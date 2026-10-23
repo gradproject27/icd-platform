@@ -1,0 +1,6 @@
+line-length = 100
+target-version = "py312"
+src = ["backend", "worker"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
