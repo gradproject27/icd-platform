@@ -44,7 +44,47 @@ cd backend
 pytest -v
 ```
 
-CI runs the same checks on every pull request, plus a gitleaks secret scan and a Compose smoke test (`.github/workflows/ci.yml`).
+Without `DATABASE_URL`, the real-database test is skipped (10 passed, 1 skipped). CI runs the same checks on every pull request against a Postgres service, plus a gitleaks secret scan and a Compose smoke test (`.github/workflows/ci.yml`).
+
+## Health check
+
+`GET /health` runs `SELECT 1` against the database:
+
+| Database | Status | Body |
+|---|---|---|
+| reachable | 200 | `{"status":"ok","database":"ok"}` |
+| unreachable | 503 | `{"status":"degraded","database":"unavailable"}` |
+
+The engine is created on first use, so the app starts even when `DATABASE_URL` is unset.
+
+## Database migrations
+
+The schema is managed by [Alembic](https://alembic.sqlalchemy.org/) in `backend/migrations`. The URL always comes from `DATABASE_URL`; it is never written in `alembic.ini`. The `api` container runs `alembic upgrade head` before it starts uvicorn, so `docker compose up` always brings the schema up to date. Revision `0001` is an empty baseline.
+
+Add ORM models as subclasses of `app.db.Base`, then create a revision:
+
+```powershell
+docker compose exec api alembic revision --autogenerate -m "add incidents table"   # then review the file
+docker compose exec api alembic upgrade head
+docker compose exec db psql -U icd -d icd -tAc "SELECT version_num FROM alembic_version"
+```
+
+Files written inside the container are not on your disk, so you can also run Alembic from `backend/` with your venv and `$env:DATABASE_URL` pointing at a reachable database.
+
+## LLM adapter
+
+Everything that needs an incident explanation depends on the `LLMAnalyzer` protocol in `backend/app/llm/adapter.py`, never on a concrete backend:
+
+```python
+from app.llm.adapter import get_analyzer, uncited_event_ids
+
+report = get_analyzer().analyze(evidence)  # EvidencePackage -> AnalysisReport
+assert uncited_event_ids(report, evidence) == []  # every cited event ID must exist in the evidence
+```
+
+`get_analyzer()` picks the backend from `LLM_BACKEND`. Only `mock` exists for now; any other value raises `ValueError`. `MockAnalyzer` (`backend/app/llm/mock.py`) is deterministic, with no clock, randomness or network. It cites only input event IDs, marks its text `[MOCK]` and its recommendations `[SIMULATED]`, so the rest of ICD runs with no LLM or HPC.
+
+The models in `backend/app/llm/contracts.py` are **provisional**: they get replaced by C3's frozen contracts in `contracts/`. Do not define these models anywhere else.
 
 ## Branches and pull requests
 
@@ -54,7 +94,14 @@ CI runs the same checks on every pull request, plus a gitleaks secret scan and a
 
 ```
 icd-platform/
-├── backend/            FastAPI app (app/) and its tests (tests/)
+├── backend/
+│   ├── app/
+│   │   ├── main.py     FastAPI app and /health
+│   │   ├── db.py       lazy SQLAlchemy engine, DeclarativeBase
+│   │   └── llm/        LLMAnalyzer protocol, MockAnalyzer, provisional contracts
+│   ├── migrations/     Alembic environment and revisions
+│   ├── alembic.ini
+│   └── tests/
 ├── worker/             background worker
 ├── frontend/           React/Vite dashboard (C4); placeholder for now
 ├── contracts/          shared Pydantic contracts (owned by C3)
