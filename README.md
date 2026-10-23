@@ -34,7 +34,7 @@ Stop with `Ctrl+C`, then `docker compose down`. Add `--volumes` to wipe the data
 
 ```powershell
 cd backend
-python -m venv .venv
+python -m venv .venv             # Windows: use py if python opens the Microsoft Store
 .venv\Scripts\Activate.ps1       # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 cd ..
