@@ -29,6 +29,22 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: icd
+          POSTGRES_PASSWORD: ci-only-not-secret
+          POSTGRES_DB: icd
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U icd -d icd"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://icd:ci-only-not-secret@localhost:5432/icd
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -37,6 +53,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements*.txt
       - run: pip install -r requirements-dev.txt
+      - run: alembic upgrade head
       - run: pytest -v
 
   secret-scan:
@@ -64,6 +81,11 @@ jobs:
       - name: Start stack and wait for all healthchecks
         run: docker compose up --build --detach --wait --wait-timeout 180
       - run: curl -fsS http://localhost:8000/health
+      - name: Check migrations reached revision 0001
+        run: |
+          version=$(docker compose exec -T db psql -U icd -d icd -tAc "SELECT version_num FROM alembic_version")
+          echo "alembic_version: $version"
+          test "$version" = "0001"
       - name: Show logs on failure
         if: failure()
         run: docker compose ps && docker compose logs
