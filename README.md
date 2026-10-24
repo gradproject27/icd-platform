@@ -10,13 +10,13 @@ Week 1 is done. This is what is on `main`:
 |---|---|
 | C1 | Dev environment (Docker Compose, CI) and backend skeleton: `/health`, Alembic baseline, LLM adapter with a mock |
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
+| C4 | Dashboard skeleton: routes, layout, typed API client, health status |
 | C5 | The response workflow specification and the authentication approach and threat model |
 
 Not built yet:
 
 - ingestion and parsing (C2);
 - the correlation engine and risk-score code (C3, Week 2);
-- the dashboard (C4); `web` serves a placeholder page;
 - real LLM backends (AI1); only `mock` exists;
 - authentication and response code (C5); the API has no login and no response endpoints yet.
 
@@ -25,6 +25,7 @@ Not built yet:
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL 2 backend (Windows), or Docker Engine with the Compose plugin (Linux)
 - [Git](https://git-scm.com/)
 - Python 3.12, only if you run lint and tests outside Docker
+- [Node.js](https://nodejs.org/) 22 or later, only if you run the frontend outside Docker
 
 ## Start everything
 
@@ -42,7 +43,7 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
 | `worker` | background worker (placeholder) | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
-| `web` | dashboard (placeholder until C4 delivers) | http://localhost:8080 |
+| `web` | React dashboard (skeleton); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
 Startup order is enforced by healthchecks: `db` becomes healthy, then `api` and `worker` start, then `web` starts once `api` is healthy. Check the state with `docker compose ps`. Every service should show `(healthy)`.
 
@@ -71,14 +72,39 @@ The tests cover:
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas.
 
-CI (`.github/workflows/ci.yml`) runs four jobs on every pull request and every push to `main`:
+CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every push to `main`:
 
 | Job | What it does |
 |---|---|
 | `lint` | `ruff check .` and `ruff format --check .` |
 | `test` | `alembic upgrade head` and `pytest` against a PostgreSQL service |
+| `frontend` | in `frontend/`: `npm ci`, contract types drift check, ESLint, type check, Vitest, production build |
 | `secret-scan` | gitleaks over the full git history |
-| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health` and checks the migration revision |
+| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision, and checks that `web` serves the dashboard and proxies `/api/health` |
+
+## Frontend
+
+The dashboard (C4) is a React + Vite + TypeScript app in `frontend/`. It only presents data: risk values, deadlines and decisions always come from the backend.
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+`npm run dev` needs the API on port 8000, for example `docker compose up db api`. Open http://localhost:5173. The browser only calls its own origin: the Vite dev server proxies `/api` and `/ws` to `http://localhost:8000` (with `/api` removed), and in Docker nginx does the same, so no CORS is needed ([auth-and-threat-model.md, A2.14](docs/auth-and-threat-model.md#a214-same-origin-for-dashboard-and-api)).
+
+Checks (the same ones CI runs):
+
+```powershell
+npm run contracts:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+The TypeScript types of the six contracts in `frontend/src/api/contracts/` are generated from `contracts/schemas/` and never edited by hand. After C3 changes a schema, run `npm run contracts:gen` and commit the result; `npm run contracts:check` fails CI if they are out of date.
 
 ## Health check
 
@@ -198,7 +224,7 @@ icd-platform/
 │   ├── alembic.ini
 │   └── tests/            health, LLM mock, and contracts/ (one file per contract plus schema drift)
 ├── worker/               background worker (placeholder)
-├── frontend/             React/Vite dashboard (C4); placeholder for now
+├── frontend/             React + Vite + TypeScript dashboard (C4): skeleton, generated contract types
 ├── contracts/            owned by C3
 │   ├── schemas/          generated JSON Schemas, one per contract
 │   └── examples/         one valid synthetic example per contract
