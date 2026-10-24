@@ -179,6 +179,8 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/correlation-and-risk-design.md](docs/correlation-and-risk-design.md) | C3 | T1-08 | Correlation and risk score design: relatedness keys, time window, grouping, risk formula, evaluation |
 | [docs/response-workflow-spec.md](docs/response-workflow-spec.md) | C5 | T1-13 | Response workflow specification: lifecycle states, transitions, freeze, 60-second window, simulated catalogue |
 | [docs/auth-and-threat-model.md](docs/auth-and-threat-model.md) | C5 | T1-14 | Authentication approach and MVP threat model: sessions, roles and permissions, threats TM-01 to TM-13 |
+| [docs/dataset-profile.md](docs/dataset-profile.md) | C2 | T1-05 | Dataset profile: inventory, field mapping to the Event contract, labels, data quality, ground truth, first development subset |
+| [docs/dataset-licence-register.md](docs/dataset-licence-register.md) | C2 | T1-06 | Licence register: licence or terms per source, evidence, redistribution, citation, status; rules for using the data |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |
