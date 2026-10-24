@@ -56,6 +56,25 @@ jobs:
       - run: alembic upgrade head
       - run: pytest -v
 
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run contracts:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   secret-scan:
     runs-on: ubuntu-24.04
     env:
@@ -74,13 +93,15 @@ jobs:
 
   compose-smoke:
     runs-on: ubuntu-24.04
-    needs: [lint, test]
+    needs: [lint, test, frontend]
     steps:
       - uses: actions/checkout@v5
       - run: cp .env.example .env
       - name: Start stack and wait for all healthchecks
         run: docker compose up --build --detach --wait --wait-timeout 180
       - run: curl -fsS http://localhost:8000/health
+      - run: curl -fsS http://localhost:8080/
+      - run: curl -fsS http://localhost:8080/api/health
       - name: Check migrations reached revision 0001
         run: |
           version=$(docker compose exec -T db psql -U icd -d icd -tAc "SELECT version_num FROM alembic_version")
