@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "record_id": "aud-2026-0001",
+  "occurred_at": "2026-03-14T10:04:01Z",
+  "event_type": "action.simulated",
+  "actor": "system",
+  "actor_role": null,
+  "incident_id": "inc-2026-0001",
+  "result": "success",
+  "simulated": true,
+  "details": {
+    "action_id": "act-2026-0001",
+    "scenario_id": "S2",
+    "window_id": "win-2026-0001",
+    "target_host": "ws-17",
+    "target_ip": "203.0.113.7"
+  }
+}

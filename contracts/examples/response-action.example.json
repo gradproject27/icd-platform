@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "action_id": "act-2026-0001",
+  "incident_id": "inc-2026-0001",
+  "scenario_id": "S2",
+  "state": "simulated_succeeded",
+  "trigger": "window_expiry",
+  "decided_by": "system",
+  "window_id": "win-2026-0001",
+  "target": {
+    "host": "ws-17",
+    "ip": "203.0.113.7",
+    "account": null
+  },
+  "parameters": {
+    "isolate_host": true,
+    "block_ip": true
+  },
+  "proposed_at": "2026-03-14T10:03:00Z",
+  "decided_at": "2026-03-14T10:04:00Z",
+  "executed_at": "2026-03-14T10:04:01Z",
+  "failure_reason": null,
+  "comment": null,
+  "simulated": true
+}

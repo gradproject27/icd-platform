@@ -1,0 +1,321 @@
+{
+  "$defs": {
+    "EventRole": {
+      "description": "Why an event belongs to an incident. Context events are never treated as malicious.",
+      "enum": [
+        "flagged",
+        "context"
+      ],
+      "title": "EventRole",
+      "type": "string"
+    },
+    "EvidenceEvent": {
+      "additionalProperties": false,
+      "description": "The citable view of one Event. Entity values may be masked tokens (NFR-S-07).",
+      "properties": {
+        "attack_type": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset attack type; null if absent.",
+          "title": "Attack Type"
+        },
+        "dst_ip": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Destination IP or masked token; null if absent.",
+          "title": "Dst Ip"
+        },
+        "event_id": {
+          "description": "ID of the Event; the AI cites this ID.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_type": {
+          "description": "Normalized event type.",
+          "minLength": 1,
+          "title": "Event Type",
+          "type": "string"
+        },
+        "host": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Host or masked token; null if absent.",
+          "title": "Host"
+        },
+        "label_status": {
+          "$ref": "#/$defs/LabelStatus",
+          "description": "Dataset label status of the event."
+        },
+        "role": {
+          "$ref": "#/$defs/EventRole",
+          "description": "flagged or context, as in the incident link."
+        },
+        "source": {
+          "description": "Provenance source, for example the file name.",
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "src_ip": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source IP or masked token; null if absent.",
+          "title": "Src Ip"
+        },
+        "summary": {
+          "description": "Short description of the event.",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "timestamp": {
+          "description": "Event time, UTC.",
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Account or masked token; null if absent.",
+          "title": "User"
+        }
+      },
+      "required": [
+        "event_id",
+        "timestamp",
+        "event_type",
+        "role",
+        "label_status",
+        "summary",
+        "source"
+      ],
+      "title": "EvidenceEvent",
+      "type": "object"
+    },
+    "IncidentContext": {
+      "additionalProperties": false,
+      "description": "Incident metadata given to the AI (OD-03).",
+      "properties": {
+        "context_event_count": {
+          "description": "Context events in the incident.",
+          "minimum": 0,
+          "title": "Context Event Count",
+          "type": "integer"
+        },
+        "first_event_at": {
+          "description": "Timestamp of the earliest event, UTC.",
+          "format": "date-time",
+          "title": "First Event At",
+          "type": "string"
+        },
+        "flagged_event_count": {
+          "description": "Flagged events in the incident.",
+          "minimum": 0,
+          "title": "Flagged Event Count",
+          "type": "integer"
+        },
+        "host_count": {
+          "description": "Distinct hosts in the incident.",
+          "minimum": 0,
+          "title": "Host Count",
+          "type": "integer"
+        },
+        "incident_type": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Incident type; null = not classified yet.",
+          "title": "Incident Type"
+        },
+        "last_event_at": {
+          "description": "Timestamp of the latest event, UTC.",
+          "format": "date-time",
+          "title": "Last Event At",
+          "type": "string"
+        },
+        "risk_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Risk level; null = not scored."
+        },
+        "risk_score": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deterministic risk score; null = not scored.",
+          "title": "Risk Score"
+        }
+      },
+      "required": [
+        "first_event_at",
+        "last_event_at",
+        "flagged_event_count",
+        "context_event_count",
+        "host_count"
+      ],
+      "title": "IncidentContext",
+      "type": "object"
+    },
+    "LabelStatus": {
+      "description": "Dataset label of an event. A missing label is unlabelled, never inferred (OD-21).",
+      "enum": [
+        "flagged",
+        "unflagged",
+        "unlabelled"
+      ],
+      "title": "LabelStatus",
+      "type": "string"
+    },
+    "RiskLevel": {
+      "description": "Risk level derived from the score by C3's configurable thresholds (FR-20).",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "What the AI receives for one incident (OD-03, NFR-S-07, FR-13).",
+  "properties": {
+    "created_at": {
+      "description": "When the package was built, UTC.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "events": {
+      "description": "Up to 50 events: all flagged events first (up to the cap), then sampled context events (OD-03). Event IDs are unique.",
+      "items": {
+        "$ref": "#/$defs/EvidenceEvent"
+      },
+      "maxItems": 50,
+      "title": "Events",
+      "type": "array"
+    },
+    "incident": {
+      "$ref": "#/$defs/IncidentContext",
+      "description": "Incident metadata (OD-03)."
+    },
+    "incident_id": {
+      "description": "ID of the incident the package describes.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "masked": {
+      "default": true,
+      "description": "True when host, user and IP values are pseudonymised as consistent tokens within the package, for example host-01 (NFR-S-07).",
+      "title": "Masked",
+      "type": "boolean"
+    },
+    "package_id": {
+      "description": "Unique package ID.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Package Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "description": "Contract version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "total_event_count": {
+      "description": "Events in the incident, before the cap.",
+      "minimum": 0,
+      "title": "Total Event Count",
+      "type": "integer"
+    },
+    "truncated": {
+      "description": "True exactly when events were left out by the cap.",
+      "title": "Truncated",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "package_id",
+    "incident_id",
+    "created_at",
+    "incident",
+    "events",
+    "total_event_count",
+    "truncated"
+  ],
+  "title": "EvidencePackage",
+  "type": "object"
+}

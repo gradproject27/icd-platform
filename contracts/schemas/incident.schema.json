@@ -1,0 +1,319 @@
+{
+  "$defs": {
+    "AnalysisStatus": {
+      "description": "Status of the AI analysis. Analysis failed is a status, not a lifecycle state (OD-09).",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "succeeded",
+        "failed"
+      ],
+      "title": "AnalysisStatus",
+      "type": "string"
+    },
+    "EventRole": {
+      "description": "Why an event belongs to an incident. Context events are never treated as malicious.",
+      "enum": [
+        "flagged",
+        "context"
+      ],
+      "title": "EventRole",
+      "type": "string"
+    },
+    "IncidentEventLink": {
+      "additionalProperties": false,
+      "description": "Link from an incident to one event (FR-08).",
+      "properties": {
+        "event_id": {
+          "description": "ID of the linked Event.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "link_keys": {
+          "description": "Keys that linked the event. Empty only for the event that started the incident.",
+          "items": {
+            "$ref": "#/$defs/LinkKey"
+          },
+          "title": "Link Keys",
+          "type": "array"
+        },
+        "linked_at": {
+          "description": "When the event was linked, UTC.",
+          "format": "date-time",
+          "title": "Linked At",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/EventRole",
+          "description": "flagged, or context: an unflagged or unlabelled event that shares an entity in the window (OD-02). A context event is never treated as malicious."
+        }
+      },
+      "required": [
+        "event_id",
+        "role",
+        "link_keys",
+        "linked_at"
+      ],
+      "title": "IncidentEventLink",
+      "type": "object"
+    },
+    "IncidentStatus": {
+      "description": "Lifecycle state (FR-31, TD-11). new replaces the former name Detected.",
+      "enum": [
+        "new",
+        "under_analysis",
+        "awaiting_human_decision",
+        "response_in_progress",
+        "escalated",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentStatus",
+      "type": "string"
+    },
+    "LinkKey": {
+      "description": "The entity key that linked an event to the incident (NFR-SF-05).",
+      "enum": [
+        "host",
+        "ip_pair",
+        "user"
+      ],
+      "title": "LinkKey",
+      "type": "string"
+    },
+    "RiskAssessment": {
+      "additionalProperties": false,
+      "description": "Deterministic risk score computed by C3 code, never by the LLM (OD-04, OD-05, FR-18).",
+      "properties": {
+        "computed_at": {
+          "description": "When the score was computed, UTC.",
+          "format": "date-time",
+          "title": "Computed At",
+          "type": "string"
+        },
+        "config_version": {
+          "description": "Version of the weights and thresholds file used.",
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "factors": {
+          "description": "Per-factor breakdown (FR-19).",
+          "items": {
+            "$ref": "#/$defs/RiskFactor"
+          },
+          "minItems": 1,
+          "title": "Factors",
+          "type": "array"
+        },
+        "level": {
+          "$ref": "#/$defs/RiskLevel",
+          "description": "Level from the configurable thresholds (FR-20); enforced by C3's scoring code, not by this contract."
+        },
+        "score": {
+          "description": "Risk score as a percentage (FR-18).",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "score",
+        "level",
+        "factors",
+        "config_version",
+        "computed_at"
+      ],
+      "title": "RiskAssessment",
+      "type": "object"
+    },
+    "RiskFactor": {
+      "additionalProperties": false,
+      "description": "One factor of the deterministic risk score.",
+      "properties": {
+        "contribution": {
+          "description": "Points this factor adds to the score.",
+          "title": "Contribution",
+          "type": "number"
+        },
+        "name": {
+          "description": "Factor name from the risk configuration.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "description": "Normalized factor value, 0 to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        },
+        "weight": {
+          "description": "Weight of the factor in the configuration.",
+          "minimum": 0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "weight",
+        "contribution"
+      ],
+      "title": "RiskFactor",
+      "type": "object"
+    },
+    "RiskLevel": {
+      "description": "Risk level derived from the score by C3's configurable thresholds (FR-20).",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A group of related events (FR-07, FR-08, FR-11, FR-18 to FR-20, FR-31, FR-42).",
+  "properties": {
+    "analysis_attempts": {
+      "default": 0,
+      "description": "Number of analysis attempts.",
+      "minimum": 0,
+      "title": "Analysis Attempts",
+      "type": "integer"
+    },
+    "analysis_status": {
+      "$ref": "#/$defs/AnalysisStatus",
+      "default": "not_started",
+      "description": "Status of the AI analysis (OD-09)."
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Confidence of the latest valid analysis (OD-16); set exactly when analysis succeeded (FR-42).",
+      "title": "Confidence"
+    },
+    "created_at": {
+      "description": "When the incident was created, UTC.",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "events": {
+      "description": "Linked events (FR-08); event IDs are unique.",
+      "items": {
+        "$ref": "#/$defs/IncidentEventLink"
+      },
+      "minItems": 1,
+      "title": "Events",
+      "type": "array"
+    },
+    "first_event_at": {
+      "description": "Timestamp of the earliest event, UTC.",
+      "format": "date-time",
+      "title": "First Event At",
+      "type": "string"
+    },
+    "incident_id": {
+      "description": "Unique incident ID.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "incident_type": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "C3 classification, read by C5's scenario lookup (OD-20); null = not classified yet.",
+      "title": "Incident Type"
+    },
+    "last_event_at": {
+      "description": "Timestamp of the latest event, UTC; not before first_event_at.",
+      "format": "date-time",
+      "title": "Last Event At",
+      "type": "string"
+    },
+    "latest_report_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ID of the latest valid AnalysisReport; required when analysis succeeded.",
+      "title": "Latest Report Id"
+    },
+    "risk": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RiskAssessment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Deterministic risk assessment; null = not scored yet."
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "description": "Contract version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/IncidentStatus",
+      "default": "new",
+      "description": "Lifecycle state (FR-31, TD-11)."
+    },
+    "updated_at": {
+      "description": "Last change, UTC; not before created_at.",
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "created_at",
+    "updated_at",
+    "first_event_at",
+    "last_event_at",
+    "events"
+  ],
+  "title": "Incident",
+  "type": "object"
+}
