@@ -137,16 +137,18 @@ With `npm run countdown:server -- --skew-ms 90000` and `npm run dev:countdown` r
 
 ### Browser checks (manual)
 
-**Not run yet.** There was no browser in the environment where the prototype was built. The automated tests above cover the same behaviour. Run these steps with the commands in section 5 and record the results here.
+Run on 25 October 2026, Windows 11, Chromium 156.0.8078.4 driven by Playwright 1.64.1 from a scratch folder outside the repo (not a project dependency), against `npm run countdown:server` and `npm run dev:countdown`. Each check was run twice.
+
+The shown value is `m:ss` rounded up to whole seconds, so it is up to 1 s above the server's exact remaining time by design. A check passes when shown − server is between −0.25 s and +1.25 s, which allows for that rounding and the 250 ms render tick. Values are given as run 1 / run 2.
 
 | # | Check | Result |
 |---|---|---|
-| a | The countdown matches the remaining time in the test server's log within 1 s | NOT VERIFIED |
-| a′ | Same with `--skew-ms 90000` | NOT VERIFIED |
-| b | After F5 the countdown continues from the same value; it does not restart at 1:00 | NOT VERIFIED |
-| c | A second tab shows the same value | NOT VERIFIED |
-| d | Stopping the test server shows "Reconnecting…" while the countdown keeps going; restarting it recovers | NOT VERIFIED |
-| e | At 0 it shows "Window expired at … The system selects a scenario (SIMULATED)." | NOT VERIFIED |
+| a | The countdown matches the remaining time in the test server's log within 1 s | PASS, max shown − server 0.34 s / 0.28 s (5 samples, 1 s apart) |
+| a′ | Same with `--skew-ms 90000` | PASS, max shown − server 0.14 s / 0.13 s; first value shown 57 s, not about 150 s |
+| b | After F5 the countdown continues from the same value; it does not restart at 1:00 | PASS, 58 s before and 58 s after the reload in both runs; no `POST` in the server log during the reload |
+| c | A second tab shows the same value | PASS, 60 s in both tabs, read 2 ms / 3 ms apart |
+| d | Stopping the test server shows "Reconnecting…" while the countdown keeps going; restarting it recovers | PASS, "Reconnecting…" within 5 s, timer 60 s → 58 s while the server was down; after the restart "No response window" and the reconnecting text gone |
+| e | At 0 it shows "Window expired at … The system selects a scenario (SIMULATED)." | PASS, 5-second window: expired text with "(SIMULATED)" shown and the timer gone |
 
 For check (d), restart the server with the same skew. A restarted test server has no windows in memory: after reconnecting, the REST read returns 404 and the page shows "No response window". That is the correct behaviour for a server that lost its state. Open a new window with the `curl.exe` command to continue. The real backend keeps windows in PostgreSQL, so a restart doesn't lose them.
 
