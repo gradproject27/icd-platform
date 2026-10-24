@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
+import { mockWebSocket } from "./test/fakeWebSocket";
 import { HEALTH_OK, jsonResponse, mockFetch } from "./test/fetch";
 
 function renderAt(path: string) {
@@ -14,7 +15,13 @@ function renderAt(path: string) {
 
 describe("routing", () => {
   beforeEach(() => {
-    mockFetch().mockImplementation(async () => jsonResponse(HEALTH_OK));
+    // The decision page reads its response window and opens a socket; no window here.
+    mockFetch().mockImplementation(async (url) =>
+      String(url).startsWith("/api/response-windows/")
+        ? jsonResponse({ detail: "no response window" }, 404)
+        : jsonResponse(HEALTH_OK),
+    );
+    mockWebSocket();
   });
 
   it("redirects / to the incident list", async () => {

@@ -107,6 +107,8 @@ npm run build
 
 The TypeScript types of the six contracts in `frontend/src/api/contracts/` are generated from `contracts/schemas/` and never edited by hand. After C3 changes a schema, run `npm run contracts:gen` and commit the result; `npm run contracts:check` fails CI if they are out of date.
 
+**Countdown prototype (T1-11).** The pending-decision page shows the response window's countdown from the server's `deadline_at`; the browser never runs its own 60-second timer. Until the backend has response windows, a local test server plays its role: `npm run countdown:server` (port 8001, `-- --skew-ms 90000` to skew its clock), `npm run dev:countdown` (the dev server proxied to it), and `npm run countdown:measure` (accuracy table). See [docs/countdown-prototype.md](docs/countdown-prototype.md).
+
 ## Health check
 
 `GET /health` runs `SELECT 1` against the database:

@@ -205,6 +205,44 @@ input {
   color: var(--muted);
 }
 
+/* Response-window countdown (T1-11). The reminder is also stated in text, not only by style. */
+
+.countdown {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.countdown--reminder {
+  border: 2px solid var(--warn);
+}
+
+.countdown__time {
+  margin: 0.25rem 0;
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown--reminder .countdown__time {
+  color: var(--warn);
+}
+
+.countdown__deadline {
+  margin: 0;
+  color: var(--muted);
+}
+
+.countdown__status p {
+  margin: 0.5rem 0 0;
+}
+
+.countdown__notice {
+  font-weight: 600;
+}
+
 .decision-options {
   display: flex;
   flex-wrap: wrap;
