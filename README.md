@@ -11,7 +11,7 @@ Week 1 is done. This is what is on `main`:
 | C1 | Dev environment (Docker Compose, CI) and backend skeleton: `/health`, Alembic baseline, LLM adapter with a mock |
 | C2 | Dataset profile of the 9 data-plan sources, dataset licence register and label mapping v1 (`docs/dataset-profile.md`, `docs/dataset-licence-register.md`, `contracts/label-mapping.json`) |
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
-| C4 | Dashboard skeleton: routes, layout, typed API client, health status |
+| C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
 
 Not built yet:
@@ -19,6 +19,8 @@ Not built yet:
 - ingestion and parsing (C2);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
+- response windows in the backend; the countdown prototype runs against a local test server (`frontend/dev/`);
+- the dashboard screens beyond the skeleton; they show no real data yet;
 - authentication and response code (C5); the API has no login and no response endpoints yet.
 
 ## Prerequisites
@@ -64,14 +66,15 @@ cd backend
 pytest -q
 ```
 
-Expected result: **212 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
+Expected result: **296 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
 - every contract, with valid payloads and with invalid payloads that must be rejected;
-- schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas.
+- schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
+- the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register.
 
 CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every push to `main`:
 
@@ -184,6 +187,9 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/auth-and-threat-model.md](docs/auth-and-threat-model.md) | C5 | T1-14 | Authentication approach and MVP threat model: sessions, roles and permissions, threats TM-01 to TM-13 |
 | [docs/dataset-profile.md](docs/dataset-profile.md) | C2 | T1-05 | Dataset profile: inventory, field mapping to the Event contract, labels, data quality, ground truth, first development subset |
 | [docs/dataset-licence-register.md](docs/dataset-licence-register.md) | C2 | T1-06 | Licence register: licence or terms per source, evidence, redistribution, citation, status; rules for using the data |
+| [contracts/label-mapping.json](contracts/label-mapping.json) | C2 | T1-06 | Label mapping v1: every dataset label value mapped to an `EventLabel` status |
+| [docs/wireframes.md](docs/wireframes.md) | C4 | T1-12 | Low-fidelity dashboard wireframes: every screen with its loading, empty and error states, the SIMULATED badge rule |
+| [docs/countdown-prototype.md](docs/countdown-prototype.md) | C4 | T1-11 | Server-driven countdown prototype: offset maths, test server, accuracy results, what the real backend must provide |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |
@@ -198,8 +204,10 @@ These are written down but not yet agreed:
 | Risk weights v0. The decision record is empty; risk scoring (T2-09) does not start until it is filled in. | Whole team | [correlation-and-risk-design.md, section 10](docs/correlation-and-risk-design.md#10-proposed-v0-weights-and-decision-record) |
 | Review of EvidencePackage and AnalysisReport (T1-09) | AI1 | [contracts-v1.md, section 8](docs/contracts-v1.md#8-review-questions-for-ai1-t1-09) |
 | Agreement on each contract: Event and EvidencePackage (C2); ResponseAction, AuditRecord and Incident (C5); Incident (C1) | C2, C5, C1 | [contracts-v1.md, section 7](docs/contracts-v1.md#7-agreement-checklist) |
-| Response window events and countdown contract | C4 | [response-workflow-spec.md, section 7](docs/response-workflow-spec.md#7-the-60-second-window-and-countdown-contract) |
-| Same origin for dashboard and API: `web` proxies `/api` and `/ws` to `api`; C1 builds it before T2-15 | C4 | [auth-and-threat-model.md, section A2.14](docs/auth-and-threat-model.md#a214-same-origin-for-dashboard-and-api) |
+| Response window API for the dashboard: REST and WebSocket paths, one socket per incident or per user, reads after a refresh. The countdown prototype already follows spec section 7 | C1, C5 | [countdown-prototype.md, sections 7 and 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5) |
+| API shapes the screens need: upload stages, event details, risk factor labels, decision type | C1, C2, C3, C5 | [wireframes.md, section 6](docs/wireframes.md#6-open-questions) |
+| Which CSV dataset (UNSW-NB15 or CIC-IDS2017), and Precinct6 used as an agreement check only, not ground truth | Whole team | [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review) |
+| Unresolved dataset licences (OTRF, EPSS, CIRCL, NVD) and which NIST resource the data plan means | C2, whole team, supervisor | [dataset-licence-register.md, section 4](docs/dataset-licence-register.md#4-open-licence-questions) |
 | Analysis confidence and valid-analysis rules for the freeze | AI1 | [response-workflow-spec.md, section 5](docs/response-workflow-spec.md#5-freeze-preconditions) |
 
 Each document also marks its own proposals "(proposed, needs team agreement)", for example transition T16 "no response needed" in the response workflow. They are listed in each document's open questions:
@@ -208,6 +216,9 @@ Each document also marks its own proposals "(proposed, needs team agreement)", f
 - [correlation-and-risk-design.md, section 15](docs/correlation-and-risk-design.md#15-review-and-open-questions)
 - [response-workflow-spec.md, section 13](docs/response-workflow-spec.md#13-agreement-checklist-and-open-questions)
 - [auth-and-threat-model.md, Part C](docs/auth-and-threat-model.md#part-c-open-questions)
+- [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review)
+- [wireframes.md, section 6](docs/wireframes.md#6-open-questions)
+- [countdown-prototype.md, section 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5)
 
 ## Branches and pull requests
 
@@ -225,14 +236,17 @@ icd-platform/
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
 │   ├── migrations/       Alembic environment and revisions (0001 baseline)
 │   ├── alembic.ini
-│   └── tests/            health, LLM mock, and contracts/ (one file per contract plus schema drift)
+│   └── tests/            health, LLM mock, label mapping, and contracts/ (one file per contract plus schema drift)
 ├── worker/               background worker (placeholder)
-├── frontend/             React + Vite + TypeScript dashboard (C4): skeleton, generated contract types
+├── frontend/             React + Vite + TypeScript dashboard (C4)
+│   ├── src/              pages, components, API client, generated contract types, countdown
+│   ├── dev/              countdown test server and accuracy script (dev and test only)
+│   └── nginx.conf        serves the build and proxies /api and /ws to api
 ├── contracts/            owned by C3
 │   ├── schemas/          generated JSON Schemas, one per contract
-│   └── examples/         one valid synthetic example per contract
-├── docs/                 contracts-v1, correlation-and-risk-design, response-workflow-spec,
-│                         auth-and-threat-model, github-setup, scope-change-note
+│   ├── examples/         one valid synthetic example per contract
+│   └── label-mapping.json  dataset labels to EventLabel (owned by C2)
+├── docs/                 Week 1 design documents and notes (see Documentation above)
 ├── .github/              CI workflow and PR template
 ├── docker-compose.yml
 ├── .env.example          template for local .env (no real secrets)
