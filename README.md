@@ -9,6 +9,7 @@ Week 1 is done. This is what is on `main`:
 | Workstream | Delivered in Week 1 |
 |---|---|
 | C1 | Dev environment (Docker Compose, CI) and backend skeleton: `/health`, Alembic baseline, LLM adapter with a mock |
+| C2 | Dataset profile of the 9 data-plan sources, dataset licence register and label mapping v1 (`docs/dataset-profile.md`, `docs/dataset-licence-register.md`, `contracts/label-mapping.json`) |
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton: routes, layout, typed API client, health status |
 | C5 | The response workflow specification and the authentication approach and threat model |
