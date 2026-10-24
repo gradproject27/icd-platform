@@ -1,0 +1,30 @@
+// Types for dev/countdown-server.mjs, so the accuracy test can import it under strict TypeScript.
+
+export interface CountdownServerOptions {
+  /** 0 picks a free port. */
+  port?: number;
+  /** Server clock = Date.now() + skewMs. */
+  skewMs?: number;
+  windowSeconds?: number;
+  log?: (line: string) => void;
+}
+
+export interface CountdownWindowSnapshot {
+  incident_id: string;
+  window_id: string;
+  status: "open" | "decided" | "expired";
+  started_at: string;
+  deadline_at: string;
+  server_time: string;
+  recommended_scenario_id: string | null;
+}
+
+export interface CountdownServer {
+  url: string;
+  port: number;
+  serverNow(): number;
+  openWindow(incidentId: string): { created: boolean; window: CountdownWindowSnapshot };
+  close(): Promise<void>;
+}
+
+export function startCountdownServer(options?: CountdownServerOptions): Promise<CountdownServer>;

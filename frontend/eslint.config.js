@@ -21,7 +21,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["scripts/**/*.mjs", "eslint.config.js"],
+    files: ["scripts/**/*.mjs", "dev/**/*.mjs", "eslint.config.js"],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 2023,
