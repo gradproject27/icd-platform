@@ -44,7 +44,7 @@ cd backend
 pytest -v
 ```
 
-Without `DATABASE_URL`, the real-database test is skipped (10 passed, 1 skipped). CI runs the same checks on every pull request against a Postgres service, plus a gitleaks secret scan and a Compose smoke test (`.github/workflows/ci.yml`).
+Without `DATABASE_URL`, the real-database test is skipped (212 passed, 1 skipped). CI runs the same checks on every pull request against a Postgres service, plus a gitleaks secret scan and a Compose smoke test (`.github/workflows/ci.yml`).
 
 ## Health check
 
@@ -84,7 +84,7 @@ assert uncited_event_ids(report, evidence) == []  # every cited event ID must ex
 
 `get_analyzer()` picks the backend from `LLM_BACKEND`. Only `mock` exists for now; any other value raises `ValueError`. `MockAnalyzer` (`backend/app/llm/mock.py`) is deterministic, with no clock, randomness or network. It cites only input event IDs, marks its text `[MOCK]` and its recommendations `[SIMULATED]`, so the rest of ICD runs with no LLM or HPC.
 
-The models in `backend/app/llm/contracts.py` are **provisional**: they get replaced by C3's frozen contracts in `contracts/`. Do not define these models anywhere else.
+`EvidencePackage` and `AnalysisReport` are C3's shared contracts, imported from `app.contracts` (`backend/app/contracts/`); their JSON Schemas and examples are in `contracts/` (see [contracts/README.md](contracts/README.md)). Do not define these models anywhere else.
 
 ## Branches and pull requests
 
@@ -98,13 +98,14 @@ icd-platform/
 │   ├── app/
 │   │   ├── main.py     FastAPI app and /health
 │   │   ├── db.py       lazy SQLAlchemy engine, DeclarativeBase
-│   │   └── llm/        LLMAnalyzer protocol, MockAnalyzer, provisional contracts
+│   │   ├── contracts/  shared Pydantic contracts v1 (owned by C3)
+│   │   └── llm/        LLMAnalyzer protocol, MockAnalyzer
 │   ├── migrations/     Alembic environment and revisions
 │   ├── alembic.ini
 │   └── tests/
 ├── worker/             background worker
 ├── frontend/           React/Vite dashboard (C4); placeholder for now
-├── contracts/          shared Pydantic contracts (owned by C3)
+├── contracts/          JSON Schemas and examples of the shared contracts (owned by C3)
 ├── docs/               project documentation and notes
 ├── .github/            CI workflow and PR template
 ├── docker-compose.yml

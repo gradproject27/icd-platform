@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "incident_id": "inc-2026-0001",
+  "status": "resolved",
+  "incident_type": "brute_force",
+  "created_at": "2026-03-14T10:00:30Z",
+  "updated_at": "2026-03-14T10:04:01Z",
+  "first_event_at": "2026-03-14T09:12:05Z",
+  "last_event_at": "2026-03-14T09:15:40Z",
+  "events": [
+    {
+      "event_id": "evt-0001",
+      "role": "flagged",
+      "link_keys": [],
+      "linked_at": "2026-03-14T10:00:30Z"
+    },
+    {
+      "event_id": "evt-0002",
+      "role": "flagged",
+      "link_keys": ["host", "ip_pair", "user"],
+      "linked_at": "2026-03-14T10:00:30Z"
+    },
+    {
+      "event_id": "evt-0003",
+      "role": "flagged",
+      "link_keys": ["host", "ip_pair", "user"],
+      "linked_at": "2026-03-14T10:00:30Z"
+    },
+    {
+      "event_id": "evt-0004",
+      "role": "context",
+      "link_keys": ["host"],
+      "linked_at": "2026-03-14T10:00:30Z"
+    }
+  ],
+  "risk": {
+    "score": 74,
+    "level": "high",
+    "factors": [
+      {"name": "severity", "value": 0.85, "weight": 0.4, "contribution": 34.0},
+      {"name": "flagged_ratio", "value": 0.75, "weight": 0.4, "contribution": 30.0},
+      {"name": "event_volume", "value": 0.5, "weight": 0.2, "contribution": 10.0}
+    ],
+    "config_version": "risk-config-example",
+    "computed_at": "2026-03-14T10:00:31Z"
+  },
+  "analysis_status": "succeeded",
+  "analysis_attempts": 1,
+  "latest_report_id": "rpt-2026-0001",
+  "confidence": 0.82
+}

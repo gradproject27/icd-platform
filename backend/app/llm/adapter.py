@@ -7,7 +7,7 @@ with the mock when no LLM or HPC is available.
 import os
 from typing import Protocol, runtime_checkable
 
-from app.llm.contracts import AnalysisReport, EvidencePackage
+from app.contracts import AnalysisReport, EvidencePackage
 from app.llm.mock import MockAnalyzer
 
 
@@ -17,10 +17,13 @@ class LLMAnalyzer(Protocol):
 
 
 def uncited_event_ids(report: AnalysisReport, evidence: EvidencePackage) -> list[str]:
-    """Return the event IDs the report cites that are not in the evidence, sorted."""
-    known = {event.event_id for event in evidence.events}
+    """Return the event IDs the report cites that are not in the evidence, sorted.
+
+    Checks the citations of every finding and every sequence step.
+    """
     cited = {event_id for finding in report.findings for event_id in finding.cited_event_ids}
-    return sorted(cited - known)
+    cited |= {event_id for step in report.sequence or [] for event_id in step.cited_event_ids}
+    return sorted(cited - evidence.citable_event_ids())
 
 
 def get_analyzer() -> LLMAnalyzer:

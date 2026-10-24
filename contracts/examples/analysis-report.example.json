@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rpt-2026-0001",
+  "incident_id": "inc-2026-0001",
+  "evidence_package_id": "pkg-2026-0001",
+  "generated_at": "2026-03-14T10:02:15Z",
+  "generated_by": "hpc",
+  "model_id": "example-pinned-model",
+  "prompt_version": "analysis-prompt-example",
+  "summary": "Repeated failed SSH password logins for user-01 on host-01 from ip-01, followed by a successful login from the same address.",
+  "attack_type": "brute_force",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "ip-01 makes 32 failed SSH password attempts for user-01 on host-01.",
+      "cited_event_ids": ["evt-0001", "evt-0002"]
+    },
+    {
+      "order": 2,
+      "description": "ip-01 logs in successfully as user-01 on host-01.",
+      "cited_event_ids": ["evt-0003"]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Failed SSH logins for user-01 from ip-01 are followed by a successful login from the same address within four minutes.",
+      "category": "evidence_supported",
+      "cited_event_ids": ["evt-0001", "evt-0002", "evt-0003"]
+    },
+    {
+      "statement": "The password of user-01 may have been guessed. The evidence does not show what the session did after the login.",
+      "category": "hypothesis",
+      "cited_event_ids": []
+    }
+  ],
+  "weaknesses": ["SSH password authentication is accepted on host-01 from ip-01."],
+  "impact": "If the login was not legitimate, the account user-01 on host-01 is under the control of ip-01.",
+  "recommendations": ["Review whether user-01 needs SSH password access to host-01 from outside the network."],
+  "risk_justification": "Three flagged events form a failure-then-success pattern on one host, which explains the high score.",
+  "uncertainty": "Only authentication and flow summaries are available; no session or process data shows activity after the login.",
+  "confidence": 0.82,
+  "model_self_rating": 0.9
+}

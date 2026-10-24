@@ -1,0 +1,269 @@
+{
+  "$defs": {
+    "ActionState": {
+      "description": "State of the action (response spec section 12, written there with hyphens).",
+      "enum": [
+        "proposed",
+        "approved",
+        "simulated_succeeded",
+        "simulated_failed"
+      ],
+      "title": "ActionState",
+      "type": "string"
+    },
+    "ActionTarget": {
+      "additionalProperties": false,
+      "description": "Target of the simulated action (response spec section 9).",
+      "properties": {
+        "account": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Account to disable; S3.",
+          "title": "Account"
+        },
+        "host": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Target host; every scenario.",
+          "title": "Host"
+        },
+        "ip": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source IP to block; S2.",
+          "title": "Ip"
+        }
+      },
+      "title": "ActionTarget",
+      "type": "object"
+    },
+    "ActionTrigger": {
+      "description": "What caused the action to be decided.",
+      "enum": [
+        "analyst_decision",
+        "window_expiry"
+      ],
+      "title": "ActionTrigger",
+      "type": "string"
+    },
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A proposed or simulated response action (FR-23, FR-27, FR-28, FR-44, FR-45, OD-20).",
+  "properties": {
+    "action_id": {
+      "description": "Unique action ID.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Action Id",
+      "type": "string"
+    },
+    "comment": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional analyst comment (FR-28).",
+      "title": "Comment"
+    },
+    "decided_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "When it was decided, UTC; null while proposed.",
+      "title": "Decided At"
+    },
+    "decided_by": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "User ID, or system; null while proposed.",
+      "title": "Decided By"
+    },
+    "executed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "When it was simulated, UTC; null until simulated.",
+      "title": "Executed At"
+    },
+    "failure_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why the simulation failed; only for simulated_failed.",
+      "title": "Failure Reason"
+    },
+    "incident_id": {
+      "description": "ID of the incident.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "Scenario parameters, for example block_ip.",
+      "title": "Parameters",
+      "type": "object"
+    },
+    "proposed_at": {
+      "description": "When the action was proposed, UTC.",
+      "format": "date-time",
+      "title": "Proposed At",
+      "type": "string"
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/ScenarioId",
+      "description": "Catalogue v0 scenario, S1 to S4 (OD-20)."
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "description": "Contract version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "simulated": {
+      "const": true,
+      "default": true,
+      "description": "Always true. No real system is touched (NFR-SF-01).",
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/ActionState",
+      "description": "Action state."
+    },
+    "target": {
+      "$ref": "#/$defs/ActionTarget",
+      "description": "Target host, IP and account."
+    },
+    "trigger": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActionTrigger"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Analyst decision or window expiry; null while proposed, because nobody knows yet which will decide."
+    },
+    "window_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Response window the action came from, if any.",
+      "title": "Window Id"
+    }
+  },
+  "required": [
+    "action_id",
+    "incident_id",
+    "scenario_id",
+    "state",
+    "target",
+    "proposed_at"
+  ],
+  "title": "ResponseAction",
+  "type": "object"
+}

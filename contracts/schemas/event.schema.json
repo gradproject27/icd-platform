@@ -1,0 +1,304 @@
+{
+  "$defs": {
+    "EventLabel": {
+      "additionalProperties": false,
+      "description": "The dataset label of an event (OD-21, FR-41). The system never generates labels.",
+      "properties": {
+        "attack_type": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The dataset's attack-type column, kept as an attribute.",
+          "title": "Attack Type"
+        },
+        "origin": {
+          "const": "dataset",
+          "default": "dataset",
+          "description": "Always dataset: labels come only from the data (FR-41).",
+          "title": "Origin",
+          "type": "string"
+        },
+        "raw_value": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The label exactly as in the dataset; null only when the record had none.",
+          "title": "Raw Value"
+        },
+        "status": {
+          "$ref": "#/$defs/LabelStatus",
+          "description": "flagged, unflagged or unlabelled. unlabelled exactly when raw_value is null."
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "EventLabel",
+      "type": "object"
+    },
+    "LabelStatus": {
+      "description": "Dataset label of an event. A missing label is unlabelled, never inferred (OD-21).",
+      "enum": [
+        "flagged",
+        "unflagged",
+        "unlabelled"
+      ],
+      "title": "LabelStatus",
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where the event came from (FR-05).",
+      "properties": {
+        "dataset_id": {
+          "description": "ID of the uploaded dataset.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "record_ref": {
+          "description": "Row number, line number or original record ID in the source file.",
+          "minLength": 1,
+          "title": "Record Ref",
+          "type": "string"
+        },
+        "source_file": {
+          "description": "Name of the source file.",
+          "minLength": 1,
+          "title": "Source File",
+          "type": "string"
+        },
+        "source_format": {
+          "description": "Format of the source, for example csv.",
+          "minLength": 1,
+          "title": "Source Format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "source_file",
+        "record_ref",
+        "source_format"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One normalized security event (FR-02, FR-04, FR-05, FR-40, FR-41, OD-21, TD-12).",
+  "properties": {
+    "dst_ip": {
+      "anyOf": [
+        {
+          "format": "ipvanyaddress",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Destination IP; null if absent.",
+      "title": "Dst Ip"
+    },
+    "dst_port": {
+      "anyOf": [
+        {
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Destination port; null if absent.",
+      "title": "Dst Port"
+    },
+    "event_id": {
+      "description": "Unique and stable across re-ingestion of the same record. A record without one is rejected by C2 (FR-03).",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "description": "Normalized type from C2's vocabulary; unknown when it cannot be mapped.",
+      "minLength": 1,
+      "title": "Event Type",
+      "type": "string"
+    },
+    "extra_fields": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "Source fields that were not mapped (FR-02). Never columns listed in CON-20.",
+      "title": "Extra Fields",
+      "type": "object"
+    },
+    "host": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Host the event was observed on or is about; null if absent.",
+      "title": "Host"
+    },
+    "ingested_at": {
+      "description": "When the record was parsed (TD-12), UTC.",
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+    },
+    "label": {
+      "$ref": "#/$defs/EventLabel",
+      "description": "Dataset label (OD-21)."
+    },
+    "privileged_user": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Whether the account is privileged; null when the data does not say (OD-04).",
+      "title": "Privileged User"
+    },
+    "protocol": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Protocol; null if absent.",
+      "title": "Protocol"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance",
+      "description": "Source of the record (FR-05)."
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "description": "Contract version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "src_ip": {
+      "anyOf": [
+        {
+          "format": "ipvanyaddress",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Source IP; null if absent.",
+      "title": "Src Ip"
+    },
+    "src_port": {
+      "anyOf": [
+        {
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Source port; null if absent.",
+      "title": "Src Port"
+    },
+    "summary": {
+      "description": "Short human-readable description built by C2.",
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "When the activity happened (event time), UTC. A record without one is rejected by C2 (FR-03).",
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "user": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Account name as in the source; null if absent.",
+      "title": "User"
+    }
+  },
+  "required": [
+    "event_id",
+    "timestamp",
+    "ingested_at",
+    "event_type",
+    "label",
+    "summary",
+    "provenance"
+  ],
+  "title": "Event",
+  "type": "object"
+}

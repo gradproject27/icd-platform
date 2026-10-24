@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "event_id": "evt-0001",
+  "timestamp": "2026-03-14T09:12:05Z",
+  "ingested_at": "2026-03-14T10:00:00Z",
+  "event_type": "ssh_auth_failure",
+  "label": {
+    "status": "flagged",
+    "raw_value": "malicious",
+    "attack_type": "brute_force",
+    "origin": "dataset"
+  },
+  "host": "ws-17",
+  "src_ip": "203.0.113.7",
+  "dst_ip": "10.0.0.17",
+  "src_port": 51514,
+  "dst_port": 22,
+  "protocol": "tcp",
+  "user": "svc-backup",
+  "privileged_user": null,
+  "summary": "12 failed SSH password attempts for svc-backup on ws-17 from 203.0.113.7",
+  "provenance": {
+    "dataset_id": "ds-synthetic-ssh-01",
+    "source_file": "synthetic_auth.csv",
+    "record_ref": "row-2",
+    "source_format": "csv"
+  },
+  "extra_fields": {
+    "auth_method": "password",
+    "attempts": 12
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "$defs": {
+    "AuditEventType": {
+      "description": "Audit event types (response spec section 11, auth doc; incident.* proposed by C3).",
+      "enum": [
+        "status_changed",
+        "transition_refused",
+        "analysis.failed",
+        "response_window.opened",
+        "response_window.reminder",
+        "decision.recorded",
+        "decision.refused",
+        "response_window.expired",
+        "expiry_duplicate_ignored",
+        "scenario.selected",
+        "scenario.no_match",
+        "action.simulated",
+        "isolation.released",
+        "notification.sent",
+        "auth.login_succeeded",
+        "auth.login_failed",
+        "auth.logout",
+        "auth.lockout",
+        "access.refused",
+        "incident.created",
+        "incident.updated"
+      ],
+      "title": "AuditEventType",
+      "type": "string"
+    },
+    "AuditResult": {
+      "description": "Outcome of the audited operation.",
+      "enum": [
+        "success",
+        "failure",
+        "refused",
+        "ignored"
+      ],
+      "title": "AuditResult",
+      "type": "string"
+    },
+    "UserRole": {
+      "description": "The four roles (D7.1).",
+      "enum": [
+        "soc_analyst",
+        "soc_manager",
+        "security_engineer",
+        "system_administrator"
+      ],
+      "title": "UserRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A record of a security-relevant decision or action (FR-35, C-14, NFR-SF-07).",
+  "properties": {
+    "actor": {
+      "description": "User ID, system, or anonymous for a failed login with no known user.",
+      "minLength": 1,
+      "title": "Actor",
+      "type": "string"
+    },
+    "actor_role": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UserRole"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Role of the user; null for system and anonymous."
+    },
+    "details": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "For example previous and new state, scenario ID, window ID, reason. Never passwords, hashes or session tokens.",
+      "title": "Details",
+      "type": "object"
+    },
+    "event_type": {
+      "$ref": "#/$defs/AuditEventType",
+      "description": "What happened."
+    },
+    "incident_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Incident ID; null for records with no incident, such as login.",
+      "title": "Incident Id"
+    },
+    "occurred_at": {
+      "description": "Database time (now()) when written, UTC.",
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "record_id": {
+      "description": "Unique record ID.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Record Id",
+      "type": "string"
+    },
+    "result": {
+      "$ref": "#/$defs/AuditResult",
+      "description": "Outcome of the operation."
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "description": "Contract version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "simulated": {
+      "default": false,
+      "description": "True exactly for action.simulated and isolation.released (NFR-SF-07).",
+      "title": "Simulated",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "record_id",
+    "occurred_at",
+    "event_type",
+    "actor",
+    "result"
+  ],
+  "title": "AuditRecord",
+  "type": "object"
+}
