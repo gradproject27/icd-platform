@@ -193,6 +193,8 @@ Context events show the activity around flagged events. They come from unflagged
 
 **Why context events never merge groups.** A busy server, a shared account or a gateway appears in many unflagged events. If context events could union groups, one such host would chain unrelated incidents into one large incident. Only flagged events, whose labels come from the dataset, decide which groups exist.
 
+**Context events never raise the risk score (proposed, needs team agreement).** The `severity`, `host_count`, `attack_type_count` and `privileged` factors are computed over flagged events only, and `flagged_share` can only go down when context is added (section 9.1).
+
 **Implementation note.** For each key value, keep the flagged events with that value sorted by time. For a context candidate, a binary search per key value finds the nearest flagged event within the window. This keeps attachment at `O(m · k · log n)` for `m` context candidates.
 
 ## 7. Incident building
@@ -269,7 +271,7 @@ Each factor is normalized to the range 0 to 1. The normalizations are **proposed
 | `flagged_share` | Flagged events ÷ all events in the incident (flagged plus context) | OD-04 |
 | `host_count` | `min(distinct hosts ÷ 5, 1)`, with the cap 5 in configuration. Distinct normalized `host` values among the incident's **flagged** events. Context events are not counted, so attaching context cannot raise this factor | OD-04 |
 | `attack_type_count` | `min(distinct attack types ÷ 3, 1)`, with the cap 3 in configuration. Distinct non-null `label.attack_type` values among flagged events | OD-04 |
-| `privileged` | 1 if any event has `privileged_user = true`. 0 if at least one event has `privileged_user = false` and none has `true`. **Excluded** when every event has `privileged_user = null`, because the data does not show it ("where the data shows them") | OD-04 |
+| `privileged` | Evaluated over the incident's **flagged** events only. 1 if any flagged event has `privileged_user = true`. 0 if at least one flagged event has `privileged_user = false` and none has `true`. **Excluded** when every flagged event has `privileged_user = null`, because the data does not show it ("where the data shows them"). Context events are not counted, so attaching context cannot raise this factor | OD-04 |
 
 **Severity table.** The table is filled after C2's label mapping (T1-06).
 
@@ -519,7 +521,7 @@ Each question has a proposed default that applies until the team decides.
 | Q9 | Incident-type rule | Most frequent attack type among flagged events; ties by severity, then alphabetical; null if none | 8 |
 | Q10 | Default severity for an unknown or missing attack type | 0.5 | 9.1 |
 | Q11 | Caps for `host_count` and `attack_type_count`, and which events count hosts | 5 hosts and 3 attack types; both counted over flagged events only | 9.1 |
-| Q12 | What happens to the privileged factor when no event shows it? | Excluded from the score | 9.1 |
+| Q12 | Which events does the privileged factor use, and what happens when none shows it? | Flagged events only; excluded from the score when every flagged event has `privileged_user = null` | 9.1 |
 | Q13 | How is an excluded factor stored? | Left out of `RiskAssessment.factors`; no contract change | 9.3 |
 | Q14 | v0 weights | Pending the decision record (section 10) | 10 |
 | Q15 | Should there be a cap on context events per incident? (The earlier draft proposed 200) | No cap in the incident; the evidence package already caps at 50 events (OD-03) | 6 |
