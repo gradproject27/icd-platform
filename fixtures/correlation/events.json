@@ -1,0 +1,1075 @@
+[
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-001",
+    "timestamp": "2026-01-15T08:40:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "http_request",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "10.10.5.5",
+    "dst_ip": "10.10.1.21",
+    "src_port": null,
+    "dst_port": 80,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Normal HTTP request to web-01 (20 min before the attack; outside the window)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-001",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-002",
+    "timestamp": "2026-01-15T09:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "203.0.113.10",
+    "dst_ip": "10.10.1.21",
+    "src_port": null,
+    "dst_port": null,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Port scan of web-01 from external address",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-002",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-003",
+    "timestamp": "2026-01-15T09:02:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "http_request",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "10.10.5.5",
+    "dst_ip": "10.10.1.21",
+    "src_port": null,
+    "dst_port": 80,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Normal HTTP request to web-01",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-003",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-004",
+    "timestamp": "2026-01-15T09:04:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "203.0.113.10",
+    "dst_ip": "10.10.1.21",
+    "src_port": null,
+    "dst_port": 443,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Service version probe of web-01",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-004",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-005",
+    "timestamp": "2026-01-15T09:05:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "unknown",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Generic",
+      "origin": "dataset"
+    },
+    "host": null,
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Flagged record with no host, IP or user",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-005",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-006",
+    "timestamp": "2026-01-15T09:06:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "unknown",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": null,
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Unflagged record with no host, IP or user",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-006",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-007",
+    "timestamp": "2026-01-15T09:10:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "web_exploit",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Exploits",
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "203.0.113.10",
+    "dst_ip": "10.10.1.21",
+    "src_port": null,
+    "dst_port": 443,
+    "protocol": "tcp",
+    "user": "www-data",
+    "privileged_user": null,
+    "summary": "Exploit request against web-01 application as www-data",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-007",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-008",
+    "timestamp": "2026-01-15T09:18:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "process_start",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Backdoors",
+      "origin": "dataset"
+    },
+    "host": "web-01",
+    "src_ip": "10.10.1.21",
+    "dst_ip": "203.0.113.10",
+    "src_port": null,
+    "dst_port": 4444,
+    "protocol": "tcp",
+    "user": "www-data",
+    "privileged_user": null,
+    "summary": "Reverse shell from web-01 back to external address",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-008",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-009",
+    "timestamp": "2026-01-15T09:30:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "remote_login",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Exploits",
+      "origin": "dataset"
+    },
+    "host": "db-01",
+    "src_ip": "10.10.1.21",
+    "dst_ip": "10.10.2.31",
+    "src_port": null,
+    "dst_port": 5432,
+    "protocol": "tcp",
+    "user": "www-data",
+    "privileged_user": null,
+    "summary": "www-data used from web-01 against db-01",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-009",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-010",
+    "timestamp": "2026-01-15T09:42:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "privilege_use",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Exploits",
+      "origin": "dataset"
+    },
+    "host": "db-01",
+    "src_ip": "10.10.1.21",
+    "dst_ip": "10.10.2.31",
+    "src_port": null,
+    "dst_port": 5432,
+    "protocol": "tcp",
+    "user": "svc-db",
+    "privileged_user": true,
+    "summary": "Privileged account svc-db used from web-01 on db-01",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-010",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-011",
+    "timestamp": "2026-01-15T09:45:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "db_query",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "db-01",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "svc-db",
+    "privileged_user": true,
+    "summary": "Routine database query by svc-db on db-01",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-011",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-012",
+    "timestamp": "2026-01-15T09:55:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "service_install",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Backdoors",
+      "origin": "dataset"
+    },
+    "host": "db-01",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "svc-db",
+    "privileged_user": true,
+    "summary": "New service installed on db-01 by svc-db",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-012",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-013",
+    "timestamp": "2026-01-15T10:08:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "service_install",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Backdoors",
+      "origin": "dataset"
+    },
+    "host": "file-01",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "svc-db",
+    "privileged_user": true,
+    "summary": "New service installed on file-01 by svc-db",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-013",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-014",
+    "timestamp": "2026-01-15T10:10:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "file_access",
+    "label": {
+      "status": "unlabelled",
+      "raw_value": null,
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "file-01",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "svc-db",
+    "privileged_user": true,
+    "summary": "File share access on file-01 by svc-db (record has no label)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-014",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-015",
+    "timestamp": "2026-01-15T11:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "User user-b logged on to ws-30",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-015",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-016",
+    "timestamp": "2026-01-15T11:04:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "user-b opened mail client on ws-30",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-016",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-017",
+    "timestamp": "2026-01-15T11:09:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "ws-30 DNS lookup",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-017",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-018",
+    "timestamp": "2026-01-15T11:15:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "user-b opened a document on ws-30",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-018",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-019",
+    "timestamp": "2026-01-15T11:22:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "ws-30 HTTPS request to update server",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-019",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-020",
+    "timestamp": "2026-01-15T11:30:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-30",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-b",
+    "privileged_user": null,
+    "summary": "User user-b logged off ws-30",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-020",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-021",
+    "timestamp": "2026-01-15T13:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "fuzzing",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Fuzzers",
+      "origin": "dataset"
+    },
+    "host": "ws-41",
+    "src_ip": "203.0.113.50",
+    "dst_ip": "10.10.4.41",
+    "src_port": null,
+    "dst_port": 8080,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Malformed requests to ws-41 from external address",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-021",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-022",
+    "timestamp": "2026-01-15T13:05:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "fuzzing",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Fuzzers",
+      "origin": "dataset"
+    },
+    "host": "ws-41",
+    "src_ip": "203.0.113.50",
+    "dst_ip": "10.10.4.41",
+    "src_port": null,
+    "dst_port": 8080,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "More malformed requests to ws-41",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-022",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-023",
+    "timestamp": "2026-01-15T13:14:30Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "remote_login",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-41",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "admin-shared",
+    "privileged_user": false,
+    "summary": "admin-shared logged on to ws-41 (equal distance to both groups)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-023",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-024",
+    "timestamp": "2026-01-15T13:16:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "remote_login",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-41",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "admin-shared",
+    "privileged_user": false,
+    "summary": "admin-shared logged on to ws-41 again (nearer to the second group)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-024",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-025",
+    "timestamp": "2026-01-15T13:24:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "dos_flood",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "DoS",
+      "origin": "dataset"
+    },
+    "host": "ws-42",
+    "src_ip": "203.0.113.60",
+    "dst_ip": "10.10.4.42",
+    "src_port": null,
+    "dst_port": null,
+    "protocol": "udp",
+    "user": "admin-shared",
+    "privileged_user": false,
+    "summary": "Request flood against ws-42 while admin-shared is logged on",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-025",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-026",
+    "timestamp": "2026-01-15T13:30:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "dos_flood",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "DoS",
+      "origin": "dataset"
+    },
+    "host": "ws-42",
+    "src_ip": "203.0.113.60",
+    "dst_ip": "10.10.4.42",
+    "src_port": null,
+    "dst_port": null,
+    "protocol": "udp",
+    "user": "admin-shared",
+    "privileged_user": false,
+    "summary": "Second request flood against ws-42",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-026",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-027",
+    "timestamp": "2026-01-15T13:40:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "dns_query",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-41",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Routine DNS query from ws-41 (no flagged event within 15 min)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-027",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-028",
+    "timestamp": "2026-01-15T15:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-50",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan seen on ws-50",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-028",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-029",
+    "timestamp": "2026-01-15T15:15:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "unknown",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Generic",
+      "origin": "dataset"
+    },
+    "host": "ws-50",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Generic attack seen on ws-50 exactly 15 minutes later",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-029",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-030",
+    "timestamp": "2026-01-15T15:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-51",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan seen on ws-51",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-030",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-031",
+    "timestamp": "2026-01-15T15:15:01Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-51",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan seen on ws-51 15 minutes and 1 second later",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-031",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-032",
+    "timestamp": "2026-01-15T17:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "unknown",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-60",
+    "src_ip": "10.10.6.60",
+    "dst_ip": "198.51.100.20",
+    "src_port": null,
+    "dst_port": 443,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "Flagged record on ws-60 with no attack type",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-032",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-033",
+    "timestamp": "2026-01-15T17:30:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "dns_query",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-60",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Routine DNS query from ws-60 (30 min later, outside the window)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-033",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-034",
+    "timestamp": "2026-01-15T12:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "dns_query",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-70",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Routine DNS query from ws-70",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-034",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-035",
+    "timestamp": "2026-01-15T16:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "user_activity",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-71",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": "user-c",
+    "privileged_user": null,
+    "summary": "user-c logged on to ws-71",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-035",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-036",
+    "timestamp": "2026-01-15T18:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "http_request",
+    "label": {
+      "status": "unflagged",
+      "raw_value": "0",
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-72",
+    "src_ip": "10.10.7.72",
+    "dst_ip": "198.51.100.30",
+    "src_port": null,
+    "dst_port": 443,
+    "protocol": "tcp",
+    "user": null,
+    "privileged_user": null,
+    "summary": "HTTPS request from ws-72",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-036",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-037",
+    "timestamp": "2026-01-15T18:05:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "file_access",
+    "label": {
+      "status": "unlabelled",
+      "raw_value": null,
+      "attack_type": null,
+      "origin": "dataset"
+    },
+    "host": "ws-72",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "File access on ws-72 (record has no label)",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-037",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  }
+]

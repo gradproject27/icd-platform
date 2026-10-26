@@ -1,0 +1,150 @@
+{
+  "fixture_version": "c3-fixtures-v0",
+  "events_file": "events.json",
+  "written": "2026-10-26",
+  "rules": "docs/correlation-and-risk-design.md with every proposed default of section 15 (Q1-Q16): 15-minute inclusive gap window, keys host / unordered ip_pair / user, context never merges groups, nearest-in-time context with ties to the earliest group, incident of one event. Incident types use the provisional UNSW-NB15 severity order (Backdoors/Worms 0.9 > Exploits/Shellcode 0.8 > DoS 0.6 > Generic 0.5 > Analysis 0.4 > Reconnaissance/Fuzzers 0.3).",
+  "incidents": [
+    {
+      "label": "A",
+      "case": "Multi-step attack: Reconnaissance -> Exploits -> Backdoors over web-01, db-01 and file-01, chained through host, ip_pair and user",
+      "start_event_id": "fx-002",
+      "flagged": [
+        {"event_id": "fx-002", "link_keys": []},
+        {"event_id": "fx-004", "link_keys": ["host", "ip_pair"]},
+        {"event_id": "fx-007", "link_keys": ["host", "ip_pair"]},
+        {"event_id": "fx-008", "link_keys": ["host", "ip_pair", "user"]},
+        {"event_id": "fx-009", "link_keys": ["user"]},
+        {"event_id": "fx-010", "link_keys": ["host", "ip_pair"]},
+        {"event_id": "fx-012", "link_keys": ["host", "user"]},
+        {"event_id": "fx-013", "link_keys": ["user"]}
+      ],
+      "context": [
+        {"event_id": "fx-003", "link_keys": ["host"]},
+        {"event_id": "fx-011", "link_keys": ["host", "user"]},
+        {"event_id": "fx-014", "link_keys": ["host", "user"]}
+      ],
+      "first_event_at": "2026-01-15T09:00:00Z",
+      "last_event_at": "2026-01-15T10:10:00Z",
+      "incident_type": "Backdoors",
+      "hosts": ["db-01", "file-01", "web-01"],
+      "attack_types": ["Backdoors", "Exploits", "Reconnaissance"],
+      "privileged": true
+    },
+    {
+      "label": "F",
+      "case": "Flagged event with no host, IP or user: it can never link, so it is an incident of one event",
+      "start_event_id": "fx-005",
+      "flagged": [{"event_id": "fx-005", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T09:05:00Z",
+      "last_event_at": "2026-01-15T09:05:00Z",
+      "incident_type": "Generic",
+      "hosts": [],
+      "attack_types": ["Generic"],
+      "privileged": null
+    },
+    {
+      "label": "C1",
+      "case": "Ambiguous case, first group: fuzzing on ws-41. Gets context fx-023, which is 9.5 min from both groups (tie -> earliest group)",
+      "start_event_id": "fx-021",
+      "flagged": [
+        {"event_id": "fx-021", "link_keys": []},
+        {"event_id": "fx-022", "link_keys": ["host", "ip_pair"]}
+      ],
+      "context": [{"event_id": "fx-023", "link_keys": ["host"]}],
+      "first_event_at": "2026-01-15T13:00:00Z",
+      "last_event_at": "2026-01-15T13:14:30Z",
+      "incident_type": "Fuzzers",
+      "hosts": ["ws-41"],
+      "attack_types": ["Fuzzers"],
+      "privileged": null
+    },
+    {
+      "label": "C2",
+      "case": "Ambiguous case, second group: DoS on ws-42 by admin-shared. Gets context fx-024 (8 min away, nearer than C1 at 11 min). The shared context events do not merge C1 and C2",
+      "start_event_id": "fx-025",
+      "flagged": [
+        {"event_id": "fx-025", "link_keys": []},
+        {"event_id": "fx-026", "link_keys": ["host", "ip_pair", "user"]}
+      ],
+      "context": [{"event_id": "fx-024", "link_keys": ["user"]}],
+      "first_event_at": "2026-01-15T13:16:00Z",
+      "last_event_at": "2026-01-15T13:30:00Z",
+      "incident_type": "DoS",
+      "hosts": ["ws-42"],
+      "attack_types": ["DoS"],
+      "privileged": false
+    },
+    {
+      "label": "D1",
+      "case": "Window boundary: two flagged events on ws-50 exactly 15:00 apart are linked (inclusive boundary, Q1)",
+      "start_event_id": "fx-028",
+      "flagged": [
+        {"event_id": "fx-028", "link_keys": []},
+        {"event_id": "fx-029", "link_keys": ["host"]}
+      ],
+      "context": [],
+      "first_event_at": "2026-01-15T15:00:00Z",
+      "last_event_at": "2026-01-15T15:15:00Z",
+      "incident_type": "Generic",
+      "hosts": ["ws-50"],
+      "attack_types": ["Generic", "Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "D2a",
+      "case": "Window boundary: first of two flagged events on ws-51 that are 15:01 apart, so not linked",
+      "start_event_id": "fx-030",
+      "flagged": [{"event_id": "fx-030", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T15:00:00Z",
+      "last_event_at": "2026-01-15T15:00:00Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-51"],
+      "attack_types": ["Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "D2b",
+      "case": "Window boundary: second flagged event on ws-51, 1 second past the window",
+      "start_event_id": "fx-031",
+      "flagged": [{"event_id": "fx-031", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T15:15:01Z",
+      "last_event_at": "2026-01-15T15:15:01Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-51"],
+      "attack_types": ["Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "E",
+      "case": "Isolated flagged event without an attack type: incident of one event, incident_type null",
+      "start_event_id": "fx-032",
+      "flagged": [{"event_id": "fx-032", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T17:00:00Z",
+      "last_event_at": "2026-01-15T17:00:00Z",
+      "incident_type": null,
+      "hosts": ["ws-60"],
+      "attack_types": [],
+      "privileged": null
+    }
+  ],
+  "not_in_any_incident": [
+    {"event_id": "fx-001", "reason": "unflagged; shares host web-01 but 20 min before the first flagged event"},
+    {"event_id": "fx-006", "reason": "unflagged; no host, IP or user"},
+    {"event_id": "fx-015", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-016", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-017", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-018", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-019", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-020", "reason": "case B: benign group, unflagged only"},
+    {"event_id": "fx-027", "reason": "unflagged; shares host ws-41 but 35 min after the last flagged event"},
+    {"event_id": "fx-033", "reason": "unflagged; shares host ws-60 but 30 min after the flagged event"},
+    {"event_id": "fx-034", "reason": "unrelated unflagged noise"},
+    {"event_id": "fx-035", "reason": "unrelated unflagged noise"},
+    {"event_id": "fx-036", "reason": "unrelated unflagged noise"},
+    {"event_id": "fx-037", "reason": "unrelated unlabelled noise"}
+  ]
+}
