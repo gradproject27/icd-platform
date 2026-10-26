@@ -17,7 +17,7 @@ AI1 owns model feasibility, the prompt and the report structure, and their evalu
 | 1 | HPC access: scheduler, GPU/CPU/RAM/storage, walltime, network | Section 2, `tools/ai1/hpc_probe.sh` | Probe ready; results need an HPC login |
 | 2 | Batch jobs or persistent service, fallback, blockers | Section 3 | Decision rule written; final choice depends on checks 3, 7 and 10 |
 | 3 | Pin model name, version, revision; check the licence | Section 4 | Shortlist and steps ready; nothing pinned; licences not yet verified on the model cards |
-| 4 | Sample inference on synthetic evidence: did it run, load time, inference time, resources, errors | Section 5, `tools/ai1/bench.py` | Harness tested with the stub; no real model has run |
+| 4 | Sample inference on synthetic evidence: did it run, load time, inference time, resources, errors | Section 5, `tools/ai1/bench.py`, `docs/ai1-runs/` | Five local runs on the fallback path (`llama3.2:3b`, Qwen3-4B-Instruct), failures included; HPC run still to do |
 | 5 | Agree the AnalysisReport with C3: findings, cited event IDs, uncertainty, recommendations, confidence | Sections 6 and 7 | Mapping onto contract 1.0 written and tested; agreement pending |
 | 6 | Prompt v0: every claim cites evidence, nothing invented | Section 8, `backend/app/analysis/prompts/` | Written |
 | 7 | Test sample output against the schema; document unsupported claims and limits | Section 9, `backend/tests/analysis/` | 1 good output and 14 broken copies behave as intended |
@@ -87,23 +87,25 @@ Add 1 to 2 GB for the attention cache. These are estimates; the benchmark replac
 | Licence, URL, date checked | to fill |
 | Terms that apply | to fill |
 
-**Size check.** Prompt v0 with the 13-event sample package is about 4,100 tokens (estimate: characters / 4). The good sample output is about 1,200 to 1,800 tokens. Meeting 30 s therefore needs roughly 40 to 60 generated tokens per second, which is realistic on one GPU with an efficient server, not on CPU (a few tokens per second, so minutes per report: batch and cache only).
+**Size check.** Prompt v0 with the 13-event sample package is about 4,100 tokens (estimate: characters / 4); measured, it is 4,880 tokens with the Llama 3.2 tokenizer and 5,181 with Qwen3's, so an 8k context is the minimum and Qwen3 needs 10k to leave room for its answer. The good sample output is about 1,200 to 1,800 tokens; real answers were 900 to 2,000 tokens (`llama3.2:3b`) and about 3,300 (Qwen3-4B-Instruct). Meeting 30 s therefore needs roughly 40 to 60 generated tokens per second, which is realistic on one GPU with an efficient server, not on CPU (a few tokens per second, so minutes per report: batch and cache only).
 
 ## 5. Model-run and performance record
 
 `tools/ai1/bench.py` runs prompt v0 at least three times per package and writes `model_run_record.md` and `.json`. Copy the final record of a real run into `docs/ai1-runs/` after checking it holds no dataset records.
 
-| Question | How it is measured | HPC result | Harness test (stub) |
-|---|---|---|---|
-| Did the model run? | Load and first analysis finish without error | to fill | yes |
-| Model load time | Seconds from start of loading to ready | to fill | not a real model |
-| Inference time per incident | Median and slowest of 3 runs; target 30 s or less (NFR-P-05) | to fill | not a real model |
-| Tokens per second | Generated tokens / inference time | to fill | not a real model |
-| Resources | Peak process RAM and GPU memory, sampled every 0.5 s | to fill | no GPU |
-| Valid analyses | Share of runs that pass parse, grounding and the contract (section 7) | to fill | 2 of 2 |
-| Stability | Attack types across valid runs | to fill | one value |
-| Errors and limits | Every load or run error as it appeared | to fill | an unreachable endpoint is recorded, not raised (tested) |
-| Licence and revision | From the pin record | to fill | n/a |
+| Question | How it is measured | HPC result | Local fallback (laptop, 4 GB GPU, Qwen3-4B-Instruct) | Harness test (stub) |
+|---|---|---|---|---|
+| Did the model run? | Load and first analysis finish without error | to fill | yes | yes |
+| Model load time | Seconds from start of loading to ready | to fill | 6.05 s (`--warmup`) | not a real model |
+| Inference time per incident | Median and slowest of 3 runs; target 30 s or less (NFR-P-05) | to fill | 200 s / 235 s: not met | not a real model |
+| Tokens per second | Generated tokens / inference time | to fill | 16.0 | not a real model |
+| Resources | Peak process RAM and GPU memory, sampled every 0.5 s | to fill | GPU 3,971 of 4,096 MB; Ollama processes 135 MB | no GPU |
+| Valid analyses | Share of runs that pass parse, grounding and the contract (section 7) | to fill | 1 of 3 (G4 x2: canary quoted in `uncertainties`) | 2 of 2 |
+| Stability | Attack types across valid runs | to fill | one valid run | one value |
+| Errors and limits | Every load or run error as it appeared | to fill | at 3,000 output tokens every answer was cut (P1); thinking build of `qwen3:4b` gave no answer | an unreachable endpoint is recorded, not raised (tested) |
+| Licence and revision | From the pin record | to fill | Apache-2.0 per `ollama show`, not yet verified on the card | n/a |
+
+All local runs, failures included, with the raw answers: [docs/ai1-runs/](ai1-runs/README.md). In short, `llama3.2:3b` went from 0 of 3 valid (no schema) to 3 of 3 with every flagged event covered, but its analysis stays shallow; Qwen3-4B-Instruct writes the most complete analysis (confidence 0.976 on its valid run) but needs about 3,300 output tokens. Neither meets 30 s on a 4 GB laptop GPU.
 
 ## 6. Report schema: LLM output v0 mapped onto AnalysisReport 1.0
 

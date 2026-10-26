@@ -1,0 +1,89 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-ai1-0001",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Failed password for user-01 from ip-01",
+    "category": "likely_interpretation",
+    "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01"],
+      "users": ["user-01"]
+    }
+  },
+  "findings": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "evidence_supported",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Verify user-01's credentials and ensure the VPN connection is secure.",
+      "rationale": "The repeated failed password attempts from user-01 using ip-01 may indicate a phishing or credential compromise attack.",
+      "cited_event_ids": ["E-011", "E-012", "E-013"],
+      "reversible_alternative": "Re-run the failed password attempts with a new set of credentials"
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "Was the repeated failed password attempt from user-01 using ip-01 a result of a phishing or credential compromise attack?",
+      "missing_evidence": "Further investigation of user-01's credentials and VPN connection"
+    }
+  ],
+  "limitations": [
+    "No information about the attacker's location or motivations"
+  ],
+  "attack_type": {
+    "category": "brute_force",
+    "claim": {
+      "text": "Repeated failed password attempts from user-01 using ip-01 may indicate a brute-force attack.",
+      "category": "evidence_supported",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    },
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": ["E-011", "E-012", "E-013"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "risk_justification": {
+    "text": "Repeated failed password attempts from user-01 using ip-01 may indicate a brute-force attack. The risk score is 81 due to the high number of failed attempts and the potential for credential compromise.",
+    "category": "evidence_supported",
+    "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-011", "E-012", "E-013"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01"],
+      "users": ["user-01"]
+    }
+  }
+}

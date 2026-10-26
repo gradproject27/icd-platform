@@ -1,0 +1,89 @@
+{
+  "environment": {
+    "time_utc": "2026-10-26T09:15:31+00:00",
+    "host": "DESKTOP-6VIN52L",
+    "platform": "Windows-10-10.0.21996-SP0",
+    "python": "3.12.15",
+    "cpu_count": 12,
+    "ram_total_gb": 33.7,
+    "scheduler_job": {},
+    "gpus": [
+      "Quadro P2000, 4096 MiB, 573.71"
+    ],
+    "pydantic": "2.14.1"
+  },
+  "model": {
+    "name": "llama3.2-3b-8k",
+    "revision": "server-side: record it by hand",
+    "backend": "openai_http",
+    "quantization": "Q4_K_M",
+    "licence_note": "Llama 3.2 Community Licence (from ollama show llama3.2:3b, 2026-10-26); not verified on the HF card; num_ctx 8192",
+    "prompt_version": "ai1-prompt-v0",
+    "temperature": 0.0,
+    "warmup": true,
+    "json_schema": true,
+    "server_process": "ollama"
+  },
+  "load": {
+    "ok": true,
+    "seconds": 8.45
+  },
+  "runs": [
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 1,
+      "infer_seconds": 141.02,
+      "prompt_tokens": 4880,
+      "completion_tokens": 857,
+      "tokens_per_second": 6.1,
+      "valid_analysis": true,
+      "failed_checks": [],
+      "problems": [],
+      "grounding_rate": 0.833,
+      "ungrounded": [
+        "sequence[1]: names ['host-01'] but its cited events do not"
+      ],
+      "confidence": 0.8131,
+      "attack_type": "brute_force"
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 2,
+      "infer_seconds": 128.63,
+      "prompt_tokens": 4880,
+      "completion_tokens": 907,
+      "tokens_per_second": 7.1,
+      "valid_analysis": true,
+      "failed_checks": [],
+      "problems": [],
+      "grounding_rate": 0.833,
+      "ungrounded": [
+        "sequence[1]: names ['host-01'] but its cited events do not"
+      ],
+      "confidence": 0.8131,
+      "attack_type": "brute_force"
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 3,
+      "infer_seconds": 130.3,
+      "prompt_tokens": 4880,
+      "completion_tokens": 907,
+      "tokens_per_second": 7.0,
+      "valid_analysis": true,
+      "failed_checks": [],
+      "problems": [],
+      "grounding_rate": 0.833,
+      "ungrounded": [
+        "sequence[1]: names ['host-01'] but its cited events do not"
+      ],
+      "confidence": 0.8131,
+      "attack_type": "brute_force"
+    }
+  ],
+  "errors": [],
+  "resources": {
+    "peak_rss_mb": 173.07648,
+    "peak_gpu_mb": 2357.0
+  }
+}

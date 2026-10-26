@@ -1,0 +1,83 @@
+{
+  "environment": {
+    "time_utc": "2026-10-26T14:04:09+00:00",
+    "host": "DESKTOP-6VIN52L",
+    "platform": "Windows-10-10.0.21996-SP0",
+    "python": "3.12.15",
+    "cpu_count": 12,
+    "ram_total_gb": 33.7,
+    "scheduler_job": {},
+    "gpus": [
+      "Quadro P2000, 4096 MiB, 573.71"
+    ],
+    "pydantic": "2.14.1"
+  },
+  "model": {
+    "name": "qwen3-4b-instruct-8k",
+    "revision": "server-side: record it by hand",
+    "backend": "openai_http",
+    "quantization": "Q4_K_M",
+    "licence_note": "Apache-2.0 (from ollama show qwen3:4b-instruct = Qwen3-4B-Instruct-2507, 2026-10-26); verify on the HF card; num_ctx 8192, num_gpu 99",
+    "prompt_version": "ai1-prompt-v0",
+    "temperature": 0.0,
+    "warmup": true,
+    "json_schema": true,
+    "server_process": "ollama"
+  },
+  "load": {
+    "ok": true,
+    "seconds": 5.68
+  },
+  "runs": [
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 1,
+      "infer_seconds": 237.59,
+      "prompt_tokens": 5179,
+      "completion_tokens": 3000,
+      "tokens_per_second": 12.6,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P1"
+      ],
+      "problems": [
+        "P1 output: model output is not valid JSON: Expecting ',' delimiter"
+      ]
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 2,
+      "infer_seconds": 197.22,
+      "prompt_tokens": 5179,
+      "completion_tokens": 3000,
+      "tokens_per_second": 15.2,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P1"
+      ],
+      "problems": [
+        "P1 output: model output is not valid JSON: Expecting ',' delimiter"
+      ]
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 3,
+      "infer_seconds": 187.12,
+      "prompt_tokens": 5179,
+      "completion_tokens": 3000,
+      "tokens_per_second": 16.0,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P1"
+      ],
+      "problems": [
+        "P1 output: model output is not valid JSON: Expecting ',' delimiter"
+      ]
+    }
+  ],
+  "errors": [],
+  "resources": {
+    "peak_rss_mb": 134.73792,
+    "peak_gpu_mb": 3681.0
+  }
+}
