@@ -28,5 +28,7 @@ RULES (all are mandatory)
 
 11. "self_rating" is optional: your own rating from 0 to 1 of how well the events support your analysis. The platform computes the real confidence itself.
 
+12. Coverage. Analyze the whole incident, not only its first activity. Every flagged event is cited by at least one sequence step or finding. Give each distinct activity in the flagged events (for example log-ons, processes, services, file access, network transfers) its own sequence step, in time order. Fill "impact" when the events show systems or data affected.
+
 OUTPUT
 Return exactly one JSON object that follows the output schema in the request, with "output_version" set to "ai1-output-0.1". No Markdown, no code fences, no text before or after the JSON.

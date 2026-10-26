@@ -12,6 +12,17 @@ Run from the repo root:
   python tools/ai1/bench.py --backend stub --out tools/ai1/runs/stub
   python tools/ai1/bench.py --backend transformers --model /scratch/$USER/models/<dir> \
       --revision <commit> --licence-note "<licence>, <card URL>, checked <date>" --out runs/<name>
+  python tools/ai1/bench.py --backend openai_http \
+      --endpoint http://127.0.0.1:11434/v1/chat/completions --model qwen3:4b --site local \
+      --warmup --json-schema --server-process ollama --quantization Q4_K_M --out runs/<name>
+
+openai_http options
+  --warmup          times a 1-token request before the runs, so model loading is recorded as the
+                    load time and kept out of the inference times (unload the model first)
+  --json-schema     sends the LLM output v0 JSON Schema as response_format, so the server constrains
+                    the answer to it (Ollama, vLLM, llama.cpp server). The prompt is unchanged
+  --server-process  samples the RAM of the server processes whose name starts with this text,
+                    because the model's memory is in the server, not in this process
 
 Needs pydantic (as pinned in backend/requirements.txt); psutil is optional.
 """
@@ -33,7 +44,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1] / "backend"))
 
-from app.analysis import PROMPT_VERSION, ReportMeta, build_messages, run_analysis  # noqa: E402
+from app.analysis import (  # noqa: E402
+    PROMPT_VERSION,
+    LlmOutput,
+    ReportMeta,
+    build_messages,
+    run_analysis,
+)
 from app.contracts import EvidencePackage  # noqa: E402
 
 try:
@@ -61,20 +78,36 @@ def gpu_used_mb() -> float | None:
     return sum(float(x) for x in out) if out else None
 
 
-class Sampler(threading.Thread):
-    """Samples process RAM and GPU memory every 0.5 s."""
+def server_rss_mb(prefix: str) -> float | None:
+    """Total RAM of the processes whose name starts with prefix (the model server)."""
+    total = 0
+    for proc in psutil.process_iter(["name", "memory_info"]):
+        name, mem = proc.info["name"] or "", proc.info["memory_info"]
+        if mem and name.lower().startswith(prefix.lower()):
+            total += mem.rss
+    return total / 1e6 if total else None
 
-    def __init__(self):
+
+class Sampler(threading.Thread):
+    """Samples RAM (this process, or the model server) and GPU memory every 0.5 s."""
+
+    def __init__(self, server_process: str | None = None):
         super().__init__(daemon=True)
         self.stop_flag = threading.Event()
         self.peak_rss_mb = None
         self.peak_gpu_mb = None
+        self.server_process = server_process
         self.proc = psutil.Process() if psutil else None
 
     def run(self):
         while not self.stop_flag.is_set():
             if self.proc:
-                self.peak_rss_mb = max(self.peak_rss_mb or 0, self.proc.memory_info().rss / 1e6)
+                if self.server_process:
+                    rss = server_rss_mb(self.server_process)
+                else:
+                    rss = self.proc.memory_info().rss / 1e6
+                if rss is not None:
+                    self.peak_rss_mb = max(self.peak_rss_mb or 0, rss)
             gpu = gpu_used_mb()
             if gpu is not None:
                 self.peak_gpu_mb = max(self.peak_gpu_mb or 0, gpu)
@@ -134,21 +167,28 @@ class OpenAIHTTP:
         self.url, self.model_name = args.endpoint, args.model
         self.revision = args.revision or "server-side: record it by hand"
         self.key = os.environ.get("OPENAI_API_KEY", "none")
+        self.warmup, self.json_schema = args.warmup, args.json_schema
 
     def load(self):
-        pass  # the server loads the model; note its start-up time by hand
+        # Without --warmup the server loads the model inside the first run; note it by hand.
+        if self.warmup:
+            self._post({"messages": [{"role": "user", "content": "OK"}], "max_tokens": 1})
 
-    def generate(self, messages, max_new_tokens, temperature):
-        body = {
-            "model": self.model_name,
-            "messages": messages,
-            "max_tokens": max_new_tokens,
-            "temperature": temperature,
-        }
+    def _post(self, body: dict) -> dict:
+        body = {"model": self.model_name, **body}
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.key}"}
         request = urllib.request.Request(self.url, json.dumps(body).encode(), headers)
         with urllib.request.urlopen(request, timeout=600) as response:
-            data = json.load(response)
+            return json.load(response)
+
+    def generate(self, messages, max_new_tokens, temperature):
+        body = {"messages": messages, "max_tokens": max_new_tokens, "temperature": temperature}
+        if self.json_schema:
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "llm_output_v0", "schema": LlmOutput.model_json_schema()},
+            }
+        data = self._post(body)
         usage = data.get("usage", {})
         return data["choices"][0]["message"]["content"], {
             "prompt_tokens": usage.get("prompt_tokens"),
@@ -220,6 +260,14 @@ def run_one(backend, args, path: Path, run: int, out: Path) -> dict:
     record["valid_analysis"] = result.valid
     record["failed_checks"] = sorted({p.check for p in result.problems()})
     record["problems"] = [f"{p.check} {p.location}: {p.detail}" for p in result.problems()][:10]
+    if result.output:
+        # Measured only: the checks and the confidence do not look at coverage (yet).
+        flagged = {e.event_id for e in evidence.events if e.role == "flagged"}
+        claims = (result.output.sequence or []) + result.output.findings
+        cited = {event_id for claim in claims for event_id in claim.cited_event_ids}
+        record["flagged_coverage"] = (
+            round(len(flagged & cited) / len(flagged), 3) if flagged else None
+        )
     if result.grounding:
         record["grounding_rate"] = round(result.grounding.grounding_rate, 3)
         record["ungrounded"] = [f"{p.location}: {p.detail}" for p in result.grounding.ungrounded]
@@ -236,6 +284,8 @@ def render_md(rec: dict) -> str:
     tps = [r["tokens_per_second"] for r in runs if "tokens_per_second" in r]
     valid = [r for r in runs if r.get("valid_analysis")]
     attack_types = sorted({str(r.get("attack_type")) for r in valid})
+    coverage = [r["flagged_coverage"] for r in runs if r.get("flagged_coverage") is not None]
+    confidences = [r["confidence"] for r in valid if "confidence" in r]
     if m["backend"] == "stub":
         target = "n/a (stub, no model)"
     elif times:
@@ -243,7 +293,15 @@ def render_md(rec: dict) -> str:
     else:
         target = "not measured"
     gpu = f"{res['peak_gpu_mb']:.0f} MB" if res["peak_gpu_mb"] is not None else "no GPU seen"
-    ram = f"{res['peak_rss_mb']:.0f} MB" if res["peak_rss_mb"] is not None else "n/a (no psutil)"
+    if m["backend"] == "openai_http" and not m.get("warmup"):
+        load_time = "not measured (the server loads the model inside run 1; use --warmup)"
+    else:
+        load_time = f"{load.get('seconds')} s"
+    if res["peak_rss_mb"] is not None:
+        ram = f"{res['peak_rss_mb']:.0f} MB"
+    else:
+        ram = "n/a (no psutil)" if psutil is None else "n/a (server process not found)"
+    ram_label = f"server '{m['server_process']}'" if m.get("server_process") else "process"
     lines = [
         "# Model-run and performance record",
         "",
@@ -254,21 +312,26 @@ def render_md(rec: dict) -> str:
         f"- Model: {m['name']} | revision: {m['revision']} | backend: {m['backend']}"
         f" | quantization: {m['quantization']}",
         f"- Licence: {m['licence_note']}",
-        f"- Prompt: {m['prompt_version']} | temperature: {m['temperature']}",
+        f"- Prompt: {m['prompt_version']} | temperature: {m['temperature']}"
+        f" | output constrained to the JSON Schema: {'yes' if m.get('json_schema') else 'no'}",
         "",
         "| Question | Answer |",
         "| --- | --- |",
         f"| Did the model load? | {'yes' if load.get('ok') else 'NO'} |",
-        f"| Load time | {load.get('seconds')} s |",
+        f"| Load time | {load_time} |",
         f"| Runs | {len(runs)} |",
         f"| Inference time (median / max) | "
         f"{round(statistics.median(times), 2) if times else 'n/a'} s / "
         f"{max(times) if times else 'n/a'} s |",
         f"| Tokens per second (median) | {round(statistics.median(tps), 1) if tps else 'n/a'} |",
-        f"| Peak process RAM | {ram} |",
+        f"| Peak {ram_label} RAM | {ram} |",
         f"| Peak GPU memory used | {gpu} |",
         f"| Valid analyses (parse + grounding + contract) | {len(valid)} of {len(runs)} |",
         f"| Attack types across valid runs | {', '.join(attack_types) or 'n/a'} |",
+        f"| Flagged events cited by a step or finding (median) | "
+        f"{f'{statistics.median(coverage):.0%}' if coverage else 'n/a'} |",
+        f"| Confidence of valid runs (min / max) | "
+        f"{f'{min(confidences)} / {max(confidences)}' if confidences else 'n/a'} |",
         f"| Inference within {TARGET_SECONDS} s (NFR-P-05) | {target} |",
         "",
     ]
@@ -282,8 +345,9 @@ def render_md(rec: dict) -> str:
         lines += ["", "Errors:"] + [f"- {e}" for e in rec["errors"]]
     lines += [
         "",
-        "The stub backend measures the harness only. For openai_http, note the server start-up"
-        " time by hand as the load time. Fill the licence line from the model card before use.",
+        "The stub backend measures the harness only. For openai_http, --warmup times the model"
+        " load (unload it on the server first). Fill the licence line from the model card"
+        " before use.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -298,6 +362,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--endpoint", default="http://127.0.0.1:8000/v1/chat/completions")
     ap.add_argument("--site", choices=("hpc", "local"), default="hpc", help="where the model ran")
     ap.add_argument("--load-4bit", action="store_true")
+    ap.add_argument("--quantization", default=None, help="as served, for example Q4_K_M")
+    ap.add_argument("--warmup", action="store_true", help="openai_http: time the model load")
+    ap.add_argument("--json-schema", action="store_true", help="openai_http: constrain output")
+    ap.add_argument("--server-process", default=None, help="sample this server's RAM")
     ap.add_argument("--packages", nargs="+", type=Path, default=[SAMPLE_PACKAGE])
     ap.add_argument("--runs", type=int, default=3, help="runs per package (plan: at least 3)")
     ap.add_argument("--max-new-tokens", type=int, default=3000)
@@ -314,16 +382,19 @@ def main(argv: list[str] | None = None) -> int:
             "name": backend.model_name,
             "revision": backend.revision,
             "backend": args.backend,
-            "quantization": "4-bit" if args.load_4bit else "none",
+            "quantization": args.quantization or ("4-bit" if args.load_4bit else "none"),
             "licence_note": args.licence_note,
             "prompt_version": PROMPT_VERSION,
             "temperature": args.temperature,
+            "warmup": args.warmup,
+            "json_schema": args.json_schema,
+            "server_process": args.server_process,
         },
         "load": {},
         "runs": [],
         "errors": [],
     }
-    sampler = Sampler()
+    sampler = Sampler(args.server_process)
     sampler.start()
     start = time.perf_counter()
     try:
