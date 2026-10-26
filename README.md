@@ -13,7 +13,7 @@ Week 1 is done. This is what is on `main`:
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
-| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). HPC results and the model pin are still to fill |
+| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). First local model run on the fallback path (Ollama, `llama3.2:3b`): 3 of 3 valid analyses, every flagged event covered, about 124 s per incident, so the 30 s target needs the HPC GPU. HPC results and the model pin are still to fill |
 
 Not built yet:
 
@@ -67,13 +67,13 @@ cd backend
 pytest -q
 ```
 
-Expected result: **328 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
+Expected result: **329 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
-- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness with its stub backend;
+- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server);
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register.
@@ -194,8 +194,8 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [contracts/label-mapping.json](contracts/label-mapping.json) | C2 | T1-06 | Label mapping v1: every dataset label value mapped to an `EventLabel` status |
 | [docs/wireframes.md](docs/wireframes.md) | C4 | T1-12 | Low-fidelity dashboard wireframes: every screen with its loading, empty and error states, the SIMULATED badge rule |
 | [docs/countdown-prototype.md](docs/countdown-prototype.md) | C4 | T1-11 | Server-driven countdown prototype: offset maths, test server, accuracy results, what the real backend must provide |
-| [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | | HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, valid analysis and confidence, prompt v0, validation |
-| [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them |
+| [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
+| [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |
