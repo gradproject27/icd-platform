@@ -1,0 +1,10 @@
+Analyze the incident below.
+
+OUTPUT SCHEMA (your answer must validate against it):
+{{output_schema}}
+
+<evidence_package>
+{{evidence_package}}
+</evidence_package>
+
+Return only the JSON object.

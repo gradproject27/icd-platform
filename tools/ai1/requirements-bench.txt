@@ -1,0 +1,8 @@
+# For tools/ai1/bench.py on the HPC or a local machine. Not used by the api image or CI.
+pydantic==2.14.1
+psutil
+# transformers backend only (install the torch build that matches the cluster's CUDA):
+# torch
+# transformers
+# accelerate
+# bitsandbytes   # only for --load-4bit

@@ -27,3 +27,6 @@ Thumbs.db
 data/
 *.pcap
 *.evtx
+
+# AI1 benchmark outputs (copy final records to docs/ai1-runs/ by hand)
+tools/ai1/runs/
