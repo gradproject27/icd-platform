@@ -110,12 +110,12 @@ def test_bad_records_are_quarantined_and_counted(upload, client, engine, setting
 
 
 def test_dataset_without_parser_fails_with_a_reason(upload, client, engine, settings):
-    accepted = upload(b"a,b\n1,2\n", name="flows.csv", dataset_id="unsw-nb15")
+    accepted = upload(b'{"a": 1}\n', name="apt29.jsonl", dataset_id="otrf")
     work(engine, settings)
     failed = job(client, accepted["job_id"])
     assert failed.state == "failed" and failed.counts is None
     assert failed.error.code == "no_parser"
-    assert "unsw-nb15" in failed.error.message
+    assert "otrf" in failed.error.message
 
 
 def test_unreadable_file_fails_parse_failed(upload, client, engine, settings):

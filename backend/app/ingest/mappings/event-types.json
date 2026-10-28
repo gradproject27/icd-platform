@@ -1,0 +1,49 @@
+{
+  "vocabulary_version": "1.0",
+  "owner": "C2",
+  "status": "v1, for team review",
+  "documentation": "docs/ingestion.md, section 4",
+  "rules": {
+    "unknown": "A value that is missing or not listed in a source's map becomes unknown, never a guess.",
+    "no_labels": "event_type is built only from activity fields (for example a service or protocol column), never from a label or attack-type column, so correlation cannot see the label through it (OD-21, CON-20).",
+    "match": "Exact match after trimming spaces and lower-casing the source value."
+  },
+  "types": [
+    {"name": "network_flow", "description": "A network connection with no recognised application service."},
+    {"name": "http_request", "description": "HTTP traffic."},
+    {"name": "dns_query", "description": "DNS traffic."},
+    {"name": "ftp_session", "description": "FTP control connection."},
+    {"name": "ftp_data_transfer", "description": "FTP data connection."},
+    {"name": "smtp_session", "description": "SMTP mail traffic."},
+    {"name": "pop3_session", "description": "POP3 mail traffic."},
+    {"name": "ssh_session", "description": "SSH connection."},
+    {"name": "tls_session", "description": "SSL or TLS connection."},
+    {"name": "snmp_request", "description": "SNMP traffic."},
+    {"name": "irc_session", "description": "IRC traffic."},
+    {"name": "radius_request", "description": "RADIUS authentication traffic."},
+    {"name": "dhcp_request", "description": "DHCP traffic."},
+    {"name": "unknown", "description": "The source value is missing or not in the map."}
+  ],
+  "sources": [
+    {
+      "dataset_id": "unsw-nb15",
+      "field": "service",
+      "map": {
+        "-": "network_flow",
+        "http": "http_request",
+        "dns": "dns_query",
+        "ftp": "ftp_session",
+        "ftp-data": "ftp_data_transfer",
+        "smtp": "smtp_session",
+        "pop3": "pop3_session",
+        "ssh": "ssh_session",
+        "ssl": "tls_session",
+        "snmp": "snmp_request",
+        "irc": "irc_session",
+        "radius": "radius_request",
+        "dhcp": "dhcp_request"
+      },
+      "notes": "Service names as documented in NUSW-NB15_features.csv (column 14, service); '-' means no service was recognised. To be checked against the measured values when the CSVs are profiled."
+    }
+  ]
+}

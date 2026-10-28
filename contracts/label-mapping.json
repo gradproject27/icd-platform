@@ -62,14 +62,17 @@
     {
       "dataset_id": "unsw-nb15",
       "profiling_status": "not_profiled_yet",
-      "tables": [],
-      "label_column": null,
-      "attack_type_column": null,
+      "tables": ["UNSW-NB15_1.csv", "UNSW-NB15_2.csv", "UNSW-NB15_3.csv", "UNSW-NB15_4.csv"],
+      "label_column": "Label",
+      "attack_type_column": "attack_cat",
       "label_scope": "per_record",
       "used_in_week1": true,
       "retrieved": "2026-10-24",
-      "notes": "Recommended CSV dataset (proposed); the team picks one of UNSW-NB15 and CIC-IDS2017. Files not downloaded yet: the label and attack-type column names come from the features file and the label values from the CSVs, in a follow-up PR. The dataset page lists the attack types below without definitions.",
-      "values": [],
+      "notes": "Week 2 parser dataset (proposed, C2 Week 2 D1). Headerless CSVs; column 49 Label and column 48 attack_cat as documented in NUSW-NB15_features.csv. The two label values come from the features file; their counts and the measured attack_cat spellings are filled after the profile run (python -m app.ingest.cli unsw-nb15 <file> --profile). The dataset page lists the attack types below without definitions.",
+      "values": [
+        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for normal records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured."},
+        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured. attack_cat gives the attack category."}
+      ],
       "attack_type_values": [
         {"raw_value": "Fuzzers", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
         {"raw_value": "Analysis", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
