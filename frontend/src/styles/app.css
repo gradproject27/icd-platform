@@ -279,3 +279,129 @@ input {
   background: var(--bg);
   color: var(--text);
 }
+
+/* Upload page (wireframes.md 4.2). Every status is also stated in text, not only by colour. */
+
+.upload-form select {
+  font: inherit;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  max-width: 28rem;
+}
+
+.upload-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.upload-error {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.upload-progress p {
+  margin: 1rem 0 0.25rem;
+}
+
+.progress {
+  height: 0.6rem;
+  max-width: 28rem;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  background: var(--accent);
+}
+
+.box,
+.processing {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.box--bad {
+  border: 2px solid var(--bad);
+}
+
+.box--warn {
+  border: 2px solid var(--warn);
+}
+
+.box p {
+  margin: 0.25rem 0;
+}
+
+.ids,
+.counts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.ids dt,
+.counts dt {
+  color: var(--muted);
+}
+
+.ids dd,
+.counts dd {
+  margin: 0;
+}
+
+.counts dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.counts__detail {
+  margin-left: 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.copyable {
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps__status {
+  font-style: italic;
+}
+
+.steps__item--done .steps__status {
+  color: var(--ok);
+}
+
+.steps__item--current {
+  font-weight: 600;
+}
+
+.steps__item--not-reached .steps__status {
+  color: var(--bad);
+}
+
+.steps__item--from-Week-3 {
+  color: var(--idle);
+}
+
+.next-step p {
+  margin: 0.5rem 0;
+}
