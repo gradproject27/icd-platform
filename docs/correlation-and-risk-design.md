@@ -5,7 +5,7 @@
 | **Project** | ICD (Intelligent Cyber Defense) |
 | **Owner** | C3, Detection & Correlation |
 | **Task** | T1-08 (Week 1). Implemented in Week 2 by T2-08 (correlation engine v0) and T2-09 (risk score) |
-| **Status** | Draft. Items marked **(proposed, needs team agreement)** are C3 design choices, not decisions. Section 15 lists every one of them |
+| **Status** | Draft. Items marked **(proposed, needs team agreement)** are C3 design choices, not decisions. Section 15 lists every one of them. Q1 to Q9 were answered by the team on 28 Oct 2026 (section 15); the correlation engine v0 implements them in `backend/app/correlation/` |
 | **Sources** | Ratified decision register (OD-xx, TD-xx, D2); approved requirements (FR-xx, NFR-xx); acceptance scenarios (AS-xx); constraints (CON-xx, C-xx); data requirements (DR-xx); contracts v1 (T1-07, [contracts-v1.md](contracts-v1.md)); [response workflow specification](response-workflow-spec.md) |
 
 ## 1. Scope and rules
@@ -108,6 +108,17 @@ An incident is **open for updates** exactly when both hold:
 
 An incident that is not open for updates keeps its events. A later related flagged event starts a new incident instead.
 
+**Adaptive memory (team decision, 28 Oct 2026; amends OD-15 for linking).** The window in force for a key value depends on how far its current chain has gone in the kill chain (section 8):
+
+| Rule | Value | Config key |
+|---|---|---|
+| Base window | 15 min, inclusive | `window_minutes` |
+| Escalated window, while the key value's current chain has reached stage 2 (exploitation) or later | 30 min, inclusive | `escalated_window_minutes`, `escalation_min_stage` |
+| The memory ends | when the chain breaks: a gap longer than the window in force | |
+| Context attachment | always the base window | |
+
+The escalated window equals the OD-15 update horizon (two windows), so an incident that is still open for updates can still grow. Reconnaissance-only activity keeps the 15-minute window, so scanning noise is not chained more widely. The decision log entry for OD-15 should record this amendment; both windows are tuned in W11.
+
 ## 5. Union-find grouping
 
 Grouping finds the connected components of the "directly related" relation over flagged events (OD-02). It uses a union-find (disjoint-set) structure.
@@ -120,8 +131,8 @@ Grouping finds the connected components of the "directly related" relation over 
 2. **Sort** the flagged events by `(timestamp, event_id)`. The tie-break on `event_id` makes the order, and so the result, deterministic.
 3. **Make a set** for every flagged event (union-find `make_set`).
 4. **Scan** the sorted flagged events. Keep a map `last[key value] → the last flagged event seen with that key value`. For each flagged event `e`, for each of its key values `v`:
-   1. if `last[v]` exists and `e.timestamp − last[v].timestamp ≤ window`, **union** `e` with `last[v]`;
-   2. set `last[v] = e`.
+   1. if `last[v]` exists and `e.timestamp − last[v].timestamp ≤` the window in force for `v` (section 4, adaptive memory), **union** `e` with `last[v]`; otherwise the memory of `v` ends;
+   2. set `last[v] = e`, and mark `v` escalated if `e` is at stage 2 or later.
 5. **Collect groups.** Each union-find set is one group of flagged events.
 6. **Attach context events** (section 6), then **build incidents** (section 7).
 
@@ -205,7 +216,7 @@ Context events show the activity around flagged events. They come from unflagged
 |---|---|---|
 | Each new group becomes **one incident** in state `New` (transition T01 of the response workflow spec) | Ratified | FR-07, FR-11, TD-11 |
 | The incident has one `IncidentEventLink` per event, flagged and context | Ratified | FR-08 |
-| Each link stores `role` (`flagged` or `context`) and `link_keys`, the keys that linked the event, so the dashboard can show why events were grouped. The first flagged event in sorted order started the incident and has empty `link_keys`. Any other flagged event lists the keys of the unions it took part in as the later event. A context event lists the keys it shares with the flagged event it was attached to | Ratified (`link_keys`); key rule proposed, needs team agreement | NFR-SF-05 |
+| Each link stores `role` (`flagged` or `context`) and `link_keys`, the keys that linked the event, so the dashboard can show why events were grouped. The first flagged event in sorted order started the incident and has empty `link_keys`. Any other flagged event lists the keys of the unions it took part in as the later event; an event that started a chain which a later event merged into the group lists the keys it was linked by as the earlier event, so only the starting event has empty `link_keys` (contract rule). A context event lists the keys it shares with the flagged event it was attached to | Ratified (`link_keys`); key rule proposed, needs team agreement | NFR-SF-05 |
 | `first_event_at` and `last_event_at` are the earliest and latest `timestamp` among all linked events | Ratified (contracts v1) | FR-08 |
 | **One consolidated alert per incident**, raised when the incident is created | Ratified | FR-12 |
 | A flagged event that matches no other flagged event becomes an **incident of one event**, so no flagged activity is lost | Proposed, needs team agreement | FR-07 |
@@ -245,15 +256,27 @@ Results are deterministic for the same uploads in the same order (AS-04). If two
 
 C5's scenario lookup reads `Incident.incident_type` (OD-20; response workflow spec, section 9).
 
-**v0 rule (proposed, needs team agreement):**
+**v0 rule (team decision Q9, 28 Oct 2026): the most advanced kill-chain stage reached.**
 
 | Step | Rule |
 |---|---|
 | 1 | Take `label.attack_type` of the incident's **flagged** events. Context events are not counted |
-| 2 | The incident type is the **most frequent** attack type |
-| 3 | Ties go to the attack type with the **higher severity** in the severity table (section 9; a missing entry counts as the default 0.5) |
-| 4 | Remaining ties go to **alphabetical order** |
+| 2 | Map each attack type to its kill-chain stage with the configured table. An attack type missing from the table is stage 0 |
+| 3 | The incident type is the attack type at the **highest stage** reached |
+| 4 | Ties at that stage go to the **most frequent** attack type, then to **alphabetical order** |
 | 5 | If no flagged event has an attack type, `incident_type = null` ("not classified") |
+
+**Kill-chain stages (provisional, C3 proposal, needs team agreement).** Five stages after the Lockheed Martin kill chain, mapped to the UNSW-NB15 categories:
+
+| Stage | Name | Attack types |
+|---|---|---|
+| 1 | reconnaissance | Reconnaissance, Analysis, Fuzzers |
+| 2 | exploitation | Generic, Exploits |
+| 3 | installation | Shellcode, Backdoors |
+| 4 | propagation | Worms |
+| 5 | actions on objectives | DoS |
+
+The same stages drive the adaptive window (section 4) and can drive the progression factor of the risk score (T2-09).
 
 The type is recomputed whenever the incident is updated. The list of attack types comes from C2's label mapping (T1-06). C5 fills its lookup table (response workflow spec, section 9) from that list.
 
@@ -417,18 +440,20 @@ Example 1 under the earlier draft weights shows the round-half-up rule: 87.5 bec
 
 ## 13. Configuration
 
-The configuration is **planned, not created**. It is created in T2-08 (correlation) and T2-09 (risk). Format and path are **proposed, needs team agreement**: TOML files in `backend/config/`, for example `backend/config/correlation.toml` and `backend/config/risk.toml`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
+The configuration is **planned, not created**. It is created in T2-08 (correlation) and T2-09 (risk). Format and path: TOML files inside the package, `backend/app/correlation/correlation.toml` (created in T2-08) and a risk file next to it in T2-09, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
 
 | Key | Default | Used by | Source |
 |---|---|---|---|
 | `window_minutes` | 15 | Window (section 4) | OD-15 |
+| `escalated_window_minutes`, `escalation_min_stage` | 30, 2 | Adaptive memory (section 4) | Team decision 28 Oct 2026 |
+| `kill_chain.attack_types` | Section 8 table | Stage per attack type (section 8) | Team decision Q9 |
 | `update_idle_windows` | 2 (30 minutes) | Update rule (section 4) | OD-15 |
 | `keys` | `["host", "ip_pair", "user"]` | Relatedness keys (section 3) | OD-02 |
 | `key_denylist` | `[]` (empty) | Denylist (section 3, proposed) | OD-02 |
 | `weights.severity`, `weights.flagged_share`, `weights.host_count`, `weights.attack_type_count`, `weights.privileged` | From the decision record (section 10) | Risk score (section 9) | OD-04 |
 | `caps.host_count` | 5 | `host_count` factor (proposed) | OD-04 |
 | `caps.attack_type_count` | 3 | `attack_type_count` factor (proposed) | OD-04 |
-| `default_severity` | 0.5 | `severity` factor and incident-type ties (proposed) | OD-04 |
+| `default_severity` | 0.5 | `severity` factor (proposed) | OD-04 |
 | `severity_table` | Filled after T1-06 | `severity` factor, incident type | OD-04 |
 | `thresholds.medium` | 40 | Level: Medium from 40 | OD-05, FR-20 |
 | `thresholds.high` | 70 | Level: High from 70 | OD-05, FR-20 |
@@ -506,19 +531,19 @@ TP = 2, FP = 2, FN = 2. P = 2 ÷ 4 = 0.50, R = 2 ÷ 4 = 0.50, F1 = 2 × 0.5 × 0
 
 ### Open questions
 
-Each question has a proposed default that applies until the team decides.
+Q1 to Q9 were answered by the team on 28 Oct 2026. Q10 to Q16 keep their proposed defaults until the team decides.
 
-| # | Question | Proposed default | Section |
+| # | Question | Answer or proposed default | Section |
 |---|---|---|---|
-| Q1 | Is the window boundary inclusive? | Yes: `≤ 15 min` | 4 |
-| Q2 | Is `ip_pair` unordered? | Yes: A→B and B→A match | 3 |
-| Q3 | Should there be a key denylist? | Yes, configurable, empty by default | 3 |
-| Q4 | Is event type a linking key? | No, not in v0 | 3 |
-| Q5 | Can context events merge groups? | No, never | 6 |
-| Q6 | Which group gets a context event that matches several? | The group of the flagged event nearest in time; ties go to the earliest group | 6 |
-| Q7 | Does an isolated flagged event become an incident? | Yes, an incident of one event, reported with alert compression | 7.1 |
-| Q8 | Are two open incidents merged when one new event matches both? | No; the event joins the incident created first, and the audit record names the other | 7.2 |
-| Q9 | Incident-type rule | Most frequent attack type among flagged events; ties by severity, then alphabetical; null if none | 8 |
+| Q1 | Is the window boundary inclusive? | Yes: `≤ 15 min` (team, 28 Oct), plus adaptive memory (section 4) | 4 |
+| Q2 | Is `ip_pair` unordered? | Yes (team, 28 Oct) | 3 |
+| Q3 | Should there be a key denylist? | Yes, empty by default (team, 28 Oct) | 3 |
+| Q4 | Is event type a linking key? | No (team, 28 Oct) | 3 |
+| Q5 | Can context events merge groups? | No, never (team, 28 Oct) | 6 |
+| Q6 | Which group gets a context event that matches several? | Nearest in time; ties to the earliest group (team, 28 Oct) | 6 |
+| Q7 | Does an isolated flagged event become an incident? | Yes (team, 28 Oct). Showing only above a threshold is a dashboard and alert filter, not a correlation rule; expiry is the OD-15 idle rule | 7.1 |
+| Q8 | Are two open incidents merged when one new event matches both? | No merge; the event joins the older incident (earliest `created_at`, then smallest `incident_id`) and the audit record names the other (team, 28 Oct). A visible `related_incidents` link needs a contract change, planned for Week 3 | 7.2 |
+| Q9 | Incident-type rule | Attack type of the most advanced kill-chain stage (team, 28 Oct; section 8) | 8 |
 | Q10 | Default severity for an unknown or missing attack type | 0.5 | 9.1 |
 | Q11 | Caps for `host_count` and `attack_type_count`, and which events count hosts | 5 hosts and 3 attack types; both counted over flagged events only | 9.1 |
 | Q12 | Which events does the privileged factor use, and what happens when none shows it? | Flagged events only; excluded from the score when every flagged event has `privileged_user = null` | 9.1 |

@@ -1,15 +1,16 @@
-"""Checks the C3 correlation fixtures (fixtures/correlation/) before any engine exists.
+"""Checks the C3 correlation fixtures (fixtures/correlation/) independently of the engine.
 
-The expected incidents were written by hand. A brute-force reference below, which
-compares every pair of events, recomputes them from the rules in
-docs/correlation-and-risk-design.md, so a wrong hand-written answer fails here.
+The expected incidents were written by hand. A reference below, which walks each key value's
+flagged events in time order and merges groups by repeated set merging (no union-find),
+recomputes them from the rules in docs/correlation-and-risk-design.md, so a wrong
+hand-written answer fails here. tests/correlation/ checks the engine against the same file.
 """
 
 import ipaddress
 import json
-from collections import Counter
+import tomllib
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
-from itertools import combinations
 from pathlib import Path
 
 import pytest
@@ -23,21 +24,14 @@ EXPECTED = json.loads((FIXTURES / "expected-incidents.json").read_text(encoding=
 EVENTS = [Event.model_validate(e) for e in RAW_EVENTS]
 BY_ID = {e.event_id: e for e in EVENTS}
 
+CONFIG = tomllib.loads(
+    (ROOT / "backend" / "app" / "correlation" / "correlation.toml").read_text(encoding="utf-8")
+)
 WINDOW = timedelta(minutes=15)
+ESCALATED_WINDOW = timedelta(minutes=30)
+ESCALATION_MIN_STAGE = 2
+STAGES = CONFIG["kill_chain"]["attack_types"]
 KEYS = ("host", "ip_pair", "user")
-# Provisional UNSW-NB15 severity table (decision D2); only used for incident-type ties here.
-SEVERITY = {
-    "Reconnaissance": 0.3,
-    "Fuzzers": 0.3,
-    "Analysis": 0.4,
-    "Generic": 0.5,
-    "DoS": 0.6,
-    "Exploits": 0.8,
-    "Shellcode": 0.8,
-    "Backdoors": 0.9,
-    "Worms": 0.9,
-}
-DEFAULT_SEVERITY = 0.5
 PLACEHOLDER_NETS = [
     ipaddress.ip_network(n)
     for n in ("10.0.0.0/8", "192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24")
@@ -68,20 +62,44 @@ def order(e: Event):
     return (e.timestamp, e.event_id)
 
 
+def stage(e: Event) -> int:
+    return STAGES.get(e.label.attack_type, 0) if e.label.attack_type else 0
+
+
 def reference_incidents() -> list[dict]:
-    """All-pairs reference for sections 5 to 8 of the design note (no union-find)."""
+    """Reference for sections 5 to 8 of the design note with the 28 Oct answers (no union-find)."""
     flagged = sorted((e for e in EVENTS if e.label.status == LabelStatus.FLAGGED), key=order)
     context = [e for e in EVENTS if e.label.status != LabelStatus.FLAGGED]
 
-    # Connected components of the "directly related" relation, by repeated merging.
+    # Per key value, walk its flagged events in time order. Two consecutive ones are linked when
+    # the gap is within the window in force: 30 min while the chain has reached stage 2+.
+    chains: dict[tuple[str, object], list[Event]] = defaultdict(list)
+    for e in flagged:
+        for k, v in key_values(e).items():
+            chains[(k, v)].append(e)
+    pairs: list[tuple[Event, Event]] = []
+    link_keys: dict[str, set[str]] = defaultdict(set)
+    earlier_keys: dict[str, set[str]] = defaultdict(set)
+    for (k, _), chain in chains.items():
+        escalated = stage(chain[0]) >= ESCALATION_MIN_STAGE
+        for prev, e in zip(chain, chain[1:], strict=False):
+            window = ESCALATED_WINDOW if escalated else WINDOW
+            if e.timestamp - prev.timestamp <= window:
+                pairs.append((prev, e))
+                link_keys[e.event_id].add(k)
+                earlier_keys[prev.event_id].add(k)
+            else:
+                escalated = False
+            escalated = escalated or stage(e) >= ESCALATION_MIN_STAGE
+
+    # Connected components of the linked pairs, by repeated merging.
     groups = [{e.event_id} for e in flagged]
-    for a, b in combinations(flagged, 2):
-        if related(a, b):
-            ga = next(g for g in groups if a.event_id in g)
-            gb = next(g for g in groups if b.event_id in g)
-            if ga is not gb:
-                ga |= gb
-                groups.remove(gb)
+    for a, b in pairs:
+        ga = next(g for g in groups if a.event_id in g)
+        gb = next(g for g in groups if b.event_id in g)
+        if ga is not gb:
+            ga |= gb
+            groups.remove(gb)
 
     def first(g):
         return min((BY_ID[i] for i in g), key=order)
@@ -102,16 +120,21 @@ def reference_incidents() -> list[dict]:
     result = []
     for gi, g in enumerate(groups):
         members = sorted((BY_ID[i] for i in g), key=order)
-        links = []
-        for e in members:
-            earlier = [p for p in flagged if order(p) < order(e)]
-            keys = {k for p in earlier if related(p, e) for k in shared_keys(p, e)}
-            links.append({"event_id": e.event_id, "link_keys": [k for k in KEYS if k in keys]})
+        links = [
+            {
+                "event_id": e.event_id,
+                "link_keys": []
+                if n == 0
+                else [k for k in KEYS if k in (link_keys[e.event_id] or earlier_keys[e.event_id])],
+            }
+            for n, e in enumerate(members)
+        ]
         types = Counter(e.label.attack_type for e in members if e.label.attack_type)
         incident_type = None
         if types:
+            top = max(STAGES.get(t, 0) for t in types)
             incident_type = min(
-                types, key=lambda t: (-types[t], -SEVERITY.get(t, DEFAULT_SEVERITY), t)
+                (t for t in types if STAGES.get(t, 0) == top), key=lambda t: (-types[t], t)
             )
         ctx = sorted(attached[gi], key=lambda t: order(BY_ID[t[0]]))
         times = [e.timestamp for e in members] + [BY_ID[i].timestamp for i, _ in ctx]

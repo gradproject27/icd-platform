@@ -1,0 +1,42 @@
+# Correlation engine v0 configuration (C3, T2-08). See docs/correlation-and-risk-design.md.
+# Any change here changes config_version.
+
+config_version = "correlation-v0"
+
+# Gap window in minutes, boundary inclusive (OD-15; Q1 answered 28 Oct 2026).
+window_minutes = 15
+
+# Adaptive memory (team decision 28 Oct 2026): a key value whose current chain has reached
+# kill-chain stage escalation_min_stage or later links over escalated_window_minutes instead.
+# The memory ends when the chain breaks (a gap longer than the window in force).
+escalated_window_minutes = 30
+escalation_min_stage = 2
+
+# Relatedness keys (OD-02) and values that never link (Q3: empty by default).
+keys = ["host", "ip_pair", "user"]
+
+[key_denylist]
+host = []
+ip = []
+user = []
+
+# Kill-chain stage of each dataset attack type (provisional, C3 proposal, needs team agreement).
+# 1 reconnaissance, 2 exploitation, 3 installation and persistence, 4 propagation,
+# 5 actions on objectives. Unknown or missing attack type = stage 0 (not staged).
+[kill_chain.stage_names]
+1 = "reconnaissance"
+2 = "exploitation"
+3 = "installation"
+4 = "propagation"
+5 = "actions_on_objectives"
+
+[kill_chain.attack_types]
+Reconnaissance = 1
+Analysis = 1
+Fuzzers = 1
+Generic = 2
+Exploits = 2
+Shellcode = 3
+Backdoors = 3
+Worms = 4
+DoS = 5
