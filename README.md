@@ -17,7 +17,8 @@ Week 1 is done. This is what is on `main`:
 
 Not built yet:
 
-- ingestion and parsing (C2);
+- dataset parsers (C2); only the `fixture` format (a JSON list of Events) is ingested so far;
+- the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
 - response windows in the backend; the countdown prototype runs against a local test server (`frontend/dev/`);
@@ -45,11 +46,11 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | Service | What it is | URL |
 |---|---|---|
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
-| `worker` | background worker (placeholder) | none |
+| `worker` | background worker: runs upload (ingest) jobs from the Postgres queue | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
 | `web` | React dashboard (skeleton); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
-Startup order is enforced by healthchecks: `db` becomes healthy, then `api` and `worker` start, then `web` starts once `api` is healthy. Check the state with `docker compose ps`. Every service should show `(healthy)`.
+Startup order is enforced by healthchecks: `db` becomes healthy, then `api` starts and applies the migrations, then `worker` and `web` start once `api` is healthy. `api` and `worker` share the `uploads` volume. Check the state with `docker compose ps`. Every service should show `(healthy)`.
 
 Stop with `Ctrl+C`, then `docker compose down`. Add `--volumes` to wipe the database.
 
@@ -67,7 +68,7 @@ cd backend
 pytest -q
 ```
 
-Expected result: **329 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
+Expected result without a database: **386 passed, 29 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **415 passed**.
 
 The tests cover:
 
@@ -76,7 +77,9 @@ The tests cover:
 - the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server);
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
-- the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register.
+- the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;
+- the API shapes in `docs/api/` (schema drift, one valid example per state, consistency rules);
+- the upload API (202 at once, refused files store nothing, file names never used as paths) and the worker (end-to-end ingest, quarantine and counts, every failure reason, a crashed worker's job retried from scratch, `worker_lost` after 3 attempts).
 
 CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every push to `main`:
 
@@ -86,7 +89,7 @@ CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every p
 | `test` | `alembic upgrade head` and `pytest` against a PostgreSQL service |
 | `frontend` | in `frontend/`: `npm ci`, contract types drift check, ESLint, type check, Vitest, production build |
 | `secret-scan` | gitleaks over the full git history |
-| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision, and checks that `web` serves the dashboard and proxies `/api/health` |
+| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision, checks that `web` serves the dashboard and proxies `/api/health`, then uploads the correlation fixture through nginx and waits for its job to finish with 37 events |
 
 ## Frontend
 
@@ -124,6 +127,20 @@ The TypeScript types of the six contracts in `frontend/src/api/contracts/` are g
 | unreachable | 503 | `{"status":"degraded","database":"unavailable"}` |
 
 The engine is created on first use, so the app starts even when `DATABASE_URL` is unset.
+
+## Upload a file
+
+`POST /uploads` stores the file, queues a job and answers **202** with a job ID at once; the worker processes it. With the stack running:
+
+```powershell
+curl.exe -F dataset_id=fixture -F file=@fixtures/correlation/events.json http://localhost:8080/api/uploads
+curl.exe http://localhost:8080/api/jobs/<job_id>
+curl.exe "http://localhost:8080/api/uploads/<upload_id>/events?label_status=flagged"
+```
+
+The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
+
+Only `fixture` has a parser so far; an upload for another dataset is stored and its job fails with `no_parser` until C2's parser is registered in `backend/app/ingest/registry.py`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
 
 ## Shared contracts
 
@@ -240,15 +257,21 @@ Each document also marks its own proposals "(proposed, needs team agreement)", f
 icd-platform/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py       FastAPI app and /health
+│   │   ├── main.py       FastAPI app, /health, upload size guard
 │   │   ├── db.py         lazy SQLAlchemy engine, DeclarativeBase
+│   │   ├── models.py     tables: uploads, jobs, events, quarantined_records
+│   │   ├── settings.py   upload dir, size limit, worker timings (from the environment)
+│   │   ├── storage.py    uploaded files on the shared volume
+│   │   ├── api/          upload, job and event endpoints, their shapes (schemas.py) and export.py
+│   │   ├── ingest/       parser interface and registry (C2 adds parsers), fixture parser
+│   │   ├── jobs/         Postgres job queue and the ingest job
+│   │   ├── worker/       the worker process: python -m app.worker
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
 │   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
-│   ├── migrations/       Alembic environment and revisions (0001 baseline)
+│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs)
 │   ├── alembic.ini
-│   └── tests/            health, LLM mock, label mapping, contracts/ (one file per contract plus schema drift), analysis/ (AI1)
-├── worker/               background worker (placeholder)
+│   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)
 │   ├── src/              pages, components, API client, generated contract types, countdown
 │   ├── dev/              countdown test server and accuracy script (dev and test only)
@@ -258,7 +281,7 @@ icd-platform/
 │   ├── examples/         one valid synthetic example per contract
 │   └── label-mapping.json  dataset labels to EventLabel (owned by C2)
 ├── tools/ai1/            AI1 HPC probe, model benchmark and synthetic samples
-├── docs/                 Week 1 design documents and notes (see Documentation above)
+├── docs/                 design documents and notes (see Documentation above); api/ holds the API schemas and examples
 ├── .github/              CI workflow and PR template
 ├── docker-compose.yml
 ├── .env.example          template for local .env (no real secrets)

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C1 (Platform & Integration) |
-| Status | **Shapes agreed for Week 2.** The endpoints are built in the next C1 PRs (upload, jobs and worker; then the HPC handoff). Until then, C4 builds against the examples below |
+| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker. **Next C1 PR:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff |
 | Week 2 plan | Section 4, steps 1 to 5; handoff "C1 to C4: endpoint request/response examples" |
 | Shapes (source of truth) | `backend/app/api/schemas.py` |
 | JSON Schemas (generated) | `docs/api/schemas/*.schema.json` |

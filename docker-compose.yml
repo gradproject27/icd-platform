@@ -21,6 +21,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:?set POSTGRES_DB in .env}
       LLM_BACKEND: ${LLM_BACKEND:-mock}
+      UPLOAD_DIR: /data/uploads
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-512}
+    volumes:
+      - uploads:/data/uploads
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:
@@ -33,15 +37,22 @@ services:
       retries: 5
       start_period: 15s
 
+  # Same image as the api: the worker imports the contracts, parsers and job code (D9).
   worker:
-    build: ./worker
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:?set POSTGRES_DB in .env}
+      LLM_BACKEND: ${LLM_BACKEND:-mock}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
     depends_on:
-      db:
+      # The api applies the migrations before it reports healthy.
+      api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "worker.py", "--check"]
+      test: ["CMD", "python", "-m", "app.worker", "--check"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -63,3 +74,5 @@ services:
 
 volumes:
   db-data:
+  # Uploaded files, shared by api and worker (D4).
+  uploads:

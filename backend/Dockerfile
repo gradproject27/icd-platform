@@ -12,7 +12,8 @@ COPY alembic.ini .
 COPY migrations ./migrations
 COPY app ./app
 
-RUN useradd --create-home --uid 10001 icd
+# /data/uploads is the shared uploads volume; a new named volume takes this owner.
+RUN useradd --create-home --uid 10001 icd && mkdir -p /data/uploads && chown icd /data/uploads
 USER icd
 
 EXPOSE 8000

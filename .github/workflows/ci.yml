@@ -102,11 +102,28 @@ jobs:
       - run: curl -fsS http://localhost:8000/health
       - run: curl -fsS http://localhost:8080/
       - run: curl -fsS http://localhost:8080/api/health
-      - name: Check migrations reached revision 0001
+      - name: Check migrations reached revision 0002
         run: |
           version=$(docker compose exec -T db psql -U icd -d icd -tAc "SELECT version_num FROM alembic_version")
           echo "alembic_version: $version"
-          test "$version" = "0001"
+          test "$version" = "0002"
+      - name: Upload the correlation fixture through nginx and wait for the job
+        run: |
+          body=$(curl -fsS -F dataset_id=fixture -F file=@fixtures/correlation/events.json http://localhost:8080/api/uploads)
+          echo "$body"
+          job_id=$(echo "$body" | jq -r .job_id)
+          for _ in $(seq 1 60); do
+            job=$(curl -fsS "http://localhost:8080/api/jobs/$job_id")
+            state=$(echo "$job" | jq -r .state)
+            if [ "$state" = done ] || [ "$state" = failed ]; then break; fi
+            sleep 1
+          done
+          echo "$job"
+          test "$state" = done
+          test "$(echo "$job" | jq '.counts.events_stored')" = 37
+          upload_id=$(echo "$body" | jq -r .upload_id)
+          flagged=$(curl -fsS "http://localhost:8080/api/uploads/$upload_id/events?label_status=flagged&limit=500" | jq '.items | length')
+          test "$flagged" = 18
       - name: Show logs on failure
         if: failure()
         run: docker compose ps && docker compose logs
