@@ -387,6 +387,22 @@ Thresholds are ratified and provisional until W11 (OD-05). They are configurable
 
 The score is an **estimated severity indicator, not a calibrated probability** (CON-12). A High level is precondition 2 of a freeze (response workflow spec, section 5).
 
+### 11.1 Handoff to C5: risk level and High
+
+This is the C3 to C5 handoff of the Week 2 plan ("risk level field, High threshold definition", due Thu 29 Oct).
+
+| Item | Definition |
+|---|---|
+| Field | `Incident.risk.level` (`RiskAssessment.level`, contracts v1.0), with the score in `Incident.risk.score`, an integer from 0 to 100 |
+| Values | `"low"`, `"medium"`, `"high"` (`RiskLevel` in `backend/app/contracts/common.py`) |
+| High | `score >= 70`, boundary inclusive. Medium is 40 to 69, Low 0 to 39 (OD-05) |
+| Where the numbers live | `backend/app/correlation/risk.toml`, `[thresholds] medium = 40`, `high = 70`; changing them changes `config_version` |
+| Not scored yet | `Incident.risk` is `null` until the score exists (T2-09). Null is **never** High, so it never meets the freeze precondition |
+| Freeze (OD-16, owned by C5) | Level High **and** analysis confidence at least 0.75 **and** a valid analysis. C3 provides only the first condition |
+| Code | `from app.correlation import is_high, level_for, check_level`. `is_high(incident.risk)` is the freeze precondition (False for null). `level_for(score)` gives the level of a score. `check_level(risk)` raises when a stored level does not match its score, which the contract itself does not check |
+
+C5 should call `is_high` rather than compare numbers, so a W11 threshold change reaches the freeze rule without a code change. Tests: `backend/tests/correlation/test_risk_levels.py`.
+
 ## 12. Worked examples
 
 All three examples use the proposed v0 weights (section 10). Contributions are `100 × wᵢ × fᵢ ÷ Σ(wᵢ)`, shown to two decimals. No input had to be adjusted: every result lands on the expected side of the thresholds.
@@ -448,7 +464,7 @@ Example 1 under the earlier draft weights shows the round-half-up rule: 87.5 bec
 
 ## 13. Configuration
 
-The correlation configuration was created in T2-08; the risk configuration is planned for T2-09. Format and path: TOML files inside the package, `backend/app/correlation/correlation.toml` (created in T2-08) and a risk file next to it in T2-09, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
+The correlation configuration was created in T2-08. The risk file `backend/app/correlation/risk.toml` holds the thresholds now (section 11.1); its weights and tables are added with the score in T2-09. Format and path: TOML files inside the package, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
 
 | Key | Default | Used by | Source |
 |---|---|---|---|
