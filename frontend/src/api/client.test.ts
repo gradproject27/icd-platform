@@ -25,6 +25,19 @@ describe("request", () => {
     expect(error).toMatchObject({ kind: "http", status: 503, body: { status: "degraded" } });
   });
 
+  it("uses C1's error.message and error.code when the error body has C1's shape", async () => {
+    const body = { error: { code: "not_found", message: "No job with ID job-0000 exists." } };
+    mockFetch().mockResolvedValue(jsonResponse(body, 404));
+
+    await expect(request("/jobs/job-0000")).rejects.toMatchObject({
+      kind: "http",
+      status: 404,
+      code: "not_found",
+      message: "No job with ID job-0000 exists.",
+      body,
+    });
+  });
+
   it("turns a fetch rejection into a network ApiError", async () => {
     mockFetch().mockRejectedValue(new TypeError("Failed to fetch"));
 

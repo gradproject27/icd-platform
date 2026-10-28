@@ -1,3 +1,8 @@
 node_modules
 dist
 .env*
+# Tests are not part of the image: they import C1's examples from ../docs, outside this build
+# context. CI's frontend job typechecks and runs them in the full repository.
+src/**/*.test.ts
+src/**/*.test.tsx
+src/test

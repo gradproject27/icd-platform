@@ -113,7 +113,9 @@ npm test
 npm run build
 ```
 
-The TypeScript types of the six contracts in `frontend/src/api/contracts/` are generated from `contracts/schemas/` and never edited by hand. After C3 changes a schema, run `npm run contracts:gen` and commit the result; `npm run contracts:check` fails CI if they are out of date.
+The TypeScript types of the six contracts in `frontend/src/api/contracts/` are generated from `contracts/schemas/` and never edited by hand. The types of C1's API shapes (upload, job, dataset list, error) in `frontend/src/api/c1/` are generated the same way from `docs/api/schemas/`, and kept apart from the contracts. After C3 or C1 changes a schema, run `npm run contracts:gen` and commit the result; `npm run contracts:check` fails CI if either folder is out of date.
+
+**Upload page (Week 2).** `/upload` runs on C1's real upload and job API ([docs/api-upload-jobs.md](docs/api-upload-jobs.md)): choose a dataset source from `GET /datasets` and a file, follow the upload percentage, then the job's processing steps and intake counts (records read, events stored, labelled, unlabelled, quarantined) until it is done or failed. The job ID is kept in the URL (`/upload?job=<job_id>`), so a refresh keeps following the same job and never uploads again. All network code is in `frontend/src/api/`: `request()` for JSON calls and `uploadFile()` (XMLHttpRequest, for upload progress and without the 5-second timeout) for the file. To try it, run the whole stack with `docker compose up --build` and open http://localhost:8080/upload; only the `fixture` dataset has a parser so far, for example `fixtures/correlation/events.json`.
 
 **Countdown prototype (T1-11).** The pending-decision page shows the response window's countdown from the server's `deadline_at`; the browser never runs its own 60-second timer. Until the backend has response windows, a local test server plays its role: `npm run countdown:server` (port 8001, `-- --skew-ms 90000` to skew its clock), `npm run dev:countdown` (the dev server proxied to it), and `npm run countdown:measure` (accuracy table). See [docs/countdown-prototype.md](docs/countdown-prototype.md).
 

@@ -1,4 +1,4 @@
-import { ApiError } from "./errors";
+import { ApiError, c1ErrorOf } from "./errors";
 
 // Same origin only (auth-and-threat-model.md A2.14): /api is proxied to the backend by the Vite
 // dev server and by nginx, so the browser never makes a cross-origin call.
@@ -48,9 +48,12 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
-    throw new ApiError("http", `The ICD API answered with HTTP ${response.status}.`, {
+    const body = parseJson(text);
+    const c1Error = c1ErrorOf(body);
+    throw new ApiError("http", c1Error?.message ?? `The ICD API answered with HTTP ${response.status}.`, {
       status: response.status,
-      body: parseJson(text),
+      body,
+      code: c1Error?.code,
     });
   }
 
@@ -61,7 +64,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   return data as T;
 }
 
-function parseJson(text: string): unknown {
+export function parseJson(text: string): unknown {
   try {
     return JSON.parse(text) as unknown;
   } catch {
