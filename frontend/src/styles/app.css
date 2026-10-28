@@ -405,3 +405,44 @@ input {
 .next-step p {
   margin: 0.5rem 0;
 }
+
+/* Incident list (wireframes.md 4.3). */
+
+.stub-banner {
+  margin: 1rem 0;
+  padding: 0.6rem 1rem;
+  border: 2px dashed var(--warn);
+  border-radius: 4px;
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin: 1rem 0;
+}
+
+.filters select {
+  font: inherit;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.sort-button {
+  padding: 0;
+  border: none;
+  background: none;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.incident-table td:nth-child(1),
+.incident-table td:nth-child(2),
+.incident-table td:nth-child(5) {
+  white-space: nowrap;
+}
