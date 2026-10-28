@@ -1,8 +1,8 @@
 {
-  "fixture_version": "c3-fixtures-v0",
+  "fixture_version": "c3-fixtures-v1",
   "events_file": "events.json",
   "written": "2026-10-26",
-  "rules": "docs/correlation-and-risk-design.md with every proposed default of section 15 (Q1-Q16): 15-minute inclusive gap window, keys host / unordered ip_pair / user, context never merges groups, nearest-in-time context with ties to the earliest group, incident of one event. Incident types use the provisional UNSW-NB15 severity order (Backdoors/Worms 0.9 > Exploits/Shellcode 0.8 > DoS 0.6 > Generic 0.5 > Analysis 0.4 > Reconnaissance/Fuzzers 0.3).",
+  "rules": "docs/correlation-and-risk-design.md with the team answers of 28 Oct 2026 (Q1-Q9) and the proposed defaults of Q10-Q16: 15-minute inclusive gap window, escalated to 30 minutes while a key value's chain has reached kill-chain stage 2 or later (adaptive memory, ends when the chain breaks), keys host / unordered ip_pair / user, context never merges groups and uses the 15-minute window only, nearest-in-time context with ties to the earliest group, incident of one event. Incident type = attack type of the most advanced kill-chain stage (Q9), stages from backend/app/correlation/correlation.toml (provisional: Reconnaissance/Analysis/Fuzzers 1, Generic/Exploits 2, Shellcode/Backdoors 3, Worms 4, DoS 5).",
   "incidents": [
     {
       "label": "A",
@@ -128,6 +128,74 @@
       "incident_type": null,
       "hosts": ["ws-60"],
       "attack_types": [],
+      "privileged": null
+    },
+    {
+      "label": "G1",
+      "case": "Adaptive memory: Exploits on ws-80 (stage 2) extends the window for host ws-80 to 30 min, so the Backdoors event 20 min later joins",
+      "start_event_id": "fx-038",
+      "flagged": [
+        {"event_id": "fx-038", "link_keys": []},
+        {"event_id": "fx-039", "link_keys": ["host"]}
+      ],
+      "context": [],
+      "first_event_at": "2026-01-15T19:00:00Z",
+      "last_event_at": "2026-01-15T19:20:00Z",
+      "incident_type": "Backdoors",
+      "hosts": ["ws-80"],
+      "attack_types": ["Backdoors", "Exploits"],
+      "privileged": null
+    },
+    {
+      "label": "G2a",
+      "case": "Adaptive memory control: two scans on ws-81 20 min apart. Reconnaissance is stage 1, so the window stays 15 min and they are not linked",
+      "start_event_id": "fx-040",
+      "flagged": [{"event_id": "fx-040", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T19:00:00Z",
+      "last_event_at": "2026-01-15T19:00:00Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-81"],
+      "attack_types": ["Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "G2b",
+      "case": "Adaptive memory control: second scan on ws-81",
+      "start_event_id": "fx-041",
+      "flagged": [{"event_id": "fx-041", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T19:20:00Z",
+      "last_event_at": "2026-01-15T19:20:00Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-81"],
+      "attack_types": ["Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "G3",
+      "case": "Memory expiry: scan on ws-80 40 min after G1 (beyond the 30 min escalated window), so the chain breaks and the memory ends",
+      "start_event_id": "fx-042",
+      "flagged": [{"event_id": "fx-042", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T20:00:00Z",
+      "last_event_at": "2026-01-15T20:00:00Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-80"],
+      "attack_types": ["Reconnaissance"],
+      "privileged": null
+    },
+    {
+      "label": "G4",
+      "case": "Memory expiry: scan on ws-80 20 min after G3. The memory ended, so the window is 15 min again and it is not linked",
+      "start_event_id": "fx-043",
+      "flagged": [{"event_id": "fx-043", "link_keys": []}],
+      "context": [],
+      "first_event_at": "2026-01-15T20:20:00Z",
+      "last_event_at": "2026-01-15T20:20:00Z",
+      "incident_type": "Reconnaissance",
+      "hosts": ["ws-80"],
+      "attack_types": ["Reconnaissance"],
       "privileged": null
     }
   ],
