@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import ValidationError
-from sqlalchemy import Engine, func, insert, select
+from sqlalchemy import Engine, delete, func, insert, select
 from sqlalchemy.orm import Session
 
 from app.api.schemas import DatasetSource, ErrorCode, IntakeCounts, JobStage
@@ -19,7 +19,7 @@ from app.contracts import Event
 from app.ingest.interface import IntakeContext, ParseError, Parser, Quarantined
 from app.ingest.registry import PARSERS
 from app.jobs.errors import JobFailure, JobLost
-from app.jobs.queue import clear_upload_rows, set_progress
+from app.jobs.queue import holds, set_progress
 from app.models import EventRow, JobRow, QuarantineRow, UploadRow
 from app.settings import Settings
 
@@ -53,8 +53,10 @@ def _has_nul(value: Any) -> bool:
 
 
 class _Intake:
-    def __init__(self, upload_id: str) -> None:
+    def __init__(self, upload_id: str, job_id: str, worker_id: str) -> None:
         self.upload_id = upload_id
+        self.job_id = job_id
+        self.worker_id = worker_id
         self.records_read = 0
         self.labels: Counter[str] = Counter()
         self.reasons: Counter[str] = Counter()
@@ -103,8 +105,20 @@ class _Intake:
     def pending(self) -> int:
         return len(self.events) + len(self.quarantine)
 
+    def clear(self, engine: Engine) -> None:
+        """Remove what an earlier attempt stored, so this attempt starts clean."""
+        with engine.begin() as connection:
+            if not holds(connection, self.job_id, self.worker_id):
+                raise JobLost
+            connection.execute(delete(EventRow).where(EventRow.upload_id == self.upload_id))
+            connection.execute(
+                delete(QuarantineRow).where(QuarantineRow.upload_id == self.upload_id)
+            )
+
     def flush(self, engine: Engine) -> None:
         with engine.begin() as connection:
+            if not holds(connection, self.job_id, self.worker_id):
+                raise JobLost
             if self.events:
                 connection.execute(insert(EventRow), self.events)
             if self.quarantine:
@@ -144,7 +158,8 @@ def run_ingest(
         if not set_progress(engine, job.job_id, worker_id, clock(), stage, counts):
             raise JobLost
 
-    clear_upload_rows(engine, upload.upload_id)
+    intake = _Intake(upload.upload_id, job.job_id, worker_id)
+    intake.clear(engine)
     path = settings.upload_dir / upload.upload_id
     if not path.is_file():
         raise JobFailure(ErrorCode.STORAGE_FAILED, "The stored file is missing.")
@@ -163,7 +178,6 @@ def run_ingest(
         source_file=upload.filename,
         ingested_at=clock(),
     )
-    intake = _Intake(upload.upload_id)
     try:
         for item in parser(path, context):
             intake.add(item)
