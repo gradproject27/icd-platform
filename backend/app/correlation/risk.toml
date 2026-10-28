@@ -1,0 +1,8 @@
+# C3 risk configuration (T2-09). Read by app/correlation/levels.py with tomllib.
+# Thresholds are ratified and provisional until W11 (OD-05); configurable (FR-20).
+# The weights and factor tables are added with the risk score (Step 3).
+config_version = "risk-v0"
+
+[thresholds]
+medium = 40  # 40 to 69 is Medium; below 40 is Low
+high = 70    # 70 to 100 is High, a freeze precondition (OD-16)
