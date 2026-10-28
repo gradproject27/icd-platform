@@ -1,0 +1,47 @@
+{
+  "items": [
+    {
+      "dataset_id": "fixture",
+      "name": "Synthetic fixture (JSON list of Events)",
+      "parser_available": true
+    },
+    {
+      "dataset_id": "precinct6",
+      "name": "Precinct6 (WitFoo)",
+      "parser_available": false
+    },
+    {
+      "dataset_id": "unsw-nb15",
+      "name": "UNSW-NB15",
+      "parser_available": false
+    },
+    {
+      "dataset_id": "cic-ids2017",
+      "name": "CIC-IDS2017",
+      "parser_available": false
+    },
+    {
+      "dataset_id": "loghub-bgl",
+      "name": "Loghub BGL",
+      "parser_available": false
+    },
+    {
+      "dataset_id": "loghub-thunderbird",
+      "name": "Loghub Thunderbird",
+      "parser_available": false
+    },
+    {
+      "dataset_id": "otrf",
+      "name": "OTRF Security Datasets",
+      "parser_available": false
+    }
+  ],
+  "accepted_extensions": [
+    ".csv",
+    ".json",
+    ".jsonl",
+    ".log",
+    ".txt"
+  ],
+  "max_upload_bytes": 536870912
+}

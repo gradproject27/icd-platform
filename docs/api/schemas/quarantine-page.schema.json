@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "QuarantinedRecord": {
+      "additionalProperties": false,
+      "description": "A record that could not become an Event (FR-03), with its reason.",
+      "properties": {
+        "raw_excerpt": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Start of the original record, cut at 500 characters.",
+          "title": "Raw Excerpt"
+        },
+        "reason": {
+          "description": "Plain-language reason.",
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "reason_code": {
+          "description": "C2's reason code, for example bad_timestamp.",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "record_ref": {
+          "description": "Row or line reference, as in Provenance.",
+          "minLength": 1,
+          "title": "Record Ref",
+          "type": "string"
+        },
+        "seq": {
+          "description": "Position of the record in the file, from 1.",
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "seq",
+        "record_ref",
+        "reason_code",
+        "reason"
+      ],
+      "title": "QuarantinedRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /uploads/{upload_id}/quarantine: quarantined records in seq order.",
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/QuarantinedRecord"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "next_after": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Pass as ?after= for the next page; null on the last page.",
+      "title": "Next After"
+    }
+  },
+  "required": [
+    "items",
+    "next_after"
+  ],
+  "title": "QuarantinePage",
+  "type": "object"
+}

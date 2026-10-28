@@ -1,0 +1,63 @@
+{
+  "items": [
+    {
+      "schema_version": "1.0",
+      "event_id": "fx-001",
+      "timestamp": "2026-01-15T08:40:00Z",
+      "ingested_at": "2026-01-16T00:00:00Z",
+      "event_type": "http_request",
+      "label": {
+        "status": "unflagged",
+        "raw_value": "0",
+        "attack_type": null,
+        "origin": "dataset"
+      },
+      "host": "web-01",
+      "src_ip": "10.10.5.5",
+      "dst_ip": "10.10.1.21",
+      "src_port": null,
+      "dst_port": 80,
+      "protocol": "tcp",
+      "user": null,
+      "privileged_user": null,
+      "summary": "Normal HTTP request to web-01 (20 min before the attack; outside the window)",
+      "provenance": {
+        "dataset_id": "fixture-c3-v0",
+        "source_file": "events.json",
+        "record_ref": "fx-001",
+        "source_format": "json"
+      },
+      "extra_fields": {}
+    },
+    {
+      "schema_version": "1.0",
+      "event_id": "fx-002",
+      "timestamp": "2026-01-15T09:00:00Z",
+      "ingested_at": "2026-01-16T00:00:00Z",
+      "event_type": "network_scan",
+      "label": {
+        "status": "flagged",
+        "raw_value": "1",
+        "attack_type": "Reconnaissance",
+        "origin": "dataset"
+      },
+      "host": "web-01",
+      "src_ip": "203.0.113.10",
+      "dst_ip": "10.10.1.21",
+      "src_port": null,
+      "dst_port": null,
+      "protocol": "tcp",
+      "user": null,
+      "privileged_user": null,
+      "summary": "Port scan of web-01 from external address",
+      "provenance": {
+        "dataset_id": "fixture-c3-v0",
+        "source_file": "events.json",
+        "record_ref": "fx-002",
+        "source_format": "json"
+      },
+      "extra_fields": {}
+    }
+  ],
+  "next_after": "fx-002"
+}

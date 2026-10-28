@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "ApiError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode",
+          "description": "Machine-readable reason."
+        },
+        "message": {
+          "description": "Plain-language reason, safe to show to the user.",
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ApiError",
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "Machine-readable reason. The first group answers a request; the second fails a job.",
+      "enum": [
+        "validation_error",
+        "dataset_unknown",
+        "file_empty",
+        "file_too_large",
+        "format_not_accepted",
+        "invalid_evidence",
+        "not_found",
+        "report_not_available",
+        "no_parser",
+        "parse_failed",
+        "counts_mismatch",
+        "storage_failed",
+        "worker_lost",
+        "unmasked_evidence",
+        "hpc_unreachable",
+        "hpc_timeout",
+        "hpc_job_failed",
+        "report_missing",
+        "internal_error"
+      ],
+      "title": "ErrorCode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Body of every 4xx and 5xx answer.",
+  "properties": {
+    "error": {
+      "$ref": "#/$defs/ApiError"
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "title": "ErrorResponse",
+  "type": "object"
+}

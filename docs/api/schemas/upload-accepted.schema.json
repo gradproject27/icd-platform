@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "description": "202 answer of POST /uploads. The file is stored; processing has not started yet.",
+  "properties": {
+    "job_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "status_url": {
+      "description": "Path of GET /jobs/{job_id}, without /api.",
+      "minLength": 1,
+      "title": "Status Url",
+      "type": "string"
+    },
+    "upload_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Upload Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "status_url",
+    "upload_id"
+  ],
+  "title": "UploadAccepted",
+  "type": "object"
+}

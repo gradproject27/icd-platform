@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "file_too_large",
+    "message": "The file is larger than the 512 MB limit."
+  }
+}
