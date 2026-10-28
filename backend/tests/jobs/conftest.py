@@ -20,7 +20,7 @@ def _needs_database():
 
 @pytest.fixture
 def fixture_events() -> Path:
-    """The C3 correlation fixture: 37 Events, 18 flagged, 17 unflagged, 2 unlabelled."""
+    """The C3 correlation fixture (fixtures/correlation/events.json); see its README for counts."""
     return FIXTURE_EVENTS
 
 

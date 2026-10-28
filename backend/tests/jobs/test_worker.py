@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from datetime import timedelta
 from pathlib import Path
 
@@ -20,6 +21,9 @@ FIXTURE_EVENTS = Path(__file__).resolve().parents[3] / "fixtures" / "correlation
 
 
 FIXTURE = json.loads(FIXTURE_EVENTS.read_text(encoding="utf-8"))
+# Counted from the file, so the tests follow C3's fixture when it grows.
+TOTAL = len(FIXTURE)
+BY_STATUS = Counter(record["label"]["status"] for record in FIXTURE)
 
 
 def job(client, job_id: str) -> Job:
@@ -46,11 +50,11 @@ def test_fixture_upload_runs_end_to_end(upload, client, engine, settings):
     assert done.state == "done" and done.stage is None and done.attempts == 1
     assert done.counts is not None
     assert done.counts.model_dump() == {
-        "records_read": 37,
-        "events_stored": 37,
-        "flagged": 18,
-        "unflagged": 17,
-        "unlabelled": 2,
+        "records_read": TOTAL,
+        "events_stored": TOTAL,
+        "flagged": BY_STATUS["flagged"],
+        "unflagged": BY_STATUS["unflagged"],
+        "unlabelled": BY_STATUS["unlabelled"],
         "quarantined": 0,
         "quarantined_by_reason": {},
     }
@@ -58,7 +62,7 @@ def test_fixture_upload_runs_end_to_end(upload, client, engine, settings):
     # M2: the events are labelled, queryable and keep their link to the original record.
     base = f"/uploads/{accepted['upload_id']}/events"
     flagged = EventPage.model_validate(client.get(f"{base}?label_status=flagged&limit=500").json())
-    assert len(flagged.items) == 18 and flagged.next_after is None
+    assert len(flagged.items) == BY_STATUS["flagged"] and flagged.next_after is None
     assert all(event.label.status == "flagged" for event in flagged.items)
     unlabelled = EventPage.model_validate(client.get(f"{base}?label_status=unlabelled").json())
     assert all(event.label.raw_value is None for event in unlabelled.items)
@@ -188,8 +192,8 @@ def test_progress_counts_are_published_while_running(upload, client, engine, set
     work(engine, settings)
     running = [j for j in seen if j.counts is not None]
     assert running and all(j.state == "running" and j.stage == "storing" for j in running)
-    assert running[-1].counts.records_read == 30
-    assert job(client, accepted["job_id"]).counts.records_read == 37
+    assert running[-1].counts.records_read == TOTAL // 10 * 10  # the last full batch of 10
+    assert job(client, accepted["job_id"]).counts.records_read == TOTAL
 
 
 def test_crashed_worker_job_is_retried_from_scratch(upload, client, engine, settings):
@@ -212,8 +216,8 @@ def test_crashed_worker_job_is_retried_from_scratch(upload, client, engine, sett
     assert work(engine, settings, clock=lambda: later, worker_id="worker-b") is True
     done = job(client, accepted["job_id"])
     assert (done.state, done.attempts) == ("done", 2)
-    assert done.counts.events_stored == 37
-    assert stored(engine, EventRow, accepted["upload_id"]) == 37
+    assert done.counts.events_stored == TOTAL
+    assert stored(engine, EventRow, accepted["upload_id"]) == TOTAL
 
 
 def test_job_fails_worker_lost_after_max_attempts(upload, client, engine, settings):

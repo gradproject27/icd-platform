@@ -12,7 +12,7 @@
 
 This document specifies how ICD turns events into incidents and how it computes the deterministic risk score of an incident. C3 implements it in Week 2: the correlation engine v0 in T2-08 and the risk score in T2-09.
 
-It is documentation only. It does not change code, configuration files, migrations, dependencies or the shared contracts. The configuration in section 13 is planned, not created.
+It does not change migrations, dependencies or the shared contracts. The correlation engine v0 (T2-08) implements sections 3 to 8 in `backend/app/correlation/`, with the configuration of section 13; the risk score (sections 9 to 12) is still planned.
 
 Each rule cites its source. Items marked **(proposed, needs team agreement)** are not decisions until the team agrees them.
 
@@ -77,7 +77,9 @@ Rules:
 **Direct relation.** Two flagged events are **directly related** when:
 
 1. they share at least one key value (section 3), and
-2. their timestamps differ by 15 minutes or less: `|t₁ − t₂| ≤ 15 min`. The boundary is inclusive (proposed, needs team agreement).
+2. their timestamps differ by no more than the window in force for that key value: 15 minutes, `|t₁ − t₂| ≤ 15 min`, or 30 minutes while the key value's chain is escalated (adaptive memory, below). The boundary is inclusive (team, 28 Oct).
+
+With adaptive memory, the relation is evaluated along each key value's chain of flagged events in time order (section 5.1), because whether a value is escalated depends on the events before it.
 
 **Time means event time** (`Event.timestamp`), never upload or parse time (TD-12 defines arrival as parse time; arrival is not used for grouping).
 
@@ -139,23 +141,29 @@ Grouping finds the connected components of the "directly related" relation over 
 ### 5.2 Pseudocode
 
 ```text
-function group_flagged(events, window, keys, denylist):
+function group_flagged(events, config):
     flagged  = [e for e in events if e.label.status == "flagged"]
     context  = [e for e in events if e.label.status in ("unflagged", "unlabelled")]
     flagged  = sort(flagged, by = (e.timestamp, e.event_id))
 
     uf   = UnionFind()                # path compression + union by rank
     last = {}                         # key value -> last flagged event with that value
+    escalated = {}                    # key value -> its current chain reached stage 2+
     for e in flagged:
         uf.make_set(e)
-        for v in key_values(e, keys, denylist):      # e.g. ("host", "ws-17")
+        for v in key_values(e, config):              # e.g. ("host", "ws-17")
             p = last.get(v)
+            window = config.escalated_window if escalated.get(v) else config.window
             if p is not None and e.timestamp - p.timestamp <= window:
                 uf.union(e, p)        # record v as a link key of e (section 7.1)
+            else:
+                escalated[v] = False  # the chain breaks, the memory ends
+            if stage(e.label.attack_type) >= config.escalation_min_stage:
+                escalated[v] = True
             last[v] = e
     return uf.sets(), context
 
-function key_values(e, keys, denylist):
+function key_values(e, config):        # keys and denylist come from config
     values = []
     if "host" in keys and e.host is not null:
         values.add(("host", normalize_host(e.host)))
@@ -170,7 +178,7 @@ With path compression and union by rank, the scan costs near-linear time, `O(n �
 
 ### 5.3 Why comparing only with the last event per key value is enough
 
-Comparing every pair of flagged events would cost `O(n²)`. Comparing only with the last event for each key value gives **the same groups**, because of the sorted order and the gap window:
+Comparing every pair of flagged events would cost `O(n²)`. Comparing only with the last event for each key value gives **the same groups**, because of the sorted order and the gap window. The argument below uses one window; with adaptive memory it holds per key value, because the window in force is fixed for each consecutive pair of that value's chain, and the relation is defined on those consecutive pairs (section 4):
 
 - **No false unions.** Every union in step 4 joins two events that share a key value and lie within the window, so every union is a direct relation.
 - **No missed groups.** Take any direct relation between an earlier event `p` and a later event `e` sharing key value `v`, with `e.timestamp − p.timestamp ≤ window`. When `e` is processed, `last[v]` is the most recent event with value `v` before `e`, so `p.timestamp ≤ last[v].timestamp ≤ e.timestamp`. Then `last[v]` is also within the window of `e`, and they are unioned. All events with value `v` between `p` and `last[v]` lie inside `[p.timestamp, e.timestamp]`, so the gap between consecutive ones is at most the window, and each consecutive pair was unioned when the later one was processed. So `p`, `last[v]` and `e` end in the same set.
@@ -194,8 +202,8 @@ Context events show the activity around flagged events. They come from unflagged
 
 | Rule | Status | Source |
 |---|---|---|
-| Context events **never merge groups**. A context event that matches two groups does not union them | Proposed, needs team agreement | OD-02 |
-| If a context event matches several groups, it is attached to the group of the flagged event **nearest in time** to it. Ties go to the **earliest group** (earliest `first_event_at`, then smallest first flagged `event_id`) | Proposed, needs team agreement | OD-02 |
+| Context events **never merge groups**. A context event that matches two groups does not union them | Team, 28 Oct (Q5) | OD-02 |
+| If a context event matches several groups, it is attached to the group of the flagged event **nearest in time** to it. Ties go to the **earliest group**: the group whose first flagged event comes first by `(timestamp, event_id)`. Context events do not count here, so the order of groups does not depend on what is attached | Team, 28 Oct (Q6) | OD-02 |
 | A context event is attached to at most one group | Follows from the rule above | OD-02 |
 | A context event is never marked or counted as flagged. It never changes what the dataset label says about the incident ("never treated as malicious", contracts v1 `EventRole`) | Ratified | OD-02, OD-21 |
 | Context events alone never create an incident. Every incident has at least one flagged event (contracts v1 validator) | Ratified | OD-02 |
@@ -440,7 +448,7 @@ Example 1 under the earlier draft weights shows the round-half-up rule: 87.5 bec
 
 ## 13. Configuration
 
-The configuration is **planned, not created**. It is created in T2-08 (correlation) and T2-09 (risk). Format and path: TOML files inside the package, `backend/app/correlation/correlation.toml` (created in T2-08) and a risk file next to it in T2-09, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
+The correlation configuration was created in T2-08; the risk configuration is planned for T2-09. Format and path: TOML files inside the package, `backend/app/correlation/correlation.toml` (created in T2-08) and a risk file next to it in T2-09, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
 
 | Key | Default | Used by | Source |
 |---|---|---|---|
