@@ -1071,5 +1071,179 @@
       "source_format": "json"
     },
     "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-038",
+    "timestamp": "2026-01-15T19:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "web_exploit",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Exploits",
+      "origin": "dataset"
+    },
+    "host": "ws-80",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Exploit attempt against ws-80",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-038",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-039",
+    "timestamp": "2026-01-15T19:20:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "process_start",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Backdoors",
+      "origin": "dataset"
+    },
+    "host": "ws-80",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Backdoor started on ws-80, 20 minutes after the exploit",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-039",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-040",
+    "timestamp": "2026-01-15T19:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-81",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan seen on ws-81",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-040",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-041",
+    "timestamp": "2026-01-15T19:20:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-81",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan seen on ws-81 again, 20 minutes later",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-041",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-042",
+    "timestamp": "2026-01-15T20:00:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-80",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan of ws-80, 40 minutes after its last flagged event",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-042",
+      "source_format": "json"
+    },
+    "extra_fields": {}
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "fx-043",
+    "timestamp": "2026-01-15T20:20:00Z",
+    "ingested_at": "2026-01-16T00:00:00Z",
+    "event_type": "network_scan",
+    "label": {
+      "status": "flagged",
+      "raw_value": "1",
+      "attack_type": "Reconnaissance",
+      "origin": "dataset"
+    },
+    "host": "ws-80",
+    "src_ip": null,
+    "dst_ip": null,
+    "src_port": null,
+    "dst_port": null,
+    "protocol": null,
+    "user": null,
+    "privileged_user": null,
+    "summary": "Scan of ws-80 again, 20 minutes later",
+    "provenance": {
+      "dataset_id": "fixture-c3-v0",
+      "source_file": "events.json",
+      "record_ref": "fx-043",
+      "source_format": "json"
+    },
+    "extra_fields": {}
   }
 ]
