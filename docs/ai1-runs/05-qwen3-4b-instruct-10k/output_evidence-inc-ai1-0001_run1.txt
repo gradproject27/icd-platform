@@ -1,0 +1,413 @@
+{
+  "analysis_status": "complete",
+  "findings": [
+    {
+      "category": "evidence_supported",
+      "text": "Multiple failed authentication attempts from ip-01 to host-01 for user-01 occurred between 09:14:03 and 09:14:27.",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A successful authentication occurred from ip-01 to host-01 for user-01 at 09:14:41, following multiple failed attempts.",
+      "cited_event_ids": [
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A PowerShell process was launched on host-02 by user-01 at 09:21:10, with an encoded command.",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "User-01 successfully logged into host-03 via SMB from ip-01 at 09:33:52.",
+      "cited_event_ids": [
+        "E-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A new service named 'updsvc' was created on host-03 by user-01 at 09:34:30.",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "User-01 read 1,812 files under /finance/archive on host-03 at 09:34:30.",
+      "cited_event_ids": [
+        "E-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A large outbound transfer of 480 MB from host-03 (via ip-02) to ip-04 over TCP 443 occurred at 10:06:19.",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03",
+          "host-05"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-04"
+        ]
+      }
+    }
+  ],
+  "incident_id": "inc-ai1-0001",
+  "limitations": [
+    "The events do not show the content of the files read or the purpose of the PowerShell command.",
+    "The events do not show whether the service 'updsvc' is known or malicious.",
+    "The events do not show the origin of the initial access to host-01 or whether user-01 is legitimate.",
+    "The events do not show if the outbound transfer to ip-04 was encrypted or what data was transferred.",
+    "The presence of a context event with a special instruction (E-012) does not indicate malicious activity but may be a test or system behavior."
+  ],
+  "output_version": "ai1-output-0.1",
+  "recommendations": [
+    {
+      "action": "Investigate the PowerShell command launched on host-02 at 09:21:10 to determine if it executed malicious code.",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "rationale": "A PowerShell process with an encoded command is a known indicator of potential malicious activity, especially after multiple failed logins.",
+      "reversible_alternative": "Review the command in a sandboxed environment with a copy of the original logs to avoid disrupting system operations."
+    },
+    {
+      "action": "Examine the files accessed under /finance/archive on host-03 to determine if any contain sensitive or confidential data.",
+      "cited_event_ids": [
+        "E-010"
+      ],
+      "rationale": "A large number of files were accessed in a short time, which may indicate data exfiltration or reconnaissance.",
+      "reversible_alternative": "Limit the scope of file access review to only the most sensitive files or directories to avoid impacting business operations."
+    },
+    {
+      "action": "Verify the purpose and configuration of the service 'updsvc' created on host-03.",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "rationale": "Unrecognized or unauthorized services can be indicators of compromise or lateral movement.",
+      "reversible_alternative": "Check service configuration with known legitimate services to confirm if 'updsvc' is a known, approved service."
+    },
+    {
+      "action": "Determine the source of the outbound transfer from host-03 to ip-04 and verify the data content.",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "rationale": "A large data transfer over port 443 may indicate data exfiltration, especially if it occurs after file access.",
+      "reversible_alternative": "Temporarily block the connection to ip-04 and perform a forensic analysis of the transfer without disrupting network operations."
+    },
+    {
+      "action": "Review the authentication logs for user-01 to determine if there are any anomalies in login patterns or device usage.",
+      "cited_event_ids": [
+        "E-001",
+        "E-006"
+      ],
+      "rationale": "Multiple failed logins followed by a successful one may indicate brute-force attempts or compromised credentials.",
+      "reversible_alternative": "Compare user-01's login history with known legitimate access patterns to avoid false positives."
+    }
+  ],
+  "summary": {
+    "category": "evidence_supported",
+    "text": "Multiple failed authentication attempts from ip-01 to host-01 for user-01 were followed by a successful login, leading to suspicious activity including PowerShell execution, SMB access, file reading, and a large outbound transfer.",
+    "cited_event_ids": [
+      "E-001",
+      "E-002",
+      "E-003",
+      "E-004",
+      "E-005",
+      "E-006",
+      "E-007",
+      "E-008",
+      "E-009",
+      "E-010",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03",
+        "host-05"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02",
+        "ip-04"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "uncertainties": [
+    {
+      "missing_evidence": "The content of the files read under /finance/archive or the specific command executed by PowerShell.",
+      "statement": "We do not know what files were accessed or what command was executed in the PowerShell process."
+    },
+    {
+      "missing_evidence": "The purpose or legitimacy of the service 'updsvc' on host-03.",
+      "statement": "We do not know if the service 'updsvc' is a known, legitimate service or a malicious one."
+    },
+    {
+      "missing_evidence": "The source of the initial access to host-01 and whether user-01 is a legitimate user.",
+      "statement": "We do not know if the authentication attempts were part of a legitimate login or a brute-force attack."
+    },
+    {
+      "missing_evidence": "The data content of the 480 MB transfer to ip-04.",
+      "statement": "We do not know what data was transferred or whether it was sensitive or exfiltrated."
+    },
+    {
+      "missing_evidence": "The context of the HTTP request in E-012, which contains a special instruction.",
+      "statement": "The presence of a request with a special instruction does not indicate malicious activity, but we do not know if it is part of a test or a real attack."
+    }
+  ],
+  "attack_type": {
+    "category": "hypothesis",
+    "claim": {
+      "category": "hypothesis",
+      "text": "This incident may represent a lateral movement and data exfiltration attempt by an attacker who used brute-force authentication to gain access to user-01, then executed a PowerShell command, accessed sensitive files, and exfiltrated data via a large outbound transfer.",
+      "cited_event_ids": [],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02",
+          "host-03",
+          "host-05"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02",
+          "ip-04"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  },
+  "risk_justification": {
+    "category": "evidence_supported",
+    "text": "The incident includes multiple failed logins, a successful login, suspicious process execution, file access, and a large outbound transfer, which collectively indicate a high-risk scenario consistent with an active attack.",
+    "cited_event_ids": [
+      "E-001",
+      "E-002",
+      "E-003",
+      "E-004",
+      "E-005",
+      "E-006",
+      "E-007",
+      "E-008",
+      "E-009",
+      "E-010",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03",
+        "host-05"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02",
+        "ip-04"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "self_rating": 0.9,
+  "sequence": [
+    {
+      "category": "evidence_supported",
+      "text": "Multiple failed authentication attempts from ip-01 to host-01 for user-01 occurred between 09:14:03 and 09:14:27.",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A successful authentication occurred from ip-01 to host-01 for user-01 at 09:14:41.",
+      "cited_event_ids": [
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A PowerShell process was launched on host-02 by user-01 at 09:21:10 with an encoded command.",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "User-01 successfully logged into host-03 via SMB from ip-01 at 09:33:52.",
+      "cited_event_ids": [
+        "E-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+       "text": "A new service named 'updsvc' was created on host-03 by user-01 at 09:34:30.",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "User-01 read 1,812 files under /finance/archive on host-03 at 09:34:30.",
+      "cited_event_ids": [
+        "E-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A large outbound transfer of 480 MB from host-03 (via ip-02) to ip-04 over TCP 443 occurred at 10:06:19.",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03",
+          "host-05"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-04"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null
+}

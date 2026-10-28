@@ -1,0 +1,353 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-ai1-0001",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Failed password for user-01 from ip-01",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "E-001",
+      "E-002",
+      "E-003",
+      "E-004",
+      "E-005",
+      "E-006",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "text": "Accepted password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "powershell.exe launched with an encoded command by user-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "SMB logon to host-03 as user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "New service 'updsvc' created on host-03 by user-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "user-01 read 1,812 files under /finance/archive on host-03",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "host-03 (ip-02) sent 480 MB to ip-04 over TCP 443",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-05"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-04"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Verify the authenticity of the user-01 account",
+      "rationale": "The user-01 account was used to access the system despite multiple failed login attempts.",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006",
+        "E-011"
+      ]
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "What triggered the failed login attempts?",
+      "missing_evidence": "The events do not show what triggered the failed login attempts."
+    }
+  ],
+  "limitations": [
+    "The analysis is limited by the lack of information about the user-01 account."
+  ],
+  "attack_type": {
+    "category": "brute_force",
+    "claim": {
+      "text": "The user-01 account was used to access the system despite multiple failed login attempts.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006",
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006",
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "Accepted password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "powershell.exe launched with an encoded command by user-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "SMB logon to host-03 as user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "New service 'updsvc' created on host-03 by user-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "user-01 read 1,812 files under /finance/archive on host-03",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "host-03 (ip-02) sent 480 MB to ip-04 over TCP 443",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-05"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-04"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": [
+    {
+      "text": "The system's password policy may be too lenient.",
+      "category": "hypothesis",
+      "cited_event_ids": [],
+      "entities": {
+        "hosts": [],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "impact": {
+    "text": "The system's security may be compromised.",
+    "category": "hypothesis",
+    "cited_event_ids": [],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "self_rating": 0.8
+}

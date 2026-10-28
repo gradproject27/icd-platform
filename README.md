@@ -13,6 +13,7 @@ Week 1 is done. This is what is on `main`:
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
+| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. HPC results and the model pin are still to fill |
 
 Not built yet:
 
@@ -66,12 +67,13 @@ cd backend
 pytest -q
 ```
 
-Expected result: **296 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
+Expected result: **329 passed, 1 skipped**. The skipped test is the one that runs `/health` against a real PostgreSQL database; it needs `DATABASE_URL` and runs in CI.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
+- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server);
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register.
@@ -159,6 +161,8 @@ assert uncited_event_ids(report, evidence) == []  # every cited event ID must ex
 
 `uncited_event_ids` checks the citations of every finding and every sequence step.
 
+Real backends will pass the model's text to `run_analysis` in `backend/app/analysis/` (AI1), which parses it, runs the grounding checks, computes the confidence and maps it onto `AnalysisReport`; see [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md).
+
 `get_analyzer()` picks the backend from `LLM_BACKEND`. Only `mock` exists for now; any other value raises `ValueError`. `MockAnalyzer` (`backend/app/llm/mock.py`) is deterministic, with no clock, randomness or network. It cites only event IDs that are in the evidence, marks its text `[MOCK]` and its recommendations `[SIMULATED]`, so the rest of ICD runs with no LLM or HPC.
 
 ## Database migrations
@@ -190,6 +194,9 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [contracts/label-mapping.json](contracts/label-mapping.json) | C2 | T1-06 | Label mapping v1: every dataset label value mapped to an `EventLabel` status |
 | [docs/wireframes.md](docs/wireframes.md) | C4 | T1-12 | Low-fidelity dashboard wireframes: every screen with its loading, empty and error states, the SIMULATED badge rule |
 | [docs/countdown-prototype.md](docs/countdown-prototype.md) | C4 | T1-11 | Server-driven countdown prototype: offset maths, test server, accuracy results, what the real backend must provide |
+| [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
+| [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
+| [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the five local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |
@@ -202,13 +209,13 @@ These are written down but not yet agreed:
 | Decision | Who | Where |
 |---|---|---|
 | Risk weights v0. The decision record is empty; risk scoring (T2-09) does not start until it is filled in. | Whole team | [correlation-and-risk-design.md, section 10](docs/correlation-and-risk-design.md#10-proposed-v0-weights-and-decision-record) |
-| Review of EvidencePackage and AnalysisReport (T1-09) | AI1 | [contracts-v1.md, section 8](docs/contracts-v1.md#8-review-questions-for-ai1-t1-09) |
+| Review of EvidencePackage and AnalysisReport (T1-09): AI1's answers are written, C3 to agree | AI1, C3 | [ai1-analysis-design.md, section 6](docs/ai1-analysis-design.md#6-report-schema-llm-output-v0-mapped-onto-analysisreport-10) |
 | Agreement on each contract: Event and EvidencePackage (C2); ResponseAction, AuditRecord and Incident (C5); Incident (C1) | C2, C5, C1 | [contracts-v1.md, section 7](docs/contracts-v1.md#7-agreement-checklist) |
 | Response window API for the dashboard: REST and WebSocket paths, one socket per incident or per user, reads after a refresh. The countdown prototype already follows spec section 7 | C1, C5 | [countdown-prototype.md, sections 7 and 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5) |
 | API shapes the screens need: upload stages, event details, risk factor labels, decision type | C1, C2, C3, C5 | [wireframes.md, section 6](docs/wireframes.md#6-open-questions) |
 | Which CSV dataset (UNSW-NB15 or CIC-IDS2017), and Precinct6 used as an agreement check only, not ground truth | Whole team | [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review) |
 | Unresolved dataset licences (OTRF, EPSS, CIRCL, NVD) and which NIST resource the data plan means | C2, whole team, supervisor | [dataset-licence-register.md, section 4](docs/dataset-licence-register.md#4-open-licence-questions) |
-| Analysis confidence and valid-analysis rules for the freeze | AI1 | [response-workflow-spec.md, section 5](docs/response-workflow-spec.md#5-freeze-preconditions) |
+| Analysis confidence and valid-analysis rules for the freeze: AI1's proposal is written, C5 to agree | AI1, C5 | [ai1-analysis-design.md, section 7](docs/ai1-analysis-design.md#7-valid-analysis-and-confidence-response-spec-section-5) |
 
 Each document also marks its own proposals "(proposed, needs team agreement)", for example transition T16 "no response needed" in the response workflow. They are listed in each document's open questions:
 
@@ -219,6 +226,7 @@ Each document also marks its own proposals "(proposed, needs team agreement)", f
 - [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review)
 - [wireframes.md, section 6](docs/wireframes.md#6-open-questions)
 - [countdown-prototype.md, section 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5)
+- [ai1-analysis-design.md, section 10](docs/ai1-analysis-design.md#10-open-questions)
 
 ## Branches and pull requests
 
@@ -233,10 +241,11 @@ icd-platform/
 │   │   ├── main.py       FastAPI app and /health
 │   │   ├── db.py         lazy SQLAlchemy engine, DeclarativeBase
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
+│   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
 │   ├── migrations/       Alembic environment and revisions (0001 baseline)
 │   ├── alembic.ini
-│   └── tests/            health, LLM mock, label mapping, and contracts/ (one file per contract plus schema drift)
+│   └── tests/            health, LLM mock, label mapping, contracts/ (one file per contract plus schema drift), analysis/ (AI1)
 ├── worker/               background worker (placeholder)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)
 │   ├── src/              pages, components, API client, generated contract types, countdown
@@ -246,6 +255,7 @@ icd-platform/
 │   ├── schemas/          generated JSON Schemas, one per contract
 │   ├── examples/         one valid synthetic example per contract
 │   └── label-mapping.json  dataset labels to EventLabel (owned by C2)
+├── tools/ai1/            AI1 HPC probe, model benchmark and synthetic samples
 ├── docs/                 Week 1 design documents and notes (see Documentation above)
 ├── .github/              CI workflow and PR template
 ├── docker-compose.yml

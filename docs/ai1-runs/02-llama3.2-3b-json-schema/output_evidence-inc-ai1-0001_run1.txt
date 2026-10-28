@@ -1,0 +1,90 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-ai1-0001",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Failed password for user-01 from ip-01",
+    "category": "likely_interpretation",
+    "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01"],
+      "users": ["user-01"]
+    }
+  },
+  "findings": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "evidence_supported",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Verify user-01's credentials and ensure the VPN connection is secure.",
+      "rationale": "The repeated failed password attempts and successful login suggest a potential security issue.",
+      "cited_event_ids": ["E-011", "E-012", "E-013"],
+      "reversible_alternative": "Re-run the failed login attempts with a different password"
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "What triggered the repeated failed password attempts?",
+      "missing_evidence": "The events do not show what triggered the repeated failed password attempts."
+    }
+  ],
+  "limitations": [
+    "The analysis is limited by the lack of information on what triggered the repeated failed password attempts."
+  ],
+  "attack_type": {
+    "category": "brute_force",
+    "claim": {
+      "text": "Repeated failed password attempts and successful login suggest a potential security issue.",
+      "category": "evidence_supported",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    },
+    {
+      "text": "Repeated failed password attempts and successful login suggest a potential security issue.",
+      "category": "evidence_supported",
+      "cited_event_ids": ["E-011", "E-012", "E-013"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "risk_justification": {
+    "text": "The repeated failed password attempts and successful login suggest a potential security issue, warranting further investigation.",
+    "category": "evidence_supported",
+    "cited_event_ids": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01"],
+      "users": ["user-01"]
+    }
+  },
+  "self_rating": 1
+}

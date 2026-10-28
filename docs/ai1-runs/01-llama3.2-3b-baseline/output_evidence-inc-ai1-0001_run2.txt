@@ -1,0 +1,126 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-ai1-0001",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Failed password for user-01 from ip-01",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "E-001",
+      "E-002",
+      "E-003",
+      "E-004",
+      "E-005",
+      "E-006",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "attack_type": {
+    "category": "brute_force",
+    "claim": "Repeated failed password attempts from the same IP address indicate a brute-force attack."
+  },
+  "sequence": [
+    {
+      "text": "Failed password for user-01 from ip-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "Outbound transfer to ip-04 over TCP 443",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-05"
+        ],
+        "ips": [
+          "ip-04"
+        ],
+        "users": [
+          null
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "Repeated failed password attempts from the same IP address indicate a brute-force attack.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": [],
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Monitor the system for further brute-force attempts and consider implementing rate limiting or IP blocking.",
+      "rationale": "The repeated failed password attempts from the same IP address indicate a brute-force attack. Monitoring the system for further attempts and considering rate limiting or IP blocking can help prevent further attacks.",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006",
+        "E-011"
+      ]
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "Was the user trying to access a specific resource or account?",
+      "missing_evidence": "Additional logs or context to determine the user's intent"
+    }
+  ],
+  "limitations": [],
+  "self_rating": null
+}

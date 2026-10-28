@@ -1,0 +1,280 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-ai1-0001",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Repeated failed sign-ins for user-01 from ip-01 were followed by a successful sign-in, an encoded PowerShell launch on host-02, an SMB logon and a new service on host-03, a large file read on host-03 and a 480 MB transfer from ip-02 to ip-04.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "E-001",
+      "E-005",
+      "E-006",
+      "E-007",
+      "E-008",
+      "E-009",
+      "E-010",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-02",
+        "host-03"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02",
+        "ip-04"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "attack_type": {
+    "category": "credential_compromise_with_exfiltration",
+    "claim": {
+      "text": "The events match password guessing followed by movement to a file server and a large outbound transfer.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-001",
+        "E-006",
+        "E-008",
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "Five failed sign-ins for user-01 from ip-01 on host-01 within 24 seconds.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "A successful sign-in for user-01 from ip-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "An encoded PowerShell command ran on host-02 under user-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "An SMB logon to host-03 as user-01, then creation of the service 'updsvc'.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-008",
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "user-01 read 1,812 files under /finance/archive on host-03, then ip-02 sent 480 MB to ip-04 over TCP 443.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-010",
+        "E-011"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-04"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "A burst of failed sign-ins from one source followed by a success is consistent with password guessing against user-01.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006"
+      ],
+      "entities": {
+        "hosts": [],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "PowerShell with an encoded command ran on host-02 under user-01 seven minutes after the successful sign-in.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "E-006",
+        "E-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "The new service 'updsvc' on host-03 shortly after a remote logon may be a persistence step.",
+      "category": "hypothesis",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": {
+    "text": "Data from /finance/archive on host-03 may have left the network: 480 MB was sent from ip-02 to ip-04.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "E-010",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [
+        "host-03"
+      ],
+      "ips": [
+        "ip-02",
+        "ip-04"
+      ],
+      "users": []
+    }
+  },
+  "recommendations": [
+    {
+      "action": "Review the recent activity of user-01 and consider resetting its credentials.",
+      "rationale": "The account signed in after repeated failures and was then used on two more hosts.",
+      "cited_event_ids": [
+        "E-001",
+        "E-006",
+        "E-008"
+      ],
+      "reversible_alternative": "Require re-authentication at the next sign-in instead of a reset."
+    },
+    {
+      "action": "Inspect the service 'updsvc' on host-03, its binary and who created it.",
+      "rationale": "It was created right after the SMB logon.",
+      "cited_event_ids": [
+        "E-009"
+      ],
+      "reversible_alternative": null
+    },
+    {
+      "action": "Review the outbound transfer to ip-04 and the files read from /finance/archive.",
+      "rationale": "A 480 MB transfer followed a large file read on the same server.",
+      "cited_event_ids": [
+        "E-010",
+        "E-011"
+      ],
+      "reversible_alternative": "Alert on further traffic to ip-04 before blocking it."
+    }
+  ],
+  "risk_justification": {
+    "text": "The given High score fits a successful sign-in after repeated failures, use of the account on a second and third host, and a large outbound transfer from a file server.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "E-005",
+      "E-006",
+      "E-008",
+      "E-011"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The events do not show what the encoded PowerShell command did.",
+      "missing_evidence": "Script block or command-line logging on host-02."
+    },
+    {
+      "statement": "The events do not show that the transferred data is the data that was read.",
+      "missing_evidence": "File access and flow logs with file names or hashes on host-03."
+    },
+    {
+      "statement": "One context event contains text that tries to give instructions; it was treated as data.",
+      "missing_evidence": "None; it does not change the analysis."
+    }
+  ],
+  "limitations": [
+    "Host, IP and user values are pseudonymised tokens, so ownership and location of the hosts are unknown.",
+    "Only 13 events from five log sources were available."
+  ],
+  "self_rating": 0.8
+}

@@ -1,0 +1,80 @@
+{
+  "environment": {
+    "time_utc": "2026-10-26T08:50:29+00:00",
+    "host": "DESKTOP-6VIN52L",
+    "platform": "Windows-10-10.0.21996-SP0",
+    "python": "3.12.15",
+    "cpu_count": 12,
+    "ram_total_gb": null,
+    "scheduler_job": {},
+    "gpus": [
+      "Quadro P2000, 4096 MiB, 573.71"
+    ],
+    "pydantic": "2.14.1"
+  },
+  "model": {
+    "name": "llama3.2-3b-8k",
+    "revision": "server-side: record it by hand",
+    "backend": "openai_http",
+    "quantization": "none",
+    "licence_note": "Llama 3.2 Community Licence (from ollama show llama3.2:3b, 2026-10-26); not verified on the HF card; Q4_K_M, num_ctx 8192",
+    "prompt_version": "ai1-prompt-v0",
+    "temperature": 0.0
+  },
+  "load": {
+    "ok": true,
+    "seconds": 0.0
+  },
+  "runs": [
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 1,
+      "infer_seconds": 269.79,
+      "prompt_tokens": 4880,
+      "completion_tokens": 1725,
+      "tokens_per_second": 6.4,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P2"
+      ],
+      "problems": [
+        "P2 output: summary.entities: Input should be a valid dictionary or instance of Entities; attack_type.claim: Input should be a valid dictionary or instance of Claim; sequence.0.entities: Input should be a valid dictionary or instance of Entities; sequence.1.entities: Input should be a valid dictionary or instance of Entities; sequence.2.entities: Input should be a valid dictionary or instance of Entities; sequence.3.entities: Input should be a valid dictionary or instance of Entities; sequence.4.entities: Input should be a valid dictionary or instance of Entities; sequence.5.entities: Input should be a valid dictionary or instance of Entities; sequence.6.entities: Input should be a valid dictionary or instance of Entities; sequence.7.entities: Input should be a valid dictionary or instance of Entities; sequence.8.entities: Input should be a valid dictionary or instance of Entities; findings.0.entities: Input should be a valid dictionary or instance of Entities; findings.1.entities: Input should be a valid dictionary or instance of Entities; findings.2.entities: Input should be a valid dictionary or instance of Entities; findings.3.entities: Input should be a valid dictionary or instance of Entities; findings.4.entities: Input should be a valid dictionary or instance of Entities; findings.5.entities: Input should be a valid dictionary or instance of Entities; findings.6.entities: Input should be a valid dictionary or instance of Entities; findings.7.entities: Input should be a valid dictionary or instance of Entities; findings.8.entities: Input should be a valid dictionary or instance of Entities; findings.9.entities: Input should be a valid dictionary or instance of Entities; weaknesses: List should have at least 1 item after validation, not 0; impact: Input should be a valid dictionary or instance of Claim; risk_justification: Input should be a valid dictionary or instance of Claim"
+      ]
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 2,
+      "infer_seconds": 100.82,
+      "prompt_tokens": 4880,
+      "completion_tokens": 759,
+      "tokens_per_second": 7.5,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P2"
+      ],
+      "problems": [
+        "P2 output: attack_type.claim: Input should be a valid dictionary or instance of Claim; sequence.1.entities.users.0: Input should be a valid string; weaknesses: List should have at least 1 item after validation, not 0; limitations: List should have at least 1 item after validation, not 0"
+      ]
+    },
+    {
+      "package": "evidence-inc-ai1-0001.json",
+      "run": 3,
+      "infer_seconds": 103.23,
+      "prompt_tokens": 4880,
+      "completion_tokens": 759,
+      "tokens_per_second": 7.4,
+      "valid_analysis": false,
+      "failed_checks": [
+        "P2"
+      ],
+      "problems": [
+        "P2 output: attack_type.claim: Input should be a valid dictionary or instance of Claim; sequence.1.entities.users.0: Input should be a valid string; weaknesses: List should have at least 1 item after validation, not 0; limitations: List should have at least 1 item after validation, not 0"
+      ]
+    }
+  ],
+  "errors": [],
+  "resources": {
+    "peak_rss_mb": null,
+    "peak_gpu_mb": 2357.0
+  }
+}
