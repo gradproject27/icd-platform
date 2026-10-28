@@ -120,10 +120,10 @@ jobs:
           done
           echo "$job"
           test "$state" = done
-          test "$(echo "$job" | jq '.counts.events_stored')" = 37
+          test "$(echo "$job" | jq '.counts.events_stored')" = "$(jq length fixtures/correlation/events.json)"
           upload_id=$(echo "$body" | jq -r .upload_id)
           flagged=$(curl -fsS "http://localhost:8080/api/uploads/$upload_id/events?label_status=flagged&limit=500" | jq '.items | length')
-          test "$flagged" = 18
+          test "$flagged" = "$(jq '[.[] | select(.label.status == "flagged")] | length' fixtures/correlation/events.json)"
       - name: Show logs on failure
         if: failure()
         run: docker compose ps && docker compose logs
