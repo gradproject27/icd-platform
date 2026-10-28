@@ -197,6 +197,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
 | [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the five local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed |
+| [docs/api-upload-jobs.md](docs/api-upload-jobs.md) | C1 | Week 2 | Upload, job status and analysis API: endpoints, request and response examples for every state, error codes, parser interface for C2 |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |
@@ -227,6 +228,7 @@ Each document also marks its own proposals "(proposed, needs team agreement)", f
 - [wireframes.md, section 6](docs/wireframes.md#6-open-questions)
 - [countdown-prototype.md, section 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5)
 - [ai1-analysis-design.md, section 10](docs/ai1-analysis-design.md#10-open-questions)
+- [api-upload-jobs.md, section 8](docs/api-upload-jobs.md#8-open-questions)
 
 ## Branches and pull requests
 

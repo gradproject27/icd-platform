@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "dataset_unknown",
+    "message": "dataset_id \"my-data\" is not a known dataset."
+  }
+}

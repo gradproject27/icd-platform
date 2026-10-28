@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "format_not_accepted",
+    "message": "Files ending in .exe are not accepted. Accepted: .csv, .json, .jsonl, .log, .txt."
+  }
+}

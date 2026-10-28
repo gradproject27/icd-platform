@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "seq": 118,
+      "record_ref": "UNSW-NB15_1.csv:118",
+      "reason_code": "bad_timestamp",
+      "reason": "stime is not a number",
+      "raw_excerpt": "10.40.85.1,0,10.40.182.3,0,arp,INT,0.000000,..."
+    },
+    {
+      "seq": 402,
+      "record_ref": "UNSW-NB15_1.csv:402",
+      "reason_code": "missing_required_field",
+      "reason": "stime is empty",
+      "raw_excerpt": null
+    }
+  ],
+  "next_after": 402
+}

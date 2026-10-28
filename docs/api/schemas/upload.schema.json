@@ -1,0 +1,74 @@
+{
+  "$defs": {
+    "DatasetSource": {
+      "description": "Dataset an upload belongs to. Becomes Event.provenance.dataset_id.\n\nThe same IDs as the sources in contracts/label-mapping.json, plus `fixture` for\nsynthetic test files that are already a JSON list of Events.",
+      "enum": [
+        "fixture",
+        "precinct6",
+        "unsw-nb15",
+        "cic-ids2017",
+        "loghub-bgl",
+        "loghub-thunderbird",
+        "otrf"
+      ],
+      "title": "DatasetSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /uploads/{upload_id}.",
+  "properties": {
+    "dataset_id": {
+      "$ref": "#/$defs/DatasetSource"
+    },
+    "filename": {
+      "description": "The name the file had on the user's machine. Display only; the server never uses it as a path.",
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+    },
+    "job_id": {
+      "description": "The ingest job that processes this upload.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "received_at": {
+      "format": "date-time",
+      "title": "Received At",
+      "type": "string"
+    },
+    "sha256": {
+      "description": "SHA-256 of the file content, lower-case hex.",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 1,
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "upload_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Upload Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "upload_id",
+    "dataset_id",
+    "filename",
+    "size_bytes",
+    "sha256",
+    "received_at",
+    "job_id"
+  ],
+  "title": "Upload",
+  "type": "object"
+}

@@ -1,0 +1,27 @@
+{
+  "job_id": "job-1a2b3c4d5e6f4a7b8c9d0e1f2a3b4c5d",
+  "kind": "ingest",
+  "state": "done",
+  "stage": null,
+  "upload_id": "upl-5b6c7d8e9f0a4b1c8d2e3f4a5b6c7d8e",
+  "created_at": "2026-10-30T09:10:00Z",
+  "started_at": "2026-10-30T09:10:01Z",
+  "finished_at": "2026-10-30T09:11:30Z",
+  "attempts": 1,
+  "max_attempts": 3,
+  "error": null,
+  "counts": {
+    "records_read": 12480,
+    "events_stored": 12455,
+    "flagged": 1210,
+    "unflagged": 11001,
+    "unlabelled": 244,
+    "quarantined": 25,
+    "quarantined_by_reason": {
+      "bad_timestamp": 12,
+      "missing_required_field": 9,
+      "invalid_ip": 4
+    }
+  },
+  "analysis": null
+}

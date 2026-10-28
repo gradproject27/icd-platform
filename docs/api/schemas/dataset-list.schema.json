@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "Dataset": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/DatasetSource"
+        },
+        "name": {
+          "description": "Display name.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parser_available": {
+          "description": "False until C2's parser for this dataset is merged. An upload is still accepted, but its job fails with no_parser.",
+          "title": "Parser Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "name",
+        "parser_available"
+      ],
+      "title": "Dataset",
+      "type": "object"
+    },
+    "DatasetSource": {
+      "description": "Dataset an upload belongs to. Becomes Event.provenance.dataset_id.\n\nThe same IDs as the sources in contracts/label-mapping.json, plus `fixture` for\nsynthetic test files that are already a JSON list of Events.",
+      "enum": [
+        "fixture",
+        "precinct6",
+        "unsw-nb15",
+        "cic-ids2017",
+        "loghub-bgl",
+        "loghub-thunderbird",
+        "otrf"
+      ],
+      "title": "DatasetSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /datasets: the choices for the upload form.",
+  "properties": {
+    "accepted_extensions": {
+      "description": "Lower case, with the dot.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Accepted Extensions",
+      "type": "array"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/Dataset"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "max_upload_bytes": {
+      "minimum": 1,
+      "title": "Max Upload Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "accepted_extensions",
+    "max_upload_bytes"
+  ],
+  "title": "DatasetList",
+  "type": "object"
+}
