@@ -15,12 +15,14 @@ function renderAt(path: string) {
 
 describe("routing", () => {
   beforeEach(() => {
-    // The decision page reads its response window and opens a socket; no window here.
-    mockFetch().mockImplementation(async (url) =>
-      String(url).startsWith("/api/response-windows/")
-        ? jsonResponse({ detail: "no response window" }, 404)
-        : jsonResponse(HEALTH_OK),
-    );
+    // The decision page reads its response window and opens a socket; no window here. The
+    // incident list gets an empty list.
+    mockFetch().mockImplementation(async (url) => {
+      const path = String(url);
+      if (path.startsWith("/api/response-windows/")) return jsonResponse({ detail: "no response window" }, 404);
+      if (path === "/api/incidents") return jsonResponse({ items: [] });
+      return jsonResponse(HEALTH_OK);
+    });
     mockWebSocket();
   });
 
@@ -34,7 +36,7 @@ describe("routing", () => {
   it("shows the empty state on /incidents", async () => {
     renderAt("/incidents");
 
-    expect(screen.getByText("No incidents yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No incidents yet. Upload a dataset to start.")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
     await screen.findByText("API online");
   });

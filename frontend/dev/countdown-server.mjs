@@ -12,6 +12,9 @@
 //   WS   /ws/response-windows?incident_id=...        response_window.* events
 //
 // No authentication: the real channel checks the session cookie and the Origin header (A2.8).
+//
+// The response-window logic is the building block createResponseWindows(), which the stub server
+// (dev/stub-server.mjs) reuses, so both serve the same windows the same way.
 
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
@@ -19,12 +22,11 @@ import { WebSocket, WebSocketServer } from "ws";
 
 const REMINDER_BEFORE_MS = 30_000;
 
-export async function startCountdownServer({
-  port = 0,
-  skewMs = 0,
-  windowSeconds = 60,
-  log = (line) => console.log(line),
-} = {}) {
+/**
+ * The response windows of one server process: state, timers, the REST paths and the WebSocket
+ * channel. handle() answers a response-window request, or returns null for any other path.
+ */
+export function createResponseWindows({ skewMs = 0, windowSeconds = 60, log = (line) => console.log(line) } = {}) {
   // Every time the server sends comes from this clock, never from Date.now() directly, so a
   // non-zero skew really tests the client's offset logic.
   const serverNow = () => Date.now() + skewMs;
@@ -33,6 +35,7 @@ export async function startCountdownServer({
   const windows = new Map(); // incident_id -> window record
   const subscribers = new Map(); // incident_id -> Set<WebSocket>
   let nextWindow = 1;
+  let wss = null;
 
   const snapshot = (w) => ({
     incident_id: w.incident_id,
@@ -44,8 +47,10 @@ export async function startCountdownServer({
     recommended_scenario_id: w.recommended_scenario_id,
   });
 
-  const remainingText = (w) =>
-    w && w.status === "open" ? ` remaining=${((w.deadlineAtMs - serverNow()) / 1000).toFixed(1)}s` : "";
+  const remainingText = (incidentId) => {
+    const w = windows.get(incidentId);
+    return w && w.status === "open" ? ` remaining=${((w.deadlineAtMs - serverNow()) / 1000).toFixed(1)}s` : "";
+  };
 
   function push(w, type, fields) {
     const event = { type, incident_id: w.incident_id, window_id: w.window_id, ...fields, server_time: iso(serverNow()) };
@@ -121,47 +126,76 @@ export async function startCountdownServer({
     return [409, { detail: "window expired" }];
   }
 
+  /** [status, body, incidentId] for a response-window path, or null for any other path. */
+  function handle(method, parts) {
+    if (method === "GET" && parts.length === 2 && parts[0] === "response-windows") {
+      const incidentId = parts[1];
+      const w = windows.get(incidentId);
+      return w ? [200, snapshot(w), incidentId] : [404, { detail: "no response window" }, incidentId];
+    }
+    if (method === "POST" && parts[0] === "dev" && parts[1] === "response-windows" && parts[2]) {
+      const incidentId = parts[2];
+      if (parts.length === 3) {
+        const { created, window } = openWindow(incidentId);
+        return created
+          ? [201, window, incidentId]
+          : [409, { detail: "a response window is already open" }, incidentId];
+      }
+      if (parts.length === 4 && parts[3] === "decide") return [...decide(incidentId), incidentId];
+      return [404, { detail: "not found" }, incidentId];
+    }
+    return null;
+  }
+
+  /** Serves the WebSocket channel /ws/response-windows on this HTTP server. */
+  function attach(server) {
+    wss = new WebSocketServer({ server, path: "/ws/response-windows" });
+    wss.on("connection", (socket, req) => {
+      const incidentId = new URL(req.url ?? "/", "http://localhost").searchParams.get("incident_id");
+      if (!incidentId) {
+        socket.close(1008, "incident_id is required");
+        return;
+      }
+      if (!subscribers.has(incidentId)) subscribers.set(incidentId, new Set());
+      subscribers.get(incidentId).add(socket);
+      log(`${iso(serverNow())} ws connected ${incidentId}`);
+      socket.on("close", () => {
+        subscribers.get(incidentId)?.delete(socket);
+        log(`${iso(serverNow())} ws closed ${incidentId}`);
+      });
+    });
+  }
+
+  async function close() {
+    for (const w of windows.values()) clearTimers(w);
+    if (wss) {
+      for (const socket of wss.clients) socket.terminate();
+      await new Promise((resolve) => wss.close(resolve));
+    }
+  }
+
+  return { serverNow, iso, remainingText, openWindow, handle, attach, close };
+}
+
+export async function startCountdownServer({
+  port = 0,
+  skewMs = 0,
+  windowSeconds = 60,
+  log = (line) => console.log(line),
+} = {}) {
+  const responseWindows = createResponseWindows({ skewMs, windowSeconds, log });
+  const { serverNow, iso } = responseWindows;
+
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
-    let status = 404;
-    let body = { detail: "not found" };
-    let incidentId = null;
-
-    if (req.method === "GET" && parts.length === 2 && parts[0] === "response-windows") {
-      incidentId = parts[1];
-      const w = windows.get(incidentId);
-      [status, body] = w ? [200, snapshot(w)] : [404, { detail: "no response window" }];
-    } else if (req.method === "POST" && parts[0] === "dev" && parts[1] === "response-windows" && parts[2]) {
-      incidentId = parts[2];
-      if (parts.length === 3) {
-        const { created, window } = openWindow(incidentId);
-        [status, body] = created ? [201, window] : [409, { detail: "a response window is already open" }];
-      } else if (parts.length === 4 && parts[3] === "decide") {
-        [status, body] = decide(incidentId);
-      }
-    }
+    const [status, body, incidentId] = responseWindows.handle(req.method, parts) ?? [404, { detail: "not found" }, null];
 
     res.writeHead(status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
-    log(`${iso(serverNow())} ${req.method} ${url.pathname} ${status}${remainingText(windows.get(incidentId))}`);
+    log(`${iso(serverNow())} ${req.method} ${url.pathname} ${status}${responseWindows.remainingText(incidentId)}`);
   });
-
-  const wss = new WebSocketServer({ server, path: "/ws/response-windows" });
-  wss.on("connection", (socket, req) => {
-    const incidentId = new URL(req.url ?? "/", "http://localhost").searchParams.get("incident_id");
-    if (!incidentId) {
-      socket.close(1008, "incident_id is required");
-      return;
-    }
-    if (!subscribers.has(incidentId)) subscribers.set(incidentId, new Set());
-    subscribers.get(incidentId).add(socket);
-    log(`${iso(serverNow())} ws connected ${incidentId}`);
-    socket.on("close", () => {
-      subscribers.get(incidentId)?.delete(socket);
-      log(`${iso(serverNow())} ws closed ${incidentId}`);
-    });
-  });
+  responseWindows.attach(server);
 
   await new Promise((resolve) => server.listen(port, "127.0.0.1", resolve));
   const actualPort = server.address().port;
@@ -170,17 +204,15 @@ export async function startCountdownServer({
     url: `http://127.0.0.1:${actualPort}`,
     port: actualPort,
     serverNow,
-    openWindow,
+    openWindow: responseWindows.openWindow,
     async close() {
-      for (const w of windows.values()) clearTimers(w);
-      for (const socket of wss.clients) socket.terminate();
-      await new Promise((resolve) => wss.close(resolve));
+      await responseWindows.close();
       await new Promise((resolve) => server.close(resolve));
     },
   };
 }
 
-function readFlag(name, fallback) {
+export function readFlag(name, fallback) {
   const index = process.argv.indexOf(name);
   if (index === -1) return fallback;
   const value = Number(process.argv[index + 1]);

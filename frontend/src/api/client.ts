@@ -6,11 +6,17 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const REQUEST_TIMEOUT_MS = 5_000;
 
+export interface RequestOptions extends RequestInit {
+  /** Called with the response headers of every answer that arrives, before the body is checked. */
+  onResponse?: (headers: Headers) => void;
+}
+
 /**
  * The only place in the dashboard that calls fetch. Returns the parsed JSON body typed as T,
  * or throws an ApiError. If the caller's own signal aborts, its AbortError is rethrown as is.
  */
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { onResponse, ...init } = options;
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => {
@@ -36,6 +42,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
       signal: controller.signal,
     });
     text = await response.text();
+    onResponse?.(response.headers);
   } catch (cause) {
     if (timedOut) {
       throw new ApiError("timeout", `The ICD API did not answer within ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
