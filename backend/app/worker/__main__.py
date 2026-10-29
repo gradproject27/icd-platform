@@ -23,13 +23,18 @@ def check() -> int:
 
 
 def main() -> None:
+    from app.response.expiry import start_expiry_thread
     from app.worker.runner import run_forever
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
-    run_forever(get_engine(), get_settings(), utcnow, stop)
+    engine = get_engine()
+    # C5: response windows expire on their own thread, so a long job never delays an expiry.
+    expiry = start_expiry_thread(engine, stop)
+    run_forever(engine, get_settings(), utcnow, stop)
+    expiry.join(timeout=5)
 
 
 if __name__ == "__main__":
