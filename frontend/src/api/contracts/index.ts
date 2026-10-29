@@ -32,7 +32,9 @@ export type {
   IncidentStatus,
   LinkKey,
   RiskAssessment,
+  RiskContributor,
   RiskFactor,
+  RiskFlag,
 } from "./incident";
 export type {
   ActionState,

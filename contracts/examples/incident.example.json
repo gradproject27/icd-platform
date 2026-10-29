@@ -17,19 +17,29 @@
     {
       "event_id": "evt-0002",
       "role": "flagged",
-      "link_keys": ["host", "ip_pair", "user"],
+      "link_keys": [
+        "host",
+        "ip_pair",
+        "user"
+      ],
       "linked_at": "2026-03-14T10:00:30Z"
     },
     {
       "event_id": "evt-0003",
       "role": "flagged",
-      "link_keys": ["host", "ip_pair", "user"],
+      "link_keys": [
+        "host",
+        "ip_pair",
+        "user"
+      ],
       "linked_at": "2026-03-14T10:00:30Z"
     },
     {
       "event_id": "evt-0004",
       "role": "context",
-      "link_keys": ["host"],
+      "link_keys": [
+        "host"
+      ],
       "linked_at": "2026-03-14T10:00:30Z"
     }
   ],
@@ -37,12 +47,38 @@
     "score": 74,
     "level": "high",
     "factors": [
-      {"name": "severity", "value": 0.85, "weight": 0.4, "contribution": 34.0},
-      {"name": "flagged_ratio", "value": 0.75, "weight": 0.4, "contribution": 30.0},
-      {"name": "event_volume", "value": 0.5, "weight": 0.2, "contribution": 10.0}
+      {
+        "name": "likelihood",
+        "value": 0.74,
+        "weight": 1.0,
+        "contribution": 74.0,
+        "reason": "1 evidence group from 3 flagged events, combined by noisy-OR; strongest: brute_force from 203.0.113.7 (0.74)"
+      },
+      {
+        "name": "impact",
+        "value": 1.0,
+        "weight": 1.0,
+        "contribution": 0.0,
+        "reason": "asset not rated (ws-17): assumed worst case 1.00 (CVSS v4.0 Not Defined = High)"
+      }
     ],
     "config_version": "risk-config-example",
-    "computed_at": "2026-03-14T10:00:31Z"
+    "computed_at": "2026-03-14T10:00:31Z",
+    "likelihood": 0.74,
+    "impact": 1.0,
+    "flags": [
+      "asset_unknown",
+      "outcome_unknown"
+    ],
+    "top_contributors": [
+      {
+        "technique": "brute_force",
+        "entity": "203.0.113.7",
+        "strength": 0.74,
+        "event_id": "evt-0003",
+        "reason": "severity 0.74 (source severity high) x confidence 1.00 x outcome 1.00 (unknown) x decay 1.00"
+      }
+    ]
   },
   "analysis_status": "succeeded",
   "analysis_attempts": 1,

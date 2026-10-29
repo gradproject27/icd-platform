@@ -84,6 +84,28 @@ class RiskFactor(_Contract):
     value: Fraction = Field(description="Normalized factor value, 0 to 1.")
     weight: float = Field(ge=0, description="Weight of the factor in the configuration.")
     contribution: float = Field(description="Points this factor adds to the score.")
+    reason: NonEmptyStr | None = Field(
+        default=None,
+        description="Plain-language reason for the factor's value (contracts 1.1, additive).",
+    )
+
+
+class RiskFlag(StrEnum):
+    """Something the score had to assume because the data does not say (contracts 1.1)."""
+
+    ASSET_UNKNOWN = "asset_unknown"
+    OUTCOME_UNKNOWN = "outcome_unknown"
+    SEVERITY_DEFAULT = "severity_default"
+
+
+class RiskContributor(_Contract):
+    """One evidence group behind the score: its strongest event (contracts 1.1)."""
+
+    technique: NonEmptyStr = Field(description="Attack type of the group; unknown when missing.")
+    entity: NonEmptyStr = Field(description="Source-side entity of the group, or none.")
+    strength: Fraction = Field(description="Strength of the group's strongest event, 0 to 1.")
+    event_id: Id = Field(description="ID of the group's strongest flagged event.")
+    reason: NonEmptyStr = Field(description="Plain-language reason for the strength.")
 
 
 class RiskAssessment(_Contract):
@@ -99,6 +121,20 @@ class RiskAssessment(_Contract):
         description="Version of the weights and thresholds file used."
     )
     computed_at: UtcDatetime = Field(description="When the score was computed, UTC.")
+    likelihood: Fraction | None = Field(
+        default=None, description="Combined evidence strength L, 0 to 1 (contracts 1.1)."
+    )
+    impact: Fraction | None = Field(
+        default=None, description="Asset impact I, 0 to 1 (contracts 1.1)."
+    )
+    flags: list[RiskFlag] = Field(
+        default_factory=list, description="Assumptions the score made (contracts 1.1)."
+    )
+    top_contributors: list[RiskContributor] = Field(
+        default_factory=list,
+        max_length=3,
+        description="The strongest evidence groups, strongest first (contracts 1.1).",
+    )
 
 
 class Incident(_Contract):

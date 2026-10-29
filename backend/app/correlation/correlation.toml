@@ -38,5 +38,6 @@ Generic = 2
 Exploits = 2
 Shellcode = 3
 Backdoors = 3
+Backdoor = 3  # spelling variant kept by C2 (decision D5)
 Worms = 4
 DoS = 5

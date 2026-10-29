@@ -1,8 +1,74 @@
-# C3 risk configuration (T2-09). Read by app/correlation/levels.py with tomllib.
-# Thresholds are ratified and provisional until W11 (OD-05); configurable (FR-20).
-# The weights and factor tables are added with the risk score (Step 3).
+# C3 risk configuration (T2-09). Read by levels.py and risk.py with tomllib.
+# Method: team decision of 29 Oct 2026, answers in docs/correlation-and-risk-design.md section 9.
+#   q_i = S_i * C_i * O_i * D_i        strength of one flagged event
+#   q_g = max q_i per (technique, entity)
+#   L   = 1 - prod(1 - q_g)             noisy-OR across groups
+#   I   = max asset impact (FIPS 199)   unknown asset -> unknown_impact, flag asset_unknown
+#   score = round half up (100 * L * I)
+# Any change to a value here must change config_version.
 config_version = "risk-v0"
 
 [thresholds]
-medium = 40  # 40 to 69 is Medium; below 40 is Low
+medium = 40  # 40 to 69 is Medium; below 40 is Low (OD-05)
 high = 70    # 70 to 100 is High, a freeze precondition (OD-16)
+
+[severity]
+# S_i. 1) the source's own severity in extra_fields["severity"], when it is in source_values;
+# 2) else the kill-chain stage of label.attack_type (correlation.toml);
+# 3) else default, with flag severity_default.
+default = 0.5
+
+[severity.stage]
+1 = 0.3  # reconnaissance
+2 = 0.6  # exploitation
+3 = 0.9  # installation
+4 = 0.9  # propagation
+5 = 0.7  # actions (DoS)
+
+[severity.source_values]
+# Precinct6 product severity, compared trimmed and lower-cased. Spelling variants are listed
+# separately (dataset profile section 5.1). Provisional until C2 profiles the values.
+critical = 1.0
+high = 0.8
+medium = 0.5
+low = 0.3
+informational = 0.1
+info = 0.1
+
+[confidence]
+# C_i: how far the dataset's flagged label is trusted, per provenance.dataset_id (team, 29 Oct).
+# Never from the LLM (OD-04). UNSW-NB15 labels are lab ground truth; Precinct6 labels come from
+# WitFoo's own correlation engine. Provisional values.
+default = 1.0
+
+[confidence.dataset]
+precinct6 = 0.8
+
+[outcome]
+# O_i from extra_fields["action"], compared trimmed and lower-cased. No value or an unlisted
+# value -> unknown, flag outcome_unknown. Provisional until C2 profiles Precinct6 actions.
+success = 1.0
+failed = 0.5
+unknown = 1.0
+success_values = ["allow", "allowed", "accept", "accepted", "success", "succeeded"]
+failed_values = ["block", "blocked", "deny", "denied", "drop", "dropped", "reject", "rejected", "fail", "failed", "failure"]
+
+[decay]
+# D_i = 0.5 ^ ((W - t_i) / half_life), W = the latest event time in the input (dataset clock).
+half_life_hours = 24
+# Successful compromise: D = 1.
+strong_attack_types = ["Backdoors", "Backdoor", "Worms"]
+
+[impact]
+# NIST FIPS 199 levels; max across the incident's assets (high water mark).
+# An asset with no level counts as unknown_impact (CVSS v4.0: Not Defined = High, worst case).
+unknown = 1.0
+
+[impact.levels]
+low = 0.33
+moderate = 0.67
+high = 1.0
+
+[assets]
+# host name or destination IP (fnmatch pattern) = FIPS 199 level. Empty for the real datasets,
+# whose hosts are anonymised. The fixture's levels are in fixtures/correlation/assets.toml.
