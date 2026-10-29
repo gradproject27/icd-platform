@@ -1,4 +1,4 @@
-import type { AnalysisStatus, IncidentStatus, RiskLevel } from "./api/contracts";
+import type { AnalysisStatus, IncidentStatus, RiskLevel, ScenarioId } from "./api/contracts";
 
 // The one place that maps contract enum values to UI labels. Typed with the generated enum types,
 // so a value C3 adds to (or removes from) a schema is a compile error here until it is labelled.
@@ -24,4 +24,13 @@ export const ANALYSIS_STATUS_LABELS: Record<AnalysisStatus, string> = {
   in_progress: "In progress",
   succeeded: "Succeeded",
   failed: "Failed",
+};
+
+// Simulated response catalogue v0 (docs/response-workflow-spec.md section 9). Every scenario is a
+// simulation; screens add the SIMULATED label next to it.
+export const SCENARIO_LABELS: Record<ScenarioId, string> = {
+  S1: "Keep the host isolated and flag it for investigation",
+  S2: "Isolate the host and block the source IP",
+  S3: "Isolate the host and disable the involved account",
+  S4: "Release isolation and raise monitoring",
 };

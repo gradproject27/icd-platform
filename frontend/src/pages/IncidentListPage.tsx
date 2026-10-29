@@ -6,7 +6,7 @@ import { listIncidents } from "../api/incidents";
 import type { IncidentSummary } from "../api/proposed";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime } from "../countdown/clock";
-import { entitiesText, STUB_BANNER } from "../incidents/format";
+import { entitiesText, formatListTime, riskText, STUB_BANNER } from "../incidents/format";
 import { ANALYSIS_STATUS_LABELS, INCIDENT_STATUS_LABELS, RISK_LEVEL_LABELS } from "../labels";
 
 // Incident list (wireframes.md 4.3). Sorting and filtering happen in the browser (decision D8);
@@ -33,9 +33,6 @@ const STATUSES = Object.keys(INCIDENT_STATUS_LABELS) as IncidentStatus[];
 const isLevelFilter = (value: string | null): value is LevelFilter =>
   LEVEL_FILTERS.some((option) => option.value === value);
 const isStatus = (value: string | null): value is IncidentStatus => STATUSES.includes(value as IncidentStatus);
-
-/** "YYYY-MM-DD HH:MM" in local time; lists drop the seconds (wireframes.md section 5). */
-const formatListTime = (iso: string) => formatLocalDateTime(iso).slice(0, 16);
 
 function compare(a: IncidentSummary, b: IncidentSummary, key: SortKey, dir: SortDir): number {
   const sign = dir === "asc" ? 1 : -1;
@@ -236,7 +233,7 @@ function IncidentRow({ summary }: { summary: IncidentSummary }) {
       </td>
       <td title={shownEntities.title}>{shownEntities.text}</td>
       <td>{incident.incident_type ?? "Not classified"}</td>
-      <td>{incident.risk ? `${RISK_LEVEL_LABELS[incident.risk.level]} ${incident.risk.score}` : "Not scored"}</td>
+      <td>{riskText(incident)}</td>
       <td>
         {INCIDENT_STATUS_LABELS[status]}
         {status === "awaiting_human_decision" && (

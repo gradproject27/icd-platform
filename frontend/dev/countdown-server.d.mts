@@ -34,6 +34,9 @@ export interface ResponseWindows {
   iso(ms: number): string;
   remainingText(incidentId: string | null): string;
   openWindow(incidentId: string): { created: boolean; window: CountdownWindowSnapshot };
+  /** Same conditional rule as the backend: decided only while server time < deadline_at. */
+  decide(incidentId: string): [number, unknown];
+  snapshotOf(incidentId: string): CountdownWindowSnapshot | null;
   handle(method: string | undefined, parts: string[]): [number, unknown, string | null] | null;
   attach(server: import("node:http").Server): void;
   close(): Promise<void>;
