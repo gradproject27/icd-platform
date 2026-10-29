@@ -21,6 +21,9 @@ describe("routing", () => {
       const path = String(url);
       if (path.startsWith("/api/response-windows/")) return jsonResponse({ detail: "no response window" }, 404);
       if (path === "/api/incidents") return jsonResponse({ items: [] });
+      if (path.startsWith("/api/incidents/")) {
+        return jsonResponse({ error: { code: "not_found", message: "No incident with ID inc-1 exists." } }, 404);
+      }
       return jsonResponse(HEALTH_OK);
     });
     mockWebSocket();
@@ -55,16 +58,12 @@ describe("routing", () => {
     await screen.findByText("API online");
   });
 
-  it("shows the three analyst options, disabled, on the decision page", async () => {
+  it("routes to the decision page, which reports an incident it cannot load", async () => {
     renderAt("/incidents/inc-1/decision");
 
-    for (const name of [
-      "Approve recommended action (SIMULATED)",
-      "Reject and release simulated isolation",
-      "Select another scenario (S1 to S4, SIMULATED)",
-    ]) {
-      expect(screen.getByRole("button", { name })).toBeDisabled();
-    }
+    expect(screen.getByRole("heading", { name: "Pending decision for incident inc-1" })).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load incident inc-1.");
+    expect(screen.getByRole("link", { name: "Back to incident" })).toHaveAttribute("href", "/incidents/inc-1");
     await screen.findByText("API online");
   });
 });

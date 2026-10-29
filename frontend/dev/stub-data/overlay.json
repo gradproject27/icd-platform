@@ -5,7 +5,9 @@
     "and it is not C3's risk method: factor values, weights (all 0.2) and contributions are examples only.",
     "Risk scoring belongs to C3 (docs/correlation-and-risk-design.md). Events, link_keys, event times and",
     "entities come from fixtures/correlation via dev/build-stub-incidents.mjs; linked_at is a stub-only",
-    "stand-in set to created_at, because the fixture has no link times."
+    "stand-in set to created_at, because the fixture has no link times.",
+    "recommended_scenario_id is a hand-picked PLACEHOLDER for the awaiting incidents (proposed for C5); it is",
+    "not C5's catalogue lookup. inc-stub-04 has none on purpose, to show the no-matching-scenario state."
   ],
   "incidents": [
     {
@@ -56,7 +58,8 @@
       "latest_report_id": "rpt-stub-01",
       "confidence": 0.86,
       "created_at": "2026-01-15T10:15:00Z",
-      "updated_at": "2026-01-15T10:30:00Z"
+      "updated_at": "2026-01-15T10:30:00Z",
+      "recommended_scenario_id": "S2"
     },
     {
       "incident_id": "inc-stub-02",
@@ -106,7 +109,8 @@
       "latest_report_id": "rpt-stub-02",
       "confidence": 0.62,
       "created_at": "2026-01-15T19:25:00Z",
-      "updated_at": "2026-01-15T19:40:00Z"
+      "updated_at": "2026-01-15T19:40:00Z",
+      "recommended_scenario_id": "S1"
     },
     {
       "incident_id": "inc-stub-03",
@@ -156,7 +160,8 @@
       "latest_report_id": "rpt-stub-03",
       "confidence": 0.78,
       "created_at": "2026-01-15T13:35:00Z",
-      "updated_at": "2026-01-15T13:50:00Z"
+      "updated_at": "2026-01-15T13:50:00Z",
+      "recommended_scenario_id": "S2"
     },
     {
       "incident_id": "inc-stub-04",
@@ -206,7 +211,8 @@
       "latest_report_id": "rpt-stub-04",
       "confidence": 0.7,
       "created_at": "2026-01-15T15:05:00Z",
-      "updated_at": "2026-01-15T15:20:00Z"
+      "updated_at": "2026-01-15T15:20:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-05",
@@ -256,7 +262,8 @@
       "latest_report_id": null,
       "confidence": null,
       "created_at": "2026-01-15T13:20:00Z",
-      "updated_at": "2026-01-15T13:45:00Z"
+      "updated_at": "2026-01-15T13:45:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-06",
@@ -269,7 +276,8 @@
       "latest_report_id": null,
       "confidence": null,
       "created_at": "2026-01-15T17:05:00Z",
-      "updated_at": "2026-01-15T17:05:00Z"
+      "updated_at": "2026-01-15T17:05:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-07",
@@ -319,7 +327,8 @@
       "latest_report_id": "rpt-stub-07",
       "confidence": 0.81,
       "created_at": "2026-01-15T15:20:00Z",
-      "updated_at": "2026-01-16T09:00:00Z"
+      "updated_at": "2026-01-16T09:00:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-08",
@@ -369,7 +378,8 @@
       "latest_report_id": "rpt-stub-08",
       "confidence": 0.76,
       "created_at": "2026-01-15T09:10:00Z",
-      "updated_at": "2026-01-16T09:30:00Z"
+      "updated_at": "2026-01-16T09:30:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-09",
@@ -419,7 +429,8 @@
       "latest_report_id": "rpt-stub-09",
       "confidence": 0.83,
       "created_at": "2026-01-15T19:05:00Z",
-      "updated_at": "2026-01-16T08:00:00Z"
+      "updated_at": "2026-01-16T08:00:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-10",
@@ -469,7 +480,8 @@
       "latest_report_id": "rpt-stub-10",
       "confidence": 0.79,
       "created_at": "2026-01-15T19:25:00Z",
-      "updated_at": "2026-01-16T08:30:00Z"
+      "updated_at": "2026-01-16T08:30:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-11",
@@ -519,7 +531,8 @@
       "latest_report_id": null,
       "confidence": null,
       "created_at": "2026-01-15T15:20:00Z",
-      "updated_at": "2026-01-15T15:25:00Z"
+      "updated_at": "2026-01-15T15:25:00Z",
+      "recommended_scenario_id": null
     },
     {
       "incident_id": "inc-stub-12",
@@ -569,7 +582,8 @@
       "latest_report_id": "rpt-stub-12",
       "confidence": 0.66,
       "created_at": "2026-01-15T20:05:00Z",
-      "updated_at": "2026-01-15T20:20:00Z"
+      "updated_at": "2026-01-15T20:20:00Z",
+      "recommended_scenario_id": "S1"
     },
     {
       "incident_id": "inc-stub-13",
@@ -582,7 +596,8 @@
       "latest_report_id": null,
       "confidence": null,
       "created_at": "2026-01-15T20:25:00Z",
-      "updated_at": "2026-01-15T20:25:00Z"
+      "updated_at": "2026-01-15T20:25:00Z",
+      "recommended_scenario_id": null
     }
   ]
 }

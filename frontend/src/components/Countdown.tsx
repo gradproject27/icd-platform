@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { formatLocalDateTime, formatRemaining } from "../countdown/clock";
-import { useResponseWindow } from "../hooks/useResponseWindow";
+import { useResponseWindow, type ResponseWindowView } from "../hooks/useResponseWindow";
 import { PageState } from "./PageState";
 
 /**
@@ -8,8 +8,11 @@ import { PageState } from "./PageState";
  * starts its own 60-second timer and cannot create, restart or extend a window (NFR-P-09).
  */
 export function Countdown({ incidentId }: { incidentId: string }) {
-  const view = useResponseWindow(incidentId);
+  return <CountdownView view={useResponseWindow(incidentId)} />;
+}
 
+/** The countdown for a window the caller already follows, so a page needs only one socket. */
+export function CountdownView({ view }: { view: ResponseWindowView }) {
   if (view.state === "loading") return <PageState kind="loading" message="Loading response window…" />;
   if (view.state === "error") {
     return <PageState kind="error" message={`Could not load the response window. ${view.error ?? ""}`.trim()} />;

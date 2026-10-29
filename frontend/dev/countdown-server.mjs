@@ -174,7 +174,13 @@ export function createResponseWindows({ skewMs = 0, windowSeconds = 60, log = (l
     }
   }
 
-  return { serverNow, iso, remainingText, openWindow, handle, attach, close };
+  /** The current snapshot of an incident's window, or null when it has none. */
+  const snapshotOf = (incidentId) => {
+    const w = windows.get(incidentId);
+    return w ? snapshot(w) : null;
+  };
+
+  return { serverNow, iso, remainingText, openWindow, decide, snapshotOf, handle, attach, close };
 }
 
 export async function startCountdownServer({

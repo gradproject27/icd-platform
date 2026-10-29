@@ -8,7 +8,8 @@
 //   src_ip and dst_ip of those events);
 // - dev/stub-data/overlay.json (hand-written): status, incident type, analysis fields, times and
 //   the risk block. The risk values are placeholders copied as they are; nothing here computes
-//   a score (risk scoring belongs to C3).
+//   a score (risk scoring belongs to C3). The overlay's recommended_scenario_id (a placeholder,
+//   proposed for C5) goes on the summary, next to the incident, never into the Incident contract.
 //
 // linked_at is not in the fixture, so the stub sets it to the incident's created_at. That is a
 // stub-only stand-in, not a rule of the real system.
@@ -83,7 +84,8 @@ export function buildStubData({ expected, events, overlay }) {
       users: sortedUnique(linked.map((event) => event.user)),
       ips: sortedUnique(linked.flatMap((event) => [event.src_ip, event.dst_ip])),
     };
-    return { fixture_label: entry.fixture_label, incident, entities };
+    if (!("recommended_scenario_id" in entry)) throw new Error(`${entry.incident_id}: overlay has no recommended_scenario_id`);
+    return { fixture_label: entry.fixture_label, incident, entities, recommended_scenario_id: entry.recommended_scenario_id };
   });
 
   return {
