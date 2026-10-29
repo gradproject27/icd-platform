@@ -167,7 +167,8 @@
           "10.10.5.5",
           "203.0.113.10"
         ]
-      }
+      },
+      "recommended_scenario_id": "S2"
     },
     {
       "fixture_label": "G1",
@@ -245,7 +246,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": "S1"
     },
     {
       "fixture_label": "C2",
@@ -339,7 +341,8 @@
           "10.10.4.42",
           "203.0.113.60"
         ]
-      }
+      },
+      "recommended_scenario_id": "S2"
     },
     {
       "fixture_label": "D2a",
@@ -409,7 +412,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "C1",
@@ -501,7 +505,8 @@
           "10.10.4.41",
           "203.0.113.50"
         ]
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "E",
@@ -537,7 +542,8 @@
           "10.10.6.60",
           "198.51.100.20"
         ]
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "D1",
@@ -615,7 +621,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "F",
@@ -683,7 +690,8 @@
         "hosts": [],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "G2a",
@@ -753,7 +761,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "G2b",
@@ -823,7 +832,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "D2b",
@@ -893,7 +903,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     },
     {
       "fixture_label": "G3",
@@ -963,7 +974,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": "S1"
     },
     {
       "fixture_label": "G4",
@@ -996,7 +1008,8 @@
         ],
         "users": [],
         "ips": []
-      }
+      },
+      "recommended_scenario_id": null
     }
   ]
 }

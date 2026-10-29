@@ -18,6 +18,7 @@ interface StubItem {
   fixture_label: string;
   incident: Incident;
   entities: IncidentEntities;
+  recommended_scenario_id: string | null;
 }
 
 const SCHEMA_PATH = resolve(import.meta.dirname, "../../../contracts/schemas/incident.schema.json");
@@ -127,6 +128,21 @@ describe("stub incidents", () => {
   it("have events, times and entities exactly as built from the fixtures", async () => {
     const rebuilt = buildStubData(await readSources());
     expect(toText(rebuilt)).toBe(committedText.replace(/\r\n/g, "\n"));
+  });
+
+  it("recommend a placeholder scenario only on awaiting incidents, never S4", () => {
+    const recommended = items.map((item) => [item.incident.incident_id, item.recommended_scenario_id]);
+    expect(recommended.filter(([, scenario]) => scenario !== null)).toEqual([
+      ["inc-stub-01", "S2"],
+      ["inc-stub-02", "S1"],
+      ["inc-stub-03", "S2"],
+      ["inc-stub-12", "S1"],
+    ]);
+    for (const item of items) {
+      if (item.recommended_scenario_id !== null) expect(item.incident.status).toBe("awaiting_human_decision");
+    }
+    // inc-stub-04 is awaiting with no match on purpose: the "no matching scenario" state.
+    expect(byId.get("inc-stub-04")!.status).toBe("awaiting_human_decision");
   });
 
   it("list each entity once, sorted", () => {

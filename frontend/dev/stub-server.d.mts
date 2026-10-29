@@ -14,6 +14,10 @@ export interface StubServerOptions {
   api?: string | null;
   /** Defaults to dev/stub-data/incidents.json. */
   dataPath?: string;
+  /** Incidents that get an open response window at start (the command line opens inc-stub-01). */
+  openWindows?: string[];
+  /** Delay before an approved simulated action becomes simulated_succeeded (default 3000). */
+  executeMs?: number;
   log?: (line: string) => void;
 }
 

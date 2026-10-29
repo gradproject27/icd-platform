@@ -15,14 +15,16 @@ Week 1 is done. This is what is on `main`:
 | C5 | The response workflow specification and the authentication approach and threat model |
 | AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. HPC results and the model pin are still to fill |
 
+Week 2 is in progress. C4 so far: the upload page on C1's real upload and job API (#20), the incident list (#22) and the pending decision panel (#23), the last two on a dev-only stub server until C3's and C5's endpoints exist (see [Frontend](#frontend)).
+
 Not built yet:
 
 - dataset parsers (C2); only the `fixture` format (a JSON list of Events) is ingested so far;
 - the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
-- response windows in the backend; the countdown prototype runs against a local test server (`frontend/dev/`);
-- the dashboard screens beyond the skeleton; they show no real data yet;
+- response windows and the decision endpoints in the backend; the dashboard's countdown and decision panel run against the dev-only stub server (`frontend/dev/`);
+- the dashboard's incident detail, AI report and login screens; they are still shells (decision D10);
 - authentication and response code (C5); the API has no login and no response endpoints yet.
 
 ## Prerequisites
@@ -48,7 +50,7 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
 | `worker` | background worker: runs upload (ingest) jobs from the Postgres queue | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
-| `web` | React dashboard (skeleton); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
+| `web` | React dashboard (upload works end to end; the incident pages need the dev-only stub, see [Frontend](#frontend)); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
 Startup order is enforced by healthchecks: `db` becomes healthy, then `api` starts and applies the migrations, then `worker` and `web` start once `api` is healthy. `api` and `worker` share the `uploads` volume. Check the state with `docker compose ps`. Every service should show `(healthy)`.
 
@@ -118,6 +120,19 @@ The TypeScript types of the six contracts in `frontend/src/api/contracts/` are g
 **Upload page (Week 2).** `/upload` runs on C1's real upload and job API ([docs/api-upload-jobs.md](docs/api-upload-jobs.md)): choose a dataset source from `GET /datasets` and a file, follow the upload percentage, then the job's processing steps and intake counts (records read, events stored, labelled, unlabelled, quarantined) until it is done or failed. The job ID is kept in the URL (`/upload?job=<job_id>`), so a refresh keeps following the same job and never uploads again. All network code is in `frontend/src/api/`: `request()` for JSON calls and `uploadFile()` (XMLHttpRequest, for upload progress and without the 5-second timeout) for the file. To try it, run the whole stack with `docker compose up --build` and open http://localhost:8080/upload; only the `fixture` dataset has a parser so far, for example `fixtures/correlation/events.json`.
 
 **Incident list on stub data (Week 2).** `/incidents` lists incidents with time, entities, type, risk, state and analysis status, sorted and filtered in the browser; the filters and the sort stay in the URL (`?level=high&state=awaiting_human_decision&sort=risk`). C3's incident API does not exist yet, so a **dev-only stub server** answers the proposed `GET /incidents` and `GET /incidents/{id}` (shape `IncidentSummary` in `frontend/src/api/proposed.ts`, proposed for C3, not a contract) with 13 example incidents, one per incident in C3's correlation fixtures. Every stub answer carries `X-ICD-Stub: 1`, and the page then shows "STUB DATA: scores and states are examples, not C3 results"; the risk values are hand-written placeholders, not C3's scoring. Run `npm run stub:server` (port 8001; add `-- --api http://localhost:8000` to forward every other path, such as uploads, to the real API) and `npm run dev:stub`, then open http://localhost:5173/incidents. `npm run stub:build` regenerates `frontend/dev/stub-data/incidents.json` from the fixtures and the hand-written `overlay.json`; a test fails if it is out of date. The app never imports the stub data: only the proxy target changes.
+
+**Pending decision (Week 2).** `/incidents/:id/decision` shows the response window's countdown from the server's `deadline_at`, the simulated isolation during a freeze, the recommended catalogue scenario, and the three options of [response-workflow-spec.md, section 8](docs/response-workflow-spec.md#8-the-three-analyst-options) with an optional comment and a confirmation step; then the recorded decision, or the server's refusal (409 window expired, 403 not allowed). A compact header shows the incident's ID, state, type, risk, event times and entities (decision D10). After approve or select, the recorded decision carries a simulated `ResponseAction` (the contract as is); the page follows it once a second from Approved to Simulated, succeeded, and the incident to Resolved. A reject during a freeze shows that the simulated isolation was released. Every response label carries SIMULATED; no real system is changed. The decision endpoints (`GET /incidents/{id}/decision`, `POST /incidents/{id}/decisions`) and the summary's `recommended_scenario_id` are **proposed for C5** in `frontend/src/api/proposed.ts`, not contracts; until C5 builds them, the stub server answers them in memory (`decided_by` is `stub-analyst`, as there is no login yet). Started from the command line, the stub server opens a 60-second window for `inc-stub-01` (`-- --no-window` to skip it, `-- --window-seconds 10` for a shorter one, `-- --execute-ms 3000` for the delay before a simulated action succeeds; `curl.exe -X POST http://localhost:8001/dev/response-windows/inc-stub-01` to open it again). The recommended scenarios are hand-picked placeholders, not C5's catalogue lookup.
+
+**Real API or stub.** Which backend each working page uses (detail, AI report and login are still shells):
+
+| Page | Backend | Run |
+|---|---|---|
+| `/upload` | C1's real API (`/datasets`, `/uploads`, `/jobs/{id}`) | `npm run dev` with the API on port 8000 |
+| `/incidents` | stub (proposed for C3) | `npm run stub:server` and `npm run dev:stub` |
+| `/incidents/:id/decision` | stub: incident, response window, decision (proposed for C5) | `npm run stub:server` and `npm run dev:stub` |
+| all three together | upload forwarded to the real API, the rest on the stub | `npm run stub:server -- --api http://localhost:8000` and `npm run dev:stub` |
+
+On `npm run dev` without the stub, the list and the decision page show the API's 404 as an error with Retry, since the real API has no incident endpoints yet.
 
 **Countdown prototype (T1-11).** The pending-decision page shows the response window's countdown from the server's `deadline_at`; the browser never runs its own 60-second timer. Until the backend has response windows, a local test server plays its role: `npm run countdown:server` (port 8001, `-- --skew-ms 90000` to skew its clock), `npm run dev:countdown` (the dev server proxied to it), and `npm run countdown:measure` (accuracy table). See [docs/countdown-prototype.md](docs/countdown-prototype.md).
 
@@ -235,6 +250,7 @@ These are written down but not yet agreed:
 | Agreement on each contract: Event and EvidencePackage (C2); ResponseAction, AuditRecord and Incident (C5); Incident (C1) | C2, C5, C1 | [contracts-v1.md, section 7](docs/contracts-v1.md#7-agreement-checklist) |
 | Response window API for the dashboard: REST and WebSocket paths, one socket per incident or per user, reads after a refresh. The countdown prototype already follows spec section 7 | C1, C5 | [countdown-prototype.md, sections 7 and 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5) |
 | API shapes the screens need: upload stages, event details, risk factor labels, decision type | C1, C2, C3, C5 | [wireframes.md, section 6](docs/wireframes.md#6-open-questions) |
+| C4's proposed shapes: `IncidentSummary` with entities and `recommended_scenario_id` (C3), and the decision call `POST /incidents/{id}/decisions` with `GET /incidents/{id}/decision` (C5) | C3, C5 | [frontend/src/api/proposed.ts](frontend/src/api/proposed.ts), PR #23 |
 | Which CSV dataset (UNSW-NB15 or CIC-IDS2017), and Precinct6 used as an agreement check only, not ground truth | Whole team | [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review) |
 | Unresolved dataset licences (OTRF, EPSS, CIRCL, NVD) and which NIST resource the data plan means | C2, whole team, supervisor | [dataset-licence-register.md, section 4](docs/dataset-licence-register.md#4-open-licence-questions) |
 | Analysis confidence and valid-analysis rules for the freeze: AI1's proposal is written, C5 to agree | AI1, C5 | [ai1-analysis-design.md, section 7](docs/ai1-analysis-design.md#7-valid-analysis-and-confidence-response-spec-section-5) |
