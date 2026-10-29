@@ -6,11 +6,13 @@ recomputes them from the rules in docs/correlation-and-risk-design.md, so a wron
 hand-written answer fails here. tests/correlation/ checks the engine against the same file.
 """
 
+import fnmatch
 import ipaddress
 import json
 import tomllib
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import pytest
@@ -208,3 +210,92 @@ def test_hand_written_incident_matches_the_rules(index):
     assert len(reference) == len(EXPECTED["incidents"])
     match = next(r for r in reference if r["start_event_id"] == expected["start_event_id"])
     assert _comparable(expected) == match, expected["label"]
+
+
+# Risk score (T2-09). An independent reference for the team's method of 29 Oct 2026 (design
+# note section 9), read straight from risk.toml, checks the hand-kept expected-risk.json.
+
+RISK = tomllib.loads(
+    (ROOT / "backend" / "app" / "correlation" / "risk.toml").read_text(encoding="utf-8")
+)
+ASSETS = tomllib.loads((FIXTURES / "assets.toml").read_text(encoding="utf-8"))
+EXPECTED_RISK = json.loads((FIXTURES / "expected-risk.json").read_text(encoding="utf-8"))
+
+
+def reference_risk(flagged_ids: list[str]) -> dict:
+    clock = max(e.timestamp for e in EVENTS)
+    half_life = timedelta(hours=RISK["decay"]["half_life_hours"])
+    best: dict[tuple[str, str], tuple[float, str]] = {}
+    for event_id in sorted(flagged_ids, key=lambda i: order(BY_ID[i])):
+        e = BY_ID[event_id]
+        s = RISK["severity"]["stage"].get(str(stage(e)), RISK["severity"]["default"])
+        strong = e.label.attack_type in RISK["decay"]["strong_attack_types"]
+        d = 1.0 if strong else 0.5 ** ((clock - e.timestamp) / half_life)
+        q = s * RISK["confidence"]["default"] * RISK["outcome"]["unknown"] * d
+        if e.src_ip is not None:
+            entity = str(e.src_ip)
+        elif e.user and e.user.strip():
+            entity = e.user.strip().casefold()
+        else:
+            entity = e.host.strip().lower() if e.host and e.host.strip() else "none"
+        key = (e.label.attack_type or "unknown", entity)
+        if key not in best or q > best[key][0]:
+            best[key] = (q, event_id)
+    likelihood = 1.0
+    for q, _ in best.values():
+        likelihood *= 1 - q
+    likelihood = 1 - likelihood
+    impacts = []
+    for event_id in flagged_ids:
+        e = BY_ID[event_id]
+        if e.host and e.host.strip():
+            asset = e.host.strip().lower()
+        else:
+            asset = str(e.dst_ip) if e.dst_ip else None
+        levels = [v for p, v in ASSETS.items() if asset and fnmatch.fnmatchcase(asset, p)]
+        impacts.append(
+            max(RISK["impact"]["levels"][v] for v in levels)
+            if levels
+            else RISK["impact"]["unknown"]
+        )
+    impact = max(impacts)
+    score = int(Decimal(repr(100 * likelihood * impact)).quantize(Decimal(1), ROUND_HALF_UP))
+    thresholds = RISK["thresholds"]
+    level = (
+        "high"
+        if score >= thresholds["high"]
+        else "medium"
+        if score >= thresholds["medium"]
+        else "low"
+    )
+    top = sorted(best.items(), key=lambda kv: (-kv[1][0], kv[0]))[:3]
+    return {
+        "score": score,
+        "level": level,
+        "likelihood": round(likelihood, 4),
+        "impact": impact,
+        "top_event_ids": [event_id for _, (_, event_id) in top],
+    }
+
+
+def test_expected_risk_covers_every_incident():
+    assert EXPECTED_RISK["risk_config_version"] == RISK["config_version"]
+    assert sorted(r["start_event_id"] for r in EXPECTED_RISK["incidents"]) == sorted(
+        i["start_event_id"] for i in EXPECTED["incidents"]
+    )
+
+
+@pytest.mark.parametrize("index", range(len(EXPECTED_RISK["incidents"])))
+def test_hand_kept_risk_matches_the_method(index):
+    expected = EXPECTED_RISK["incidents"][index]
+    incident = next(
+        i for i in EXPECTED["incidents"] if i["start_event_id"] == expected["start_event_id"]
+    )
+    got = reference_risk([link["event_id"] for link in incident["flagged"]])
+    assert got == {
+        "score": expected["score"],
+        "level": expected["level"],
+        "likelihood": expected["likelihood"],
+        "impact": expected["impact"],
+        "top_event_ids": [c["event_id"] for c in expected["top_contributors"]],
+    }, expected["label"]

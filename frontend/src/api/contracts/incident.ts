@@ -22,6 +22,13 @@ export type LinkKey = "host" | "ip_pair" | "user";
  */
 export type EventRole = "flagged" | "context";
 /**
+ * Something the score had to assume because the data does not say (contracts 1.1).
+ *
+ * This interface was referenced by `Incident`'s JSON-Schema
+ * via the `definition` "RiskFlag".
+ */
+export type RiskFlag = "asset_unknown" | "outcome_unknown" | "severity_default";
+/**
  * Risk level derived from the score by C3's configurable thresholds (FR-20).
  *
  * This interface was referenced by `Incident`'s JSON-Schema
@@ -136,11 +143,30 @@ export interface RiskAssessment {
    * @minItems 1
    */
   factors: [RiskFactor, ...RiskFactor[]];
+  /**
+   * Assumptions the score made (contracts 1.1).
+   */
+  flags?: RiskFlag[];
+  /**
+   * Asset impact I, 0 to 1 (contracts 1.1).
+   */
+  impact?: number | null;
   level: RiskLevel;
+  /**
+   * Combined evidence strength L, 0 to 1 (contracts 1.1).
+   */
+  likelihood?: number | null;
   /**
    * Risk score as a percentage (FR-18).
    */
   score: number;
+  /**
+   * The strongest evidence groups, strongest first (contracts 1.1).
+   *
+   * @maxItems 3
+   */
+  top_contributors?:
+    [] | [RiskContributor] | [RiskContributor, RiskContributor] | [RiskContributor, RiskContributor, RiskContributor];
 }
 /**
  * One factor of the deterministic risk score.
@@ -158,6 +184,10 @@ export interface RiskFactor {
    */
   name: string;
   /**
+   * Plain-language reason for the factor's value (contracts 1.1, additive).
+   */
+  reason?: string | null;
+  /**
    * Normalized factor value, 0 to 1.
    */
   value: number;
@@ -165,4 +195,32 @@ export interface RiskFactor {
    * Weight of the factor in the configuration.
    */
   weight: number;
+}
+/**
+ * One evidence group behind the score: its strongest event (contracts 1.1).
+ *
+ * This interface was referenced by `Incident`'s JSON-Schema
+ * via the `definition` "RiskContributor".
+ */
+export interface RiskContributor {
+  /**
+   * Source-side entity of the group, or none.
+   */
+  entity: string;
+  /**
+   * ID of the group's strongest flagged event.
+   */
+  event_id: string;
+  /**
+   * Plain-language reason for the strength.
+   */
+  reason: string;
+  /**
+   * Strength of the group's strongest event, 0 to 1.
+   */
+  strength: number;
+  /**
+   * Attack type of the group; unknown when missing.
+   */
+  technique: string;
 }

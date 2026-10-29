@@ -1,0 +1,282 @@
+{
+  "fixture_version": "c3-risk-fixtures-v1",
+  "risk_config_version": "risk-v0",
+  "assets_file": "assets.toml",
+  "dataset_clock_W": "2026-01-15T20:20:00Z",
+  "note": "Expected risk per incident of expected-incidents.json, by start_event_id. Checked by an independent reference in backend/tests/test_correlation_fixtures.py.",
+  "incidents": [
+    {
+      "label": "A",
+      "start_event_id": "fx-002",
+      "score": 100,
+      "level": "high",
+      "likelihood": 0.9975,
+      "impact": 1.0,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Backdoors",
+          "entity": "10.10.1.21",
+          "event_id": "fx-008",
+          "strength": 0.9
+        },
+        {
+          "technique": "Backdoors",
+          "entity": "svc-db",
+          "event_id": "fx-012",
+          "strength": 0.9
+        },
+        {
+          "technique": "Exploits",
+          "entity": "10.10.1.21",
+          "event_id": "fx-010",
+          "strength": 0.4413
+        }
+      ]
+    },
+    {
+      "label": "F",
+      "start_event_id": "fx-005",
+      "score": 43,
+      "level": "medium",
+      "likelihood": 0.4336,
+      "impact": 1.0,
+      "flags": [
+        "asset_unknown",
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Generic",
+          "entity": "none",
+          "event_id": "fx-005",
+          "strength": 0.4336
+        }
+      ]
+    },
+    {
+      "label": "C1",
+      "start_event_id": "fx-021",
+      "score": 8,
+      "level": "low",
+      "likelihood": 0.2433,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Fuzzers",
+          "entity": "203.0.113.50",
+          "event_id": "fx-022",
+          "strength": 0.2433
+        }
+      ]
+    },
+    {
+      "label": "C2",
+      "start_event_id": "fx-025",
+      "score": 19,
+      "level": "low",
+      "likelihood": 0.5746,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "DoS",
+          "entity": "203.0.113.60",
+          "event_id": "fx-026",
+          "strength": 0.5746
+        }
+      ]
+    },
+    {
+      "label": "D1",
+      "start_event_id": "fx-028",
+      "score": 21,
+      "level": "low",
+      "likelihood": 0.642,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Generic",
+          "entity": "ws-50",
+          "event_id": "fx-029",
+          "strength": 0.5181
+        },
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-50",
+          "event_id": "fx-028",
+          "strength": 0.2572
+        }
+      ]
+    },
+    {
+      "label": "D2a",
+      "start_event_id": "fx-030",
+      "score": 8,
+      "level": "low",
+      "likelihood": 0.2572,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-51",
+          "event_id": "fx-030",
+          "strength": 0.2572
+        }
+      ]
+    },
+    {
+      "label": "D2b",
+      "start_event_id": "fx-031",
+      "score": 9,
+      "level": "low",
+      "likelihood": 0.259,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-51",
+          "event_id": "fx-031",
+          "strength": 0.259
+        }
+      ]
+    },
+    {
+      "label": "E",
+      "start_event_id": "fx-032",
+      "score": 15,
+      "level": "low",
+      "likelihood": 0.4541,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown",
+        "severity_default"
+      ],
+      "top_contributors": [
+        {
+          "technique": "unknown",
+          "entity": "10.10.6.60",
+          "event_id": "fx-032",
+          "strength": 0.4541
+        }
+      ]
+    },
+    {
+      "label": "G1",
+      "start_event_id": "fx-038",
+      "score": 32,
+      "level": "low",
+      "likelihood": 0.9577,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Backdoors",
+          "entity": "ws-80",
+          "event_id": "fx-039",
+          "strength": 0.9
+        },
+        {
+          "technique": "Exploits",
+          "entity": "ws-80",
+          "event_id": "fx-038",
+          "strength": 0.5773
+        }
+      ]
+    },
+    {
+      "label": "G2a",
+      "start_event_id": "fx-040",
+      "score": 10,
+      "level": "low",
+      "likelihood": 0.2887,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-81",
+          "event_id": "fx-040",
+          "strength": 0.2887
+        }
+      ]
+    },
+    {
+      "label": "G2b",
+      "start_event_id": "fx-041",
+      "score": 10,
+      "level": "low",
+      "likelihood": 0.2915,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-81",
+          "event_id": "fx-041",
+          "strength": 0.2915
+        }
+      ]
+    },
+    {
+      "label": "G3",
+      "start_event_id": "fx-042",
+      "score": 10,
+      "level": "low",
+      "likelihood": 0.2971,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-80",
+          "event_id": "fx-042",
+          "strength": 0.2971
+        }
+      ]
+    },
+    {
+      "label": "G4",
+      "start_event_id": "fx-043",
+      "score": 10,
+      "level": "low",
+      "likelihood": 0.3,
+      "impact": 0.33,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Reconnaissance",
+          "entity": "ws-80",
+          "event_id": "fx-043",
+          "strength": 0.3
+        }
+      ]
+    }
+  ]
+}

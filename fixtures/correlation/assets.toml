@@ -1,0 +1,5 @@
+# Placeholder FIPS 199 levels for the fixture hosts (team, 29 Oct 2026). Not real assets.
+"db-01" = "high"       # holds the privileged svc-db account
+"web-01" = "moderate"
+"file-01" = "moderate"
+"ws-*" = "low"         # workstations

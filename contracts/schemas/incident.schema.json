@@ -109,9 +109,47 @@
           "title": "Factors",
           "type": "array"
         },
+        "flags": {
+          "description": "Assumptions the score made (contracts 1.1).",
+          "items": {
+            "$ref": "#/$defs/RiskFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "impact": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Asset impact I, 0 to 1 (contracts 1.1).",
+          "title": "Impact"
+        },
         "level": {
           "$ref": "#/$defs/RiskLevel",
           "description": "Level from the configurable thresholds (FR-20); enforced by C3's scoring code, not by this contract."
+        },
+        "likelihood": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Combined evidence strength L, 0 to 1 (contracts 1.1).",
+          "title": "Likelihood"
         },
         "score": {
           "description": "Risk score as a percentage (FR-18).",
@@ -119,6 +157,15 @@
           "minimum": 0,
           "title": "Score",
           "type": "integer"
+        },
+        "top_contributors": {
+          "description": "The strongest evidence groups, strongest first (contracts 1.1).",
+          "items": {
+            "$ref": "#/$defs/RiskContributor"
+          },
+          "maxItems": 3,
+          "title": "Top Contributors",
+          "type": "array"
         }
       },
       "required": [
@@ -129,6 +176,54 @@
         "computed_at"
       ],
       "title": "RiskAssessment",
+      "type": "object"
+    },
+    "RiskContributor": {
+      "additionalProperties": false,
+      "description": "One evidence group behind the score: its strongest event (contracts 1.1).",
+      "properties": {
+        "entity": {
+          "description": "Source-side entity of the group, or none.",
+          "minLength": 1,
+          "title": "Entity",
+          "type": "string"
+        },
+        "event_id": {
+          "description": "ID of the group's strongest flagged event.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Plain-language reason for the strength.",
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "strength": {
+          "description": "Strength of the group's strongest event, 0 to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Strength",
+          "type": "number"
+        },
+        "technique": {
+          "description": "Attack type of the group; unknown when missing.",
+          "minLength": 1,
+          "title": "Technique",
+          "type": "string"
+        }
+      },
+      "required": [
+        "technique",
+        "entity",
+        "strength",
+        "event_id",
+        "reason"
+      ],
+      "title": "RiskContributor",
       "type": "object"
     },
     "RiskFactor": {
@@ -145,6 +240,20 @@
           "minLength": 1,
           "title": "Name",
           "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-language reason for the factor's value (contracts 1.1, additive).",
+          "title": "Reason"
         },
         "value": {
           "description": "Normalized factor value, 0 to 1.",
@@ -168,6 +277,16 @@
       ],
       "title": "RiskFactor",
       "type": "object"
+    },
+    "RiskFlag": {
+      "description": "Something the score had to assume because the data does not say (contracts 1.1).",
+      "enum": [
+        "asset_unknown",
+        "outcome_unknown",
+        "severity_default"
+      ],
+      "title": "RiskFlag",
+      "type": "string"
     },
     "RiskLevel": {
       "description": "Risk level derived from the score by C3's configurable thresholds (FR-20).",

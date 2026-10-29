@@ -147,10 +147,18 @@ In the tables below, **Required** means the key must be present. "default" means
 | `factors` | list of RiskFactor, min 1 | yes | n/a | FR-19 |
 | `config_version` | string, min 1 | yes | n/a. Version of the weights and thresholds file used | FR-20 |
 | `computed_at` | UTC datetime | yes | n/a | OD-04 |
+| `likelihood` | number 0 to 1 | no (1.1) | `null` = not given. Combined evidence strength `L` | Team, 29 Oct 2026 |
+| `impact` | number 0 to 1 | no (1.1) | `null` = not given. Asset impact `I` (FIPS 199) | Team, 29 Oct 2026 |
+| `flags` | list of `asset_unknown` \| `outcome_unknown` \| `severity_default` | no (1.1) | `[]` | Team, 29 Oct 2026 |
+| `top_contributors` | list of RiskContributor, max 3 | no (1.1) | `[]` | Team, 29 Oct 2026 |
 
-**RiskFactor**: `name` (string, min 1), `value` (number 0 to 1, the normalized factor), `weight` (number ≥ 0), `contribution` (number, the points the factor adds to the score).
+**RiskFactor**: `name` (string, min 1), `value` (number 0 to 1, the normalized factor), `weight` (number ≥ 0), `contribution` (number, the points the factor adds to the score), `reason` (string or `null`, the plain-language reason; added in 1.1).
 
-**No validator ties `level` to `score`.** The thresholds are configurable (FR-20), so the contract cannot know them. C3's scoring code applies the thresholds from the configuration named in `config_version`. The weights, factors and thresholds themselves come from T1-08. The factors in the example file are placeholders.
+**RiskContributor** (1.1): `technique` (attack type, `unknown` when missing), `entity` (source-side entity, or `none`), `strength` (0 to 1), `event_id` (the group's strongest flagged event), `reason` (string).
+
+**Contracts 1.1 (29 Oct 2026, additive).** The fields marked 1.1 are optional with a default, so every 1.0 document stays valid and `schema_version` stays `"1.0"` (change rule 4 in `contracts/README.md`: bump only for a change that is not backward compatible). They carry the output of the risk method of 29 Oct 2026 (design note section 9).
+
+**No validator ties `level` to `score`.** The thresholds are configurable (FR-20), so the contract cannot know them. C3's scoring code applies the thresholds from the configuration named in `config_version`. The weights, factors and thresholds themselves come from T1-08. The numbers in the example file are placeholders; the factors follow the risk v0 method (likelihood and impact).
 
 **Validators.**
 - `updated_at >= created_at` and `last_event_at >= first_event_at`.

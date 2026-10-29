@@ -11,7 +11,9 @@ from app.contracts.incident import (
     IncidentStatus,
     LinkKey,
     RiskAssessment,
+    RiskContributor,
     RiskFactor,
+    RiskFlag,
 )
 from app.contracts.report import AnalysisReport, Finding, FindingCategory, SequenceStep
 from app.contracts.response import (
@@ -48,7 +50,9 @@ __all__ = [
     "Provenance",
     "ResponseAction",
     "RiskAssessment",
+    "RiskContributor",
     "RiskFactor",
+    "RiskFlag",
     "RiskLevel",
     "ScenarioId",
     "SequenceStep",

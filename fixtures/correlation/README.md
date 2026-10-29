@@ -5,6 +5,8 @@ A small hand-built event set for the correlation engine v0 (T2-08), the risk sco
 | File | Content |
 |---|---|
 | `events.json` | 43 events in the `Event` contract (v1.0): 24 flagged, 17 unflagged, 2 unlabelled. All on 15 Jan 2026, UTC |
+| `expected-risk.json` | The expected risk of each of the 13 incidents (score, level, `L`, `I`, flags, top 3 groups), under `backend/app/correlation/risk.toml` and `assets.toml` |
+| `assets.toml` | Placeholder NIST FIPS 199 levels for the fixture hosts: `db-01` high, `web-01` and `file-01` moderate, `ws-*` low. Not real assets; the production asset table is empty |
 | `expected-incidents.json` | The 13 expected incidents (flagged events, context events, `link_keys`, times, incident type, hosts, attack types, privileged) and the 14 events that stay outside any incident, each with a reason |
 
 `backend/tests/test_correlation_fixtures.py` validates every event against the contract. It also recomputes the expected incidents with an independent reference (no union-find), so a mistake in the hand-written answers fails CI. `backend/tests/correlation/test_correlation_engine.py` checks the engine (`backend/app/correlation/`) against the same file.
@@ -107,4 +109,12 @@ fx-034 to fx-037: unrelated unflagged and unlabelled events. None is attached.
 | No adaptive memory | G1 splits into two incidents |
 | A different escalated window | G1 (20 min) and G3 (40 min) are the boundaries: 20 to 39 min keeps every answer |
 
-Risk scores are **not** in this file yet. They are added in Step 3, once the risk method is chosen.
+## Risk scores
+
+`expected-risk.json` holds the score of every incident under the team's risk method of 29 Oct 2026 (design note section 9). The dataset clock `W` is 20:20, the last fixture event. Only attack A is High (100): it reaches `db-01`. F is Medium (43): it has no asset, so it takes the worst-case impact and the flag `asset_unknown`. Everything else is on a Low workstation and is Low, including G1 (exploit then backdoor, 32). The worked examples are in section 12 of the design note.
+
+| Change | What changes in `expected-risk.json` |
+|---|---|
+| A different asset level for `ws-*` | Every incident except A and F |
+| Fallback 0.5 for an unknown asset | F drops to 22, Low |
+| A different half-life or severity table | Most scores; A stays High while a Backdoors event (strength 0.9) is on `db-01` |

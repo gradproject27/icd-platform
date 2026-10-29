@@ -46,7 +46,7 @@ Correlation reads `Event` records (contracts v1) after the intake layer (C2) has
 | `host` | Key `host` | OD-02 |
 | `src_ip`, `dst_ip` | Key `ip_pair` | OD-02 |
 | `user` | Key `user` | OD-02 |
-| `privileged_user` | Privileged factor (section 9) | OD-04 |
+| `privileged_user` | Not used by the risk method of 29 Oct 2026 (section 9); kept in the contract | OD-04 |
 
 Rules:
 
@@ -212,7 +212,7 @@ Context events show the activity around flagged events. They come from unflagged
 
 **Why context events never merge groups.** A busy server, a shared account or a gateway appears in many unflagged events. If context events could union groups, one such host would chain unrelated incidents into one large incident. Only flagged events, whose labels come from the dataset, decide which groups exist.
 
-**Context events never raise the risk score (proposed, needs team agreement).** The `severity`, `host_count`, `attack_type_count` and `privileged` factors are computed over flagged events only, and `flagged_share` can only go down when context is added (section 9.1).
+**Context events never change the risk score.** The score uses flagged events only (section 9.1), so attaching context can neither raise nor lower it (tested).
 
 **Implementation note.** For each key value, keep the flagged events with that value sorted by time. For a context candidate, a binary search per key value finds the nearest flagged event within the window. This keeps attachment at `O(m · k · log n)` for `m` context candidates.
 
@@ -290,56 +290,54 @@ The type is recomputed whenever the incident is updated. The list of attack type
 
 ## 9. Risk score
 
-The risk score is a **weighted factor score computed in code**, with the weights in configuration (OD-04, OD-05). The LLM writes the justification only (FR-19).
+**Method: team decision of 29 Oct 2026.** It replaces the weighted factor sum proposed in Week 1 (sections 9 and 10 of earlier versions). The score is still computed in code from configured values (OD-04, OD-05); the LLM writes only the justification (FR-19). Code: `backend/app/correlation/risk.py`; values: `backend/app/correlation/risk.toml`.
 
-### 9.1 Factors
+### 9.1 Formula
 
-Each factor is normalized to the range 0 to 1. The normalizations are **proposed, needs team agreement**.
-
-| Factor | Definition | Source |
+| Step | Formula | Meaning |
 |---|---|---|
-| `severity` | Highest severity among the attack types of the incident's flagged events, from the configured table `attack_type → severity` (0 to 1). An attack type missing from the table, or a flagged event without an attack type, uses the default `default_severity = 0.5` | OD-04 |
-| `flagged_share` | Flagged events ÷ all events in the incident (flagged plus context) | OD-04 |
-| `host_count` | `min(distinct hosts ÷ 5, 1)`, with the cap 5 in configuration. Distinct normalized `host` values among the incident's **flagged** events. Context events are not counted, so attaching context cannot raise this factor | OD-04 |
-| `attack_type_count` | `min(distinct attack types ÷ 3, 1)`, with the cap 3 in configuration. Distinct non-null `label.attack_type` values among flagged events | OD-04 |
-| `privileged` | Evaluated over the incident's **flagged** events only. 1 if any flagged event has `privileged_user = true`. 0 if at least one flagged event has `privileged_user = false` and none has `true`. **Excluded** when every flagged event has `privileged_user = null`, because the data does not show it ("where the data shows them"). Context events are not counted, so attaching context cannot raise this factor | OD-04 |
+| 1. Event strength | `q_i = S_i · C_i · O_i · D_i` | Every **flagged** event of the incident. Context events never count |
+| 2. Evidence groups | `q_g = max q_i` per `(technique, entity)` | Repeated alerts and one source scanning many targets count once (anti-flooding) |
+| 3. Likelihood | `L = 1 − Π_g (1 − q_g)` | Noisy-OR across groups |
+| 4. Impact | `I = max` asset impact over the incident's assets | NIST FIPS 199 high water mark |
+| 5. Score | `score = round_half_up(100 · L · I)` | Integer 0 to 100 (FR-18); level from section 11 |
 
-**Severity table.** The table is filled after C2's label mapping (T1-06).
+### 9.2 The terms
 
-> **Example values only.** These rows illustrate the format. They are not proposed values and must not be used.
->
-> | `attack_type` | severity |
-> |---|---|
-> | `reconnaissance` | 0.2 |
-> | `brute_force` | 0.6 |
-> | `privilege_escalation` | 0.8 |
-> | `data_exfiltration` | 0.9 |
+| Term | Rule (team answers, 29 Oct 2026) | Config |
+|---|---|---|
+| `S_i` severity | 1) the source's own severity in `extra_fields["severity"]` when listed (Precinct6 product severity: critical 1.0, high 0.8, medium 0.5, low 0.3, informational/info 0.1); 2) else from the kill-chain stage of `label.attack_type` (section 8): stage 1 → 0.3, 2 → 0.6, 3 → 0.9, 4 → 0.9, 5 (DoS) → 0.7; 3) else 0.5 with flag `severity_default`. No model learns severity: UNSW-NB15 and CIC-IDS2017 have no severity column, and Precinct6's is read directly (Q8) | `[severity]` |
+| `C_i` event confidence | How far the dataset's flagged label is trusted, per `provenance.dataset_id`: 1.0 by default (UNSW-NB15 labels are lab ground truth), Precinct6 0.8 (labels come from WitFoo's own correlation engine). Provisional. **Never from the LLM** (OD-04): the score is computed before the analysis and sent to it (section 9.4), and the dataset's own "is this alert true" columns are CON-20 | `[confidence]` |
+| `O_i` outcome | From `extra_fields["action"]`: success 1.0, failed or blocked 0.5, no value or an unlisted value = unknown 1.0 with flag `outcome_unknown`. A blocked attack never scores 0. UNSW-NB15 has no outcome field, so its events are unknown. Value lists provisional until C2 profiles Precinct6 actions | `[outcome]` |
+| `D_i` decay | `0.5 ^ ((W − t_i) / T½)`, `T½ = 24 h`. `W` is the **dataset clock**: the latest event time in the input, the same `W` as section 7.3. Never the wall clock: the datasets are historical (2015 to 2024), so the wall clock would make every `D` almost 0. An event after `W` is not boosted. Successful compromise (Backdoors, Backdoor, Worms) has `D = 1` | `[decay]` |
+| technique | `label.attack_type`, or `unknown` | |
+| entity | Source side: `src_ip`, else `user` (trimmed, case-folded), else `host` (trimmed, lower-cased), else `none`. One entity per event, so no event counts twice. A target-side entity would undo the anti-scan goal (one source on 20 targets would score 100) | |
+| asset | The flagged event's `host`, else its `dst_ip` (UNSW-NB15 flows have no host) | |
+| `I` impact | NIST FIPS 199 level of each asset from the asset table: low 0.33, moderate 0.67, high 1.0; the incident takes the max. An asset with no level, or an incident with no asset, counts as **1.0** with flag `asset_unknown` (CVSS v4.0: Not Defined = High, the worst case). The production table is empty, because the datasets' hosts are anonymised; the fixture's placeholder levels are in `fixtures/correlation/assets.toml` | `[impact]`, `[assets]` |
 
-### 9.2 Formula
+Deferred until a test asks for them (team, 29 Oct): progression and source bonuses (`b_prog`, `b_src`), the confirmed-compromise override, time buckets and `ρ`, `I_min`.
 
-```
-score = round_half_up( 100 × Σ(wᵢ × fᵢ) ÷ Σ(wᵢ) )
-```
+**Properties checked by tests** (`backend/tests/correlation/test_risk_score.py`): a scan from one source to 5, 20 or 50 targets scores the same as to one target; 100 repeats of one alert score the same as one; with a fixed `W`, adding a flagged event never lowers the score; context events never change it; a backdoor outscores a 50-host reconnaissance scan; an unknown asset never scores below a known one; same input, same output, in any order (AS-04).
 
-The sums run over the factors that are **not excluded**. The result is an integer from 0 to 100 (FR-18). Dividing by `Σ(wᵢ)` keeps the scale at 0 to 100 when a factor is excluded.
+**Sensitivity** (same test file): scaling each group of values by ±20% (the stage severities, the half-life, the FIPS 199 levels, the unknown-asset impact) moves at most one fixture incident to another level (F, Medium → Low, at −20% severity or −20% unknown impact), and attack A stays High in every case.
 
-`round_half_up` rounds .5 upward (87.5 → 88). The implementation should use decimal arithmetic, not binary floating point, so that a value such as 87.5 is not turned into 87.4999… before rounding.
+**Known properties.** (1) `W` moves forward when later events arrive, so an older incident's score can fall slightly as the batch grows; that is what decay is for. (2) Noisy-OR saturates: several strong groups give `L` close to 1. (3) Impact multiplies: a confirmed backdoor on a Low workstation scores about 30, Low (fixture G1).
 
 ### 9.3 What is stored
 
-The score is stored in `Incident.risk` as a `RiskAssessment` (contracts v1):
+`Incident.risk`, a `RiskAssessment` (contracts 1.1, additive):
 
-| Field | Content | Source |
-|---|---|---|
-| `score` | The integer score | FR-18 |
-| `level` | `low`, `medium` or `high` from the thresholds (section 11) | FR-20 |
-| `factors` | One `RiskFactor` per **included** factor: `name`, `value` (fᵢ), `weight` (wᵢ), `contribution` = `100 × wᵢ × fᵢ ÷ Σ(wᵢ)` points, unrounded | FR-19, NFR-SF-05, C-17 |
-| `config_version` | The `config_version` string of the configuration used | AS-04 |
-| `computed_at` | When the score was computed, UTC | FR-18 |
+| Field | Content |
+|---|---|
+| `score`, `level` | The integer score and its level (section 11) |
+| `factors` | Two rows, each with a plain-language `reason`: `likelihood` (value `L`, contribution `100·L`) and `impact` (value `I`, contribution `100·L·I − 100·L`, zero or negative). The two contributions add up to the unrounded score. The weights are a nominal 1.0: the method multiplies, it does not weight. A dashboard should show the impact row as "points removed by the asset's impact", not as a weighted share |
+| `likelihood`, `impact` | `L` and `I` |
+| `flags` | `asset_unknown`, `outcome_unknown`, `severity_default`: what the score had to assume |
+| `top_contributors` | The 3 strongest groups: technique, entity, strength, strongest event ID and the reason (`S × C × O × D`) |
+| `config_version` | `risk.toml`'s `config_version` (`risk-v0`) |
+| `computed_at` | `evaluated_at`, passed in by the caller; stored, never used in the maths |
 
-**Excluded factors (proposed, needs team agreement).** An excluded factor is **left out** of `RiskAssessment.factors`. The contract is not changed. The dashboard shows a factor that is configured but missing from `factors` as "not in data". Contributions are unrounded, so they add up to the score before rounding.
-
-With this breakdown, the dashboard shows which factors set the risk (NFR-SF-05, FR-19, C-17).
+`round_half_up` uses decimal arithmetic (69.5 → 70).
 
 ### 9.4 When the score is computed
 
@@ -350,30 +348,17 @@ With this breakdown, the dashboard shows which factors set the risk (NFR-SF-05, 
 
 The score is computed **before and independent of** AI analysis. Re-analysis uses the new score (FR-16). The LLM receives the score and level in the evidence package (`IncidentContext.risk_score`, `risk_level`, OD-03) and explains them. It never changes them (OD-04, FR-19).
 
-**Risk is not confidence.** The 0.75 confidence gate belongs to AI1 and C5 (OD-16; response workflow spec, section 5). Risk and confidence are **never combined into one number**.
+**Risk is not confidence.** The AI report confidence and its 0.75 gate belong to AI1 and C5 (OD-16; response workflow spec, section 5). It is a different thing from the event confidence `C_i`. Risk and report confidence are **never combined into one number**.
 
-## 10. Proposed v0 weights and decision record
+## 10. Decision record
 
-> **Proposed v0 weights (pending team agreement).** This is a proposal for the team meeting, not a decision.
->
-> | Factor | Proposed v0 weight | Alternative: earlier C3 draft |
-> |---|---|---|
-> | `severity` | 0.35 | 0.35 |
-> | `flagged_share` | 0.20 | 0.25 |
-> | `host_count` | 0.20 | 0.15 |
-> | `attack_type_count` | 0.15 | 0.15 |
-> | `privileged` | 0.10 | 0.10 |
-> | **Sum** | **1.00** | **1.00** |
->
-> The proposed v0 weights give equal weight to how many hosts and how much of the incident is flagged. The earlier C3 draft gives more weight to the flagged share. The team can choose either set or set its own.
+| Date | Decision | Where |
+|---|---|---|
+| 29 Oct 2026 | Risk method `q = S·C·O·D`, max per (technique, entity), noisy-OR, `I` max, `Risk = 100·L·I` | Team |
+| 29 Oct 2026 | Q1, Q2: impact = NIST FIPS 199, three levels; unknown = 1.0 with `asset_unknown` (four levels may be tried later) | Team |
+| 29 Oct 2026 | Q3 source-side entity; Q4 `C` = dataset label trust, `O` success/failed/unknown; Q5 to Q7 dataset clock, 24 h, strong = Backdoors/Backdoor/Worms; Q8 severity from the source value, else the stage; Q9 to Q13 contract 1.1, flagged only, unknown technique 0.5, round then band, host else destination IP | Team (C3 thread, `c3-week2/02-risk-score-gaps-and-questions.md`) |
 
-**Decision record**
-
-| Date | Attendees | Weights agreed | Notes |
-|---|---|---|---|
-| pending | pending | pending | pending |
-
-**T2-09 does not start until the team has filled in this decision record.** The weights are re-tuned in W11 together with the thresholds (OD-05).
+All values are provisional and are re-tuned in W11 with the thresholds (OD-05). Any change changes `config_version`.
 
 ## 11. Thresholds
 
@@ -405,66 +390,45 @@ C5 should call `is_high` rather than compare numbers, so a W11 threshold change 
 
 ## 12. Worked examples
 
-All three examples use the proposed v0 weights (section 10). Contributions are `100 × wᵢ × fᵢ ÷ Σ(wᵢ)`, shown to two decimals. No input had to be adjusted: every result lands on the expected side of the thresholds.
+From the shared fixture (`fixtures/correlation/expected-risk.json`, checked by an independent reference in `backend/tests/test_correlation_fixtures.py`). Dataset clock `W` = 20:20, the last fixture event. Fixture asset levels: `db-01` high, `web-01` and `file-01` moderate, `ws-*` low.
 
-### Example 1: High
+### Example 1: attack A, High
 
-Inputs: severity 0.8, flagged share 0.9, 4 hosts, 3 attack types, privileged true. Σ(wᵢ) = 1.00.
-
-| Factor | Value fᵢ | Weight wᵢ | wᵢ × fᵢ | Contribution (points) |
+| Group (technique, entity) | Strongest event | S | D | q_g |
 |---|---|---|---|---|
-| `severity` | 0.8 | 0.35 | 0.2800 | 28.00 |
-| `flagged_share` | 0.9 | 0.20 | 0.1800 | 18.00 |
-| `host_count` | min(4 ÷ 5, 1) = 0.8 | 0.20 | 0.1600 | 16.00 |
-| `attack_type_count` | min(3 ÷ 3, 1) = 1.0 | 0.15 | 0.1500 | 15.00 |
-| `privileged` | 1 | 0.10 | 0.1000 | 10.00 |
-| **Total** | | **1.00** | **0.8700** | **87.00** |
+| Backdoors, 10.10.1.21 | fx-008 | 0.9 (stage 3) | 1 (compromise) | 0.90 |
+| Backdoors, svc-db | fx-012 | 0.9 | 1 | 0.90 |
+| Exploits, 10.10.1.21 | fx-010 | 0.6 (stage 2) | 0.74 (10.6 h before W) | 0.44 |
+| Exploits, 203.0.113.10 and Reconnaissance, 203.0.113.10 | fx-007, fx-004 | 0.6, 0.3 | 0.72 | 0.43, 0.22 |
 
-Score = round_half_up(100 × 0.87 ÷ 1.00) = **87 → High** (≥ 70).
+`L = 1 − (0.1 × 0.1 × 0.56 × 0.57 × 0.78) = 0.9975`. `I` = max(db-01 high 1.0, web-01 0.67, file-01 0.67) = 1.0. Score = round(99.75) = **100, High**. Flag: `outcome_unknown`.
 
-### Example 2: Medium
+### Example 2: G1, Low because of the asset
 
-Inputs: severity 0.6, flagged share 0.75, 1 host, 1 attack type, privileged data absent (excluded). Σ(wᵢ) = 0.35 + 0.20 + 0.20 + 0.15 = 0.90.
+Exploits (0.6 × 0.96 = 0.58) then Backdoors (0.9) on `ws-80`: `L = 1 − 0.42 × 0.1 = 0.958`. `I` = ws-80 low 0.33. Score = round(31.6) = **32, Low**. The same evidence on an unrated host would score 96, High.
 
-| Factor | Value fᵢ | Weight wᵢ | wᵢ × fᵢ | Contribution (points) |
-|---|---|---|---|---|
-| `severity` | 0.6 | 0.35 | 0.2100 | 23.33 |
-| `flagged_share` | 0.75 | 0.20 | 0.1500 | 16.67 |
-| `host_count` | min(1 ÷ 5, 1) = 0.2 | 0.20 | 0.0400 | 4.44 |
-| `attack_type_count` | min(1 ÷ 3, 1) = 0.3333 | 0.15 | 0.0500 | 5.56 |
-| `privileged` | excluded, not in `factors` | (0.10) | | |
-| **Total** | | **0.90** | **0.4500** | **50.00** |
+### Example 3: E, Low
 
-Score = round_half_up(100 × 0.45 ÷ 0.90) = **50 → Medium** (40 to 69).
+One flagged event without an attack type on `ws-60`: `S` = default 0.5 (flag `severity_default`), `D` = 0.91 (3.3 h before W), `L` = 0.454, `I` = 0.33. Score = **15, Low**.
 
-### Example 3: Low
+### All fixture incidents
 
-Inputs: severity 0.2, flagged share 0.2, 1 host, 1 attack type, privileged false. Σ(wᵢ) = 1.00.
+| Incident | Score | Level | L | I | Flags |
+|---|---|---|---|---|---|
+| A | 100 | High | 0.998 | 1.00 | outcome_unknown |
+| F | 43 | Medium | 0.434 | 1.00 | asset_unknown, outcome_unknown |
+| G1 | 32 | Low | 0.958 | 0.33 | outcome_unknown |
+| D1 | 21 | Low | 0.642 | 0.33 | outcome_unknown |
+| C2 | 19 | Low | 0.575 | 0.33 | outcome_unknown |
+| E | 15 | Low | 0.454 | 0.33 | outcome_unknown, severity_default |
+| G2a, G2b, G3, G4 | 10 | Low | 0.29 to 0.30 | 0.33 | outcome_unknown |
+| D2b, D2a, C1 | 9, 8, 8 | Low | 0.24 to 0.26 | 0.33 | outcome_unknown |
 
-| Factor | Value fᵢ | Weight wᵢ | wᵢ × fᵢ | Contribution (points) |
-|---|---|---|---|---|
-| `severity` | 0.2 | 0.35 | 0.0700 | 7.00 |
-| `flagged_share` | 0.2 | 0.20 | 0.0400 | 4.00 |
-| `host_count` | min(1 ÷ 5, 1) = 0.2 | 0.20 | 0.0400 | 4.00 |
-| `attack_type_count` | min(1 ÷ 3, 1) = 0.3333 | 0.15 | 0.0500 | 5.00 |
-| `privileged` | 0 | 0.10 | 0.0000 | 0.00 |
-| **Total** | | **1.00** | **0.2000** | **20.00** |
-
-Score = round_half_up(100 × 0.20 ÷ 1.00) = **20 → Low** (< 40).
-
-### Same examples with the earlier C3 draft weights
-
-| Example | Σ(wᵢ × fᵢ) | Σ(wᵢ) | Score | Level |
-|---|---|---|---|---|
-| 1 | 0.2800 + 0.2250 + 0.1200 + 0.1500 + 0.1000 = 0.8750 | 1.00 | 87.5 → **88** | High |
-| 2 | 0.2100 + 0.1875 + 0.0300 + 0.0500 = 0.4775 | 0.90 | 53.06 → **53** | Medium |
-| 3 | 0.0700 + 0.0500 + 0.0300 + 0.0500 + 0.0000 = 0.2000 | 1.00 | 20.0 → **20** | Low |
-
-Example 1 under the earlier draft weights shows the round-half-up rule: 87.5 becomes 88.
+F has no asset at all (no host, IP or user), so it takes the worst-case impact: a single Generic event outranks the DoS incident C2 on a Low workstation. That is the intended effect of "unknown = worst case", and the dashboard shows the `asset_unknown` flag next to it.
 
 ## 13. Configuration
 
-The correlation configuration was created in T2-08. The risk file `backend/app/correlation/risk.toml` holds the thresholds now (section 11.1); its weights and tables are added with the score in T2-09. Format and path: TOML files inside the package, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
+The correlation configuration was created in T2-08 and the risk configuration in T2-09. Format and path: TOML files inside the package, `backend/app/correlation/correlation.toml` and `backend/app/correlation/risk.toml`, because the backend image copies only `app/`. Python 3.12 reads TOML with the standard library module `tomllib`, so no dependency is added.
 
 | Key | Default | Used by | Source |
 |---|---|---|---|
@@ -474,16 +438,17 @@ The correlation configuration was created in T2-08. The risk file `backend/app/c
 | `update_idle_windows` | 2 (30 minutes) | Update rule (section 4) | OD-15 |
 | `keys` | `["host", "ip_pair", "user"]` | Relatedness keys (section 3) | OD-02 |
 | `key_denylist` | `[]` (empty) | Denylist (section 3, proposed) | OD-02 |
-| `weights.severity`, `weights.flagged_share`, `weights.host_count`, `weights.attack_type_count`, `weights.privileged` | From the decision record (section 10) | Risk score (section 9) | OD-04 |
-| `caps.host_count` | 5 | `host_count` factor (proposed) | OD-04 |
-| `caps.attack_type_count` | 3 | `attack_type_count` factor (proposed) | OD-04 |
-| `default_severity` | 0.5 | `severity` factor (proposed) | OD-04 |
-| `severity_table` | Filled after T1-06 | `severity` factor, incident type | OD-04 |
+| `severity.default`, `severity.stage`, `severity.source_values` | 0.5; stage 1 0.3, 2 0.6, 3 0.9, 4 0.9, 5 0.7; Precinct6 values | `S_i` (section 9.2) | Team, 29 Oct (Q8) |
+| `confidence.default`, `confidence.dataset` | 1.0; precinct6 0.8 | `C_i` | Team, 29 Oct (Q4) |
+| `outcome.*` | success 1.0, failed 0.5, unknown 1.0; value lists | `O_i` | Team, 29 Oct (Q4) |
+| `decay.half_life_hours`, `decay.strong_attack_types` | 24; Backdoors, Backdoor, Worms | `D_i` | Team, 29 Oct (Q5 to Q7) |
+| `impact.levels`, `impact.unknown` | low 0.33, moderate 0.67, high 1.0; 1.0 | `I` | Team, 29 Oct (Q1, Q2) |
+| `assets` | empty (fixture: `fixtures/correlation/assets.toml`) | `I` | Team, 29 Oct |
 | `thresholds.medium` | 40 | Level: Medium from 40 | OD-05, FR-20 |
 | `thresholds.high` | 70 | Level: High from 70 | OD-05, FR-20 |
 | `config_version` | For example `risk-v0` | Stored in every `RiskAssessment` | AS-04, FR-19 |
 
-Any change to the weights, caps, severity table or thresholds changes `config_version`, so every stored score can be traced to the configuration that produced it.
+Any change to a value in `risk.toml` changes `config_version`, so every stored score can be traced to the configuration that produced it.
 
 ## 14. Evaluation
 
@@ -551,7 +516,7 @@ TP = 2, FP = 2, FN = 2. P = 2 ÷ 4 = 0.50, R = 2 ÷ 4 = 0.50, F1 = 2 × 0.5 × 0
 | C2 | The key fields (`host`, `src_ip`, `dst_ip`, `user`) exist and are filled in the dataset; the event types; the attack-type list from the label mapping (T1-06); whether `privileged_user` is available | pending |
 | AI1 | The risk justification explains the deterministic score without changing it (section 9.4); the incident metadata in the evidence package (`incident_type`, `risk_score`, `risk_level`, counts) | pending |
 | C5 | The incident type for the scenario lookup (section 8); the update rule against the lifecycle (section 4, section 7.2 and transition T14) | pending |
-| Whole team | v0 weights (section 10, decision record) | pending |
+| Whole team | Risk method and values (section 10, decision record) | agreed 29 Oct 2026 |
 
 ### Open questions
 
@@ -568,11 +533,11 @@ Q1 to Q9 were answered by the team on 28 Oct 2026. Q10 to Q16 keep their propose
 | Q7 | Does an isolated flagged event become an incident? | Yes (team, 28 Oct). Showing only above a threshold is a dashboard and alert filter, not a correlation rule; expiry is the OD-15 idle rule | 7.1 |
 | Q8 | Are two open incidents merged when one new event matches both? | No merge; the event joins the older incident (earliest `created_at`, then smallest `incident_id`) and the audit record names the other (team, 28 Oct). A visible `related_incidents` link needs a contract change, planned for Week 3 | 7.2 |
 | Q9 | Incident-type rule | Attack type of the most advanced kill-chain stage (team, 28 Oct; section 8) | 8 |
-| Q10 | Default severity for an unknown or missing attack type | 0.5 | 9.1 |
-| Q11 | Caps for `host_count` and `attack_type_count`, and which events count hosts | 5 hosts and 3 attack types; both counted over flagged events only | 9.1 |
-| Q12 | Which events does the privileged factor use, and what happens when none shows it? | Flagged events only; excluded from the score when every flagged event has `privileged_user = null` | 9.1 |
-| Q13 | How is an excluded factor stored? | Left out of `RiskAssessment.factors`; no contract change | 9.3 |
-| Q14 | v0 weights | Pending the decision record (section 10) | 10 |
+| Q10 | Default severity for an unknown or missing attack type | 0.5, flag `severity_default` (team, 29 Oct) | 9.2 |
+| Q11 | Caps for `host_count` and `attack_type_count` | Not used: replaced by the risk method of 29 Oct 2026 (per-group max and noisy-OR) | 9 |
+| Q12 | The privileged factor | Not in the risk method of 29 Oct 2026; privilege is not scored in v0 | 9 |
+| Q13 | How is an excluded factor stored? | Not applicable: the two factors are always present; assumptions are `flags` | 9.3 |
+| Q14 | v0 weights | Replaced by the risk method of 29 Oct 2026 (team); values in section 9.2 | 9, 10 |
 | Q15 | Should there be a cap on context events per incident? (The earlier draft proposed 200) | No cap in the incident; the evidence package already caps at 50 events (OD-03) | 6 |
 | Q16 | Should there be a maximum incident span? (The earlier draft proposed 2 hours) | None; OD-15 uses only the idle rule | 4 |
 

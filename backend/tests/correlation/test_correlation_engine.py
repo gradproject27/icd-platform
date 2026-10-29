@@ -327,5 +327,21 @@ def test_demo_prints_the_fixture_incidents(capsys):
 
     assert main([str(FIXTURES / "events.json")]) == 0
     out = capsys.readouterr().out
-    assert "43 events -> 13 incidents (correlation-v0)" in out
+    assert "43 events -> 13 incidents (correlation-v0, risk-v0)" in out
     assert incident_id_for("fx-002") in out
+
+
+def test_demo_with_the_fixture_assets_shows_one_high_incident(capsys):
+    from app.correlation.demo import main
+
+    assert main([str(FIXTURES / "events.json"), str(FIXTURES / "assets.toml")]) == 0
+    out = capsys.readouterr().out
+    assert "levels: high 1, medium 1, low 11" in out
+    assert out.index(incident_id_for("fx-002")) < out.index(incident_id_for("fx-005"))
+
+
+def test_demo_without_arguments_prints_the_usage(capsys):
+    from app.correlation.demo import main
+
+    assert main([]) == 2
+    assert "EVENTS_JSON" in capsys.readouterr().err
