@@ -1,0 +1,40 @@
+# C5 response engine configuration (Week 2). Read by config.py with tomllib.
+# Source: docs/response-workflow-spec.md (merged T1-13) and the decision register.
+# Any change to a value here must change config_version.
+config_version = "response-v0"
+
+[freeze]
+confidence_threshold = 0.75  # OD-16: High confidence means 0.75 or more
+window_seconds = 60          # OD-17: fixed, not configurable from the UI in the MVP
+
+[network]
+# Addresses inside these networks are internal (decision D3). Everything else is external,
+# including documentation ranges such as 203.0.113.0/24 that Python calls "private".
+internal = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "::1/128", "fc00::/7"]
+
+# Simulated response catalogue v0 (OD-20; formal approval at W7). Every scenario is a
+# simulation: the executor records what it would do and changes nothing.
+[scenarios.S1]
+title = "Keep the host isolated and flag it for investigation"
+needs = []
+automatic = true
+
+[scenarios.S2]
+title = "Isolate the host and block the source IP"
+needs = ["source_ip"]
+automatic = true
+
+[scenarios.S3]
+title = "Isolate the host and disable the involved account"
+needs = ["account"]
+automatic = true
+
+[scenarios.S4]
+title = "Release isolation and raise monitoring"
+needs = []
+automatic = false  # ends the isolation, so only an analyst may choose it (spec section 9)
+
+[selection]
+# v0 rule (spec section 9, decision D11): the first scenario whose needs are met.
+# W7 can replace it with a table by incident type and confidence band without code changes.
+order = ["S2", "S3", "S1"]

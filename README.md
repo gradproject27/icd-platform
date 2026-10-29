@@ -23,9 +23,9 @@ Not built yet:
 - the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
-- response windows and the decision endpoints in the backend; the dashboard's countdown and decision panel run against the dev-only stub server (`frontend/dev/`);
+- the HTTP decision and response-window endpoints and the WebSocket (C5, Week 3); the dashboard's countdown and decision panel still run against the dev-only stub server (`frontend/dev/`);
 - the dashboard's incident detail, AI report and login screens; they are still shells (decision D10);
-- authentication and response code (C5); the API has no login and no response endpoints yet.
+- authentication (C5, Week 3); the response engine (below) has no HTTP endpoints or WebSocket yet.
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | Service | What it is | URL |
 |---|---|---|
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
-| `worker` | background worker: runs upload (ingest) jobs from the Postgres queue | none |
+| `worker` | background worker: runs upload (ingest) jobs from the Postgres queue, and expires 60-second response windows on its own thread (C5) | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
 | `web` | React dashboard (upload works end to end; the incident pages need the dev-only stub, see [Frontend](#frontend)); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
@@ -70,7 +70,7 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **386 passed, 29 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **415 passed**.
+Expected result without a database: **588 passed, 56 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **644 passed**.
 
 The tests cover:
 
@@ -81,7 +81,8 @@ The tests cover:
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;
 - the API shapes in `docs/api/` (schema drift, one valid example per state, consistency rules);
-- the upload API (202 at once, refused files store nothing, file names never used as paths) and the worker (end-to-end ingest, quarantine and counts, every failure reason, a crashed worker's job retried from scratch, `worker_lost` after 3 attempts).
+- the upload API (202 at once, refused files store nothing, file names never used as paths) and the worker (end-to-end ingest, quarantine and counts, every failure reason, a crashed worker's job retried from scratch, `worker_lost` after 3 attempts);
+- the response engine (C5): every transition of the lifecycle table, each freeze precondition, targets and catalogue lookup, the simulated executor (no import that can reach a network), and with PostgreSQL and a fake clock: early decision, expiry, decision at the deadline, failed report, low confidence, reject, no match, simulated failure, double and concurrent expiry, worker restart, authorization and the append-only audit trail.
 
 CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every push to `main`:
 
@@ -91,7 +92,7 @@ CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every p
 | `test` | `alembic upgrade head` and `pytest` against a PostgreSQL service |
 | `frontend` | in `frontend/`: `npm ci`, contract types drift check, ESLint, type check, Vitest, production build |
 | `secret-scan` | gitleaks over the full git history |
-| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision, checks that `web` serves the dashboard and proxies `/api/health`, then uploads the correlation fixture through nginx and waits for its job to finish with 37 events |
+| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision and that the worker started the response expiry loop, checks that `web` serves the dashboard and proxies `/api/health`, then uploads the correlation fixture through nginx and waits for its job to finish with 37 events |
 
 ## Frontend
 
@@ -201,11 +202,20 @@ Real backends will pass the model's text to `run_analysis` in `backend/app/analy
 
 `get_analyzer()` picks the backend from `LLM_BACKEND`. Only `mock` exists for now; any other value raises `ValueError`. `MockAnalyzer` (`backend/app/llm/mock.py`) is deterministic, with no clock, randomness or network. It cites only event IDs that are in the evidence, marks its text `[MOCK]` and its recommendations `[SIMULATED]`, so the rest of ICD runs with no LLM or HPC.
 
+## Response engine
+
+The response engine (C5, `backend/app/response/`) decides when an incident freezes, holds the 60-second deadline in PostgreSQL and runs only simulated actions, with an audit record for every step. It follows [docs/response-workflow-spec.md](docs/response-workflow-spec.md); how to call it is in [docs/response-engine.md](docs/response-engine.md).
+
+- **Freeze** only when the analysis is valid, the risk level is High (`is_high` from C3) and the confidence is at least 0.75 (`response.toml`). Otherwise the incident waits for a human with no timer, and the reasons are audited.
+- **Deadline** = database time + 60 s, stored in `response_windows`. The dashboard only displays it.
+- **Expiry** runs on its own thread in the `worker` container and closes each window exactly once (conditional update); a lost race writes `expiry_duplicate_ignored`.
+- **Executor**: S1 to S4 are simulations. Every action and its audit record carry `SIMULATED`, and the `audit_records` table refuses UPDATE and DELETE.
+
 ## Database migrations
 
 The schema is managed by [Alembic](https://alembic.sqlalchemy.org/) in `backend/migrations`. The URL always comes from `DATABASE_URL`; it is never written in `alembic.ini`. The `api` container runs `alembic upgrade head` before it starts uvicorn, so `docker compose up` always brings the schema up to date.
 
-Revision `0001` is still the empty baseline: there are no tables yet. Tables come in Week 2 with the code that stores events and incidents, using the contracts.
+Revision `0001` is the empty baseline, `0002` adds uploads, jobs, stored events and quarantined records (C1), and `0003` adds the response engine's tables: lifecycle state, status history, response windows, simulated actions and the append-only audit trail (C5). Incidents themselves are stored from Week 3.
 
 Add ORM models as subclasses of `app.db.Base`, then create a revision:
 
@@ -224,6 +234,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/contracts-v1.md](docs/contracts-v1.md) | C3 | T1-07 | Shared data contracts v1: every field of the six contracts, decisions applied, review questions |
 | [docs/correlation-and-risk-design.md](docs/correlation-and-risk-design.md) | C3 | T1-08 | Correlation and risk score design: relatedness keys, time window, grouping, risk formula, evaluation |
 | [docs/response-workflow-spec.md](docs/response-workflow-spec.md) | C5 | T1-13 | Response workflow specification: lifecycle states, transitions, freeze, 60-second window, simulated catalogue |
+| [docs/response-engine.md](docs/response-engine.md) | C5 | Week 2 | Response engine v0: how to call it, tables, clock, expiry worker, what C4 reads, decisions D1 to D12 |
 | [docs/auth-and-threat-model.md](docs/auth-and-threat-model.md) | C5 | T1-14 | Authentication approach and MVP threat model: sessions, roles and permissions, threats TM-01 to TM-13 |
 | [docs/dataset-profile.md](docs/dataset-profile.md) | C2 | T1-05 | Dataset profile: inventory, field mapping to the Event contract, labels, data quality, ground truth, first development subset |
 | [docs/dataset-licence-register.md](docs/dataset-licence-register.md) | C2 | T1-06 | Licence register: licence or terms per source, evidence, redistribution, citation, status; rules for using the data |
@@ -288,10 +299,11 @@ icd-platform/
 │   │   ├── worker/       the worker process: python -m app.worker
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
 │   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
+│   │   ├── response/     C5: lifecycle table, freeze check, catalogue (response.toml), simulated executor, engine, expiry loop
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
-│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs)
+│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine)
 │   ├── alembic.ini
-│   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1)
+│   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)
 │   ├── src/              pages, components, API client, generated contract types, countdown
 │   ├── dev/              countdown test server and accuracy script (dev and test only)

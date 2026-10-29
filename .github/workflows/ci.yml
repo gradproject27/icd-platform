@@ -102,11 +102,13 @@ jobs:
       - run: curl -fsS http://localhost:8000/health
       - run: curl -fsS http://localhost:8080/
       - run: curl -fsS http://localhost:8080/api/health
-      - name: Check migrations reached revision 0002
+      - name: Check migrations reached revision 0003
         run: |
           version=$(docker compose exec -T db psql -U icd -d icd -tAc "SELECT version_num FROM alembic_version")
           echo "alembic_version: $version"
-          test "$version" = "0002"
+          test "$version" = "0003"
+      - name: Check the worker runs the response expiry loop (C5)
+        run: docker compose logs worker | grep -q "response expiry loop started"
       - name: Upload the correlation fixture through nginx and wait for the job
         run: |
           body=$(curl -fsS -F dataset_id=fixture -F file=@fixtures/correlation/events.json http://localhost:8080/api/uploads)
