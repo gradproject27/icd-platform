@@ -15,14 +15,16 @@ Week 1 is done. This is what is on `main`:
 | C5 | The response workflow specification and the authentication approach and threat model |
 | AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. HPC results and the model pin are still to fill |
 
+Week 2 is in progress. C4 so far: the upload page on C1's real upload and job API (#20), the incident list (#22) and the pending decision panel (#23), the last two on a dev-only stub server until C3's and C5's endpoints exist (see [Frontend](#frontend)).
+
 Not built yet:
 
 - dataset parsers (C2); only the `fixture` format (a JSON list of Events) is ingested so far;
 - the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
-- response windows in the backend; the countdown prototype runs against a local test server (`frontend/dev/`);
-- the dashboard screens beyond the skeleton; they show no real data yet;
+- response windows and the decision endpoints in the backend; the dashboard's countdown and decision panel run against the dev-only stub server (`frontend/dev/`);
+- the dashboard's incident detail, AI report and login screens; they are still shells (decision D10);
 - authentication and response code (C5); the API has no login and no response endpoints yet.
 
 ## Prerequisites
@@ -48,7 +50,7 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
 | `worker` | background worker: runs upload (ingest) jobs from the Postgres queue | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
-| `web` | React dashboard (skeleton); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
+| `web` | React dashboard (upload works end to end; the incident pages need the dev-only stub, see [Frontend](#frontend)); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
 Startup order is enforced by healthchecks: `db` becomes healthy, then `api` starts and applies the migrations, then `worker` and `web` start once `api` is healthy. `api` and `worker` share the `uploads` volume. Check the state with `docker compose ps`. Every service should show `(healthy)`.
 
@@ -248,6 +250,7 @@ These are written down but not yet agreed:
 | Agreement on each contract: Event and EvidencePackage (C2); ResponseAction, AuditRecord and Incident (C5); Incident (C1) | C2, C5, C1 | [contracts-v1.md, section 7](docs/contracts-v1.md#7-agreement-checklist) |
 | Response window API for the dashboard: REST and WebSocket paths, one socket per incident or per user, reads after a refresh. The countdown prototype already follows spec section 7 | C1, C5 | [countdown-prototype.md, sections 7 and 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5) |
 | API shapes the screens need: upload stages, event details, risk factor labels, decision type | C1, C2, C3, C5 | [wireframes.md, section 6](docs/wireframes.md#6-open-questions) |
+| C4's proposed shapes: `IncidentSummary` with entities and `recommended_scenario_id` (C3), and the decision call `POST /incidents/{id}/decisions` with `GET /incidents/{id}/decision` (C5) | C3, C5 | [frontend/src/api/proposed.ts](frontend/src/api/proposed.ts), PR #23 |
 | Which CSV dataset (UNSW-NB15 or CIC-IDS2017), and Precinct6 used as an agreement check only, not ground truth | Whole team | [dataset-profile.md, section 10](docs/dataset-profile.md#10-open-questions-and-review) |
 | Unresolved dataset licences (OTRF, EPSS, CIRCL, NVD) and which NIST resource the data plan means | C2, whole team, supervisor | [dataset-licence-register.md, section 4](docs/dataset-licence-register.md#4-open-licence-questions) |
 | Analysis confidence and valid-analysis rules for the freeze: AI1's proposal is written, C5 to agree | AI1, C5 | [ai1-analysis-design.md, section 7](docs/ai1-analysis-design.md#7-valid-analysis-and-confidence-response-spec-section-5) |
