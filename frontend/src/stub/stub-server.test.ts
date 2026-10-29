@@ -122,6 +122,14 @@ describe("stub server", () => {
     expect(health.headers.get("x-upstream")).toBe("yes");
     expect(await health.json()).toMatchObject({ method: "GET", path: "/health" });
 
+    // C1's dataset and job endpoints go to the real API too; only incidents and windows are stubbed.
+    for (const path of ["/datasets", "/jobs/job-123"]) {
+      const answer = await fetch(`${url}${path}`);
+      expect(answer.headers.get("x-upstream")).toBe("yes");
+      expect(answer.headers.get("x-icd-stub")).toBeNull();
+      expect(await answer.json()).toMatchObject({ method: "GET", path });
+    }
+
     const body = new Uint8Array(300_000).map((_, index) => index % 251);
     const contentType = "multipart/form-data; boundary=test-boundary";
     const upload = await fetch(`${url}/uploads?x=1`, {

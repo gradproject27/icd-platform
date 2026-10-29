@@ -58,11 +58,11 @@ describe("routing", () => {
     await screen.findByText("API online");
   });
 
-  it("routes to the decision page, which reports an incident it cannot load", async () => {
+  it("routes to the decision page, which reports an unknown incident as not found", async () => {
     renderAt("/incidents/inc-1/decision");
 
     expect(screen.getByRole("heading", { name: "Pending decision for incident inc-1" })).toBeInTheDocument();
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load incident inc-1.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("No incident with ID inc-1 exists.");
     expect(screen.getByRole("link", { name: "Back to incident" })).toHaveAttribute("href", "/incidents/inc-1");
     await screen.findByText("API online");
   });

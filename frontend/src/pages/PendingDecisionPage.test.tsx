@@ -74,6 +74,9 @@ function serve(incidentId: string, api: Api = {}) {
   fetchMock.mockImplementation(async (url, init) => {
     const path = String(url);
     if (path === `/api/incidents/${incidentId}`) {
+      if (!summaries.has(incidentId)) {
+        return jsonResponse({ error: { code: "not_found", message: `No incident with ID ${incidentId} exists.` } }, 404);
+      }
       return new Response(JSON.stringify(summaries.get(incidentId)), {
         status: 200,
         headers: { "Content-Type": "application/json", "X-ICD-Stub": "1" },
@@ -150,7 +153,7 @@ describe("PendingDecisionPage", () => {
       .map((radio) => radio.closest("label")?.textContent);
     expect(labels).toEqual([
       "Approve recommended action (S2, SIMULATED)",
-      "Reject and release simulated isolation",
+      "Reject and release simulated isolation (SIMULATED)",
       "Select another scenario (SIMULATED):",
       "S1 Keep the host isolated and flag it for investigation (SIMULATED)",
       "S2 Isolate the host and block the source IP (SIMULATED)",
@@ -171,7 +174,7 @@ describe("PendingDecisionPage", () => {
 
     const confirm = screen.getByRole("region", { name: "Confirm your decision" });
     expect(confirm).toHaveTextContent("Incident inc-stub-01");
-    expect(confirm).toHaveTextContent("Decision: Approve recommended action");
+    expect(confirm).toHaveTextContent("Decision: Approve recommended action (SIMULATED)");
     expect(confirm).toHaveTextContent("Scenario: S2 Isolate the host and block the source IP [SIMULATED]");
     expect(confirm).toHaveTextContent("Comment: (none)");
     expect(confirm).toHaveTextContent("No real system is changed. The action is simulated and audited.");
@@ -185,7 +188,7 @@ describe("PendingDecisionPage", () => {
     expect(postedBody(fetchMock)).toEqual({ decision: "approve", scenario_id: "S2", window_id: "win-0001", comment: null });
     const recorded = screen.getByRole("region", { name: "Decision recorded" });
     expect(recorded).toHaveTextContent("By stub-analyst at");
-    expect(recorded).toHaveTextContent("Decision: Approve recommended action");
+    expect(recorded).toHaveTextContent("Decision: Approve recommended action (SIMULATED)");
     expect(recorded).toHaveTextContent("Scenario: S2 Isolate the host and block the source IP [SIMULATED]");
     expect(recorded).toHaveTextContent("Status: Response in Progress");
     // The page header follows the new state too, not only the recorded-decision box.
@@ -198,14 +201,14 @@ describe("PendingDecisionPage", () => {
     renderPage("inc-stub-01");
     await advance(0);
 
-    fireEvent.click(option("Reject and release simulated isolation"));
+    fireEvent.click(option("Reject and release simulated isolation (SIMULATED)"));
     fireEvent.click(screen.getByRole("button", { name: "Review decision" }));
     expect(screen.getByRole("region", { name: "Confirm your decision" })).toHaveTextContent(
-      "Decision: Reject and release simulated isolation",
+      "Decision: Reject and release simulated isolation (SIMULATED)",
     );
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
 
-    expect(option("Reject and release simulated isolation")).toBeChecked();
+    expect(option("Reject and release simulated isolation (SIMULATED)")).toBeChecked();
   });
 
   it("without a window: no countdown, no isolation, 'Reject the recommendation', and select with a comment", async () => {
@@ -241,7 +244,9 @@ describe("PendingDecisionPage", () => {
     await advance(0);
 
     expect(postedBody(fetchMock)).toEqual({ decision: "select", scenario_id: "S4", window_id: null, comment: "Monitor only" });
-    expect(screen.getByRole("region", { name: "Decision recorded" })).toHaveTextContent("Comment: Monitor only");
+    const recorded = screen.getByRole("region", { name: "Decision recorded" });
+    expect(recorded).toHaveTextContent("Decision: Select another scenario (SIMULATED)");
+    expect(recorded).toHaveTextContent("Comment: Monitor only");
   });
 
   it("disables Approve with the reason when no catalogue scenario matches", async () => {
@@ -307,10 +312,10 @@ describe("PendingDecisionPage", () => {
     await advance(0);
 
     const recorded = screen.getByRole("region", { name: "Decision recorded" });
-    expect(recorded).toHaveTextContent("Decision: Reject and release simulated isolation");
+    expect(recorded).toHaveTextContent("Decision: Reject and release simulated isolation (SIMULATED)");
     expect(recorded).toHaveTextContent("Scenario: none");
     expect(recorded).toHaveTextContent("Comment: False positive");
-    expect(recorded).toHaveTextContent("Simulated isolation released.");
+    expect(recorded).toHaveTextContent("Simulated isolation released. [SIMULATED]");
     expect(recorded).not.toHaveTextContent("Action ");
     expect(screen.queryByRole("group", { name: "Your decision" })).not.toBeInTheDocument();
   });
@@ -398,6 +403,71 @@ describe("PendingDecisionPage", () => {
 
     expect(screen.queryByRole("group", { name: "Your decision" })).not.toBeInTheDocument();
     expect(screen.getByText("The options are closed: the response window has expired.")).toBeInTheDocument();
+  });
+
+  it("shows loading, then the error block when the API cannot be reached, and Retry loads again", async () => {
+    const fetchMock = serve("inc-stub-03");
+    const answer = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (url, init) => {
+      if (String(url) === "/api/incidents/inc-stub-03") throw new TypeError("Failed to fetch");
+      return answer(url, init);
+    });
+    renderPage("inc-stub-03");
+
+    expect(screen.getByText("Loading incident…")).toBeInTheDocument();
+    await advance(0);
+    expect(screen.getByRole("alert")).toHaveTextContent("Could not load incident inc-stub-03. Cannot reach the ICD API.");
+
+    fetchMock.mockImplementation(answer);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(screen.getByText("Loading incident…")).toBeInTheDocument();
+    await advance(0);
+    expect(screen.getByRole("group", { name: "Your decision" })).toBeInTheDocument();
+  });
+
+  it("shows not found, without Retry, for an unknown incident (404 not_found)", async () => {
+    serve("inc-nope");
+    renderPage("inc-nope");
+    await advance(0);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("No incident with ID inc-nope exists.");
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to the incident list" })).toHaveAttribute("href", "/incidents");
+  });
+
+  it("keeps a 404 without C1's code (endpoint not built yet) as an error with Retry", async () => {
+    const fetchMock = serve("inc-stub-03");
+    const answer = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (url, init) =>
+      String(url) === "/api/incidents/inc-stub-03" ? jsonResponse({ detail: "Not Found" }, 404) : answer(url, init),
+    );
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Could not load incident inc-stub-03. The ICD API answered with HTTP 404.",
+    );
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText(/No incident with ID/)).not.toBeInTheDocument();
+  });
+
+  it("reports a submit that cannot reach the API, keeps the choice, and records nothing", async () => {
+    serve("inc-stub-03", {
+      submit: () => {
+        throw new TypeError("Failed to fetch");
+      },
+    });
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    fireEvent.click(option("Reject the recommendation (SIMULATED)"));
+    fireEvent.click(screen.getByRole("button", { name: "Review decision" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit decision" }));
+    await advance(0);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Could not submit the decision. Cannot reach the ICD API.");
+    expect(screen.getByRole("button", { name: "Submit decision" })).toBeEnabled();
+    expect(screen.queryByRole("region", { name: "Decision recorded" })).not.toBeInTheDocument();
   });
 
   it("offers no options on an incident that is not awaiting a decision", async () => {

@@ -121,6 +121,17 @@ The TypeScript types of the six contracts in `frontend/src/api/contracts/` are g
 
 **Pending decision (Week 2).** `/incidents/:id/decision` shows the response window's countdown from the server's `deadline_at`, the simulated isolation during a freeze, the recommended catalogue scenario, and the three options of [response-workflow-spec.md, section 8](docs/response-workflow-spec.md#8-the-three-analyst-options) with an optional comment and a confirmation step; then the recorded decision, or the server's refusal (409 window expired, 403 not allowed). A compact header shows the incident's ID, state, type, risk, event times and entities (decision D10). After approve or select, the recorded decision carries a simulated `ResponseAction` (the contract as is); the page follows it once a second from Approved to Simulated, succeeded, and the incident to Resolved. A reject during a freeze shows that the simulated isolation was released. Every response label carries SIMULATED; no real system is changed. The decision endpoints (`GET /incidents/{id}/decision`, `POST /incidents/{id}/decisions`) and the summary's `recommended_scenario_id` are **proposed for C5** in `frontend/src/api/proposed.ts`, not contracts; until C5 builds them, the stub server answers them in memory (`decided_by` is `stub-analyst`, as there is no login yet). Started from the command line, the stub server opens a 60-second window for `inc-stub-01` (`-- --no-window` to skip it, `-- --window-seconds 10` for a shorter one, `-- --execute-ms 3000` for the delay before a simulated action succeeds; `curl.exe -X POST http://localhost:8001/dev/response-windows/inc-stub-01` to open it again). The recommended scenarios are hand-picked placeholders, not C5's catalogue lookup.
 
+**Real API or stub.** Which backend each working page uses (detail, AI report and login are still shells):
+
+| Page | Backend | Run |
+|---|---|---|
+| `/upload` | C1's real API (`/datasets`, `/uploads`, `/jobs/{id}`) | `npm run dev` with the API on port 8000 |
+| `/incidents` | stub (proposed for C3) | `npm run stub:server` and `npm run dev:stub` |
+| `/incidents/:id/decision` | stub: incident, response window, decision (proposed for C5) | `npm run stub:server` and `npm run dev:stub` |
+| all three together | upload forwarded to the real API, the rest on the stub | `npm run stub:server -- --api http://localhost:8000` and `npm run dev:stub` |
+
+On `npm run dev` without the stub, the list and the decision page show the API's 404 as an error with Retry, since the real API has no incident endpoints yet.
+
 **Countdown prototype (T1-11).** The pending-decision page shows the response window's countdown from the server's `deadline_at`; the browser never runs its own 60-second timer. Until the backend has response windows, a local test server plays its role: `npm run countdown:server` (port 8001, `-- --skew-ms 90000` to skew its clock), `npm run dev:countdown` (the dev server proxied to it), and `npm run countdown:measure` (accuracy table). See [docs/countdown-prototype.md](docs/countdown-prototype.md).
 
 ## Health check

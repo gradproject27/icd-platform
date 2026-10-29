@@ -25,6 +25,7 @@ const ACTION_POLL_MS = 1_000;
 type Load =
   | { kind: "loading" }
   | { kind: "error"; message: string }
+  | { kind: "not_found" }
   | { kind: "ready"; summary: IncidentSummary; stub: boolean; decision: DecisionRecord | null };
 
 const simulated = <span className="simulated-badge">[SIMULATED]</span>;
@@ -32,9 +33,9 @@ const simulated = <span className="simulated-badge">[SIMULATED]</span>;
 const timeOfDay = (iso: string) => formatLocalDateTime(iso).slice(11);
 
 function decisionLabel(decision: DecisionType, freeze: boolean): string {
-  if (decision === "approve") return "Approve recommended action";
-  if (decision === "select") return "Select another scenario";
-  return freeze ? "Reject and release simulated isolation" : "Reject the recommendation (SIMULATED)";
+  if (decision === "approve") return "Approve recommended action (SIMULATED)";
+  if (decision === "select") return "Select another scenario (SIMULATED)";
+  return freeze ? "Reject and release simulated isolation (SIMULATED)" : "Reject the recommendation (SIMULATED)";
 }
 
 function actionStateText(action: ResponseAction): string {
@@ -65,6 +66,12 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
       ([{ data, stub }, decision]) => setLoad({ kind: "ready", summary: data, stub, decision }),
       (error: unknown) => {
         if (controller.signal.aborted) return;
+        // Only C1's not_found code means the incident does not exist. A bare 404 (the real API
+        // before the incident endpoints exist) stays an error with Retry.
+        if (error instanceof ApiError && error.kind === "http" && error.status === 404 && error.code === "not_found") {
+          setLoad({ kind: "not_found" });
+          return;
+        }
         const reason = error instanceof ApiError ? error.message : "Unexpected error.";
         setLoad({ kind: "error", message: `Could not load incident ${incidentId}. ${reason}` });
       },
@@ -129,6 +136,13 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
         <h1>Pending decision for incident {incidentId}</h1>
         {load.kind === "loading" ? (
           <PageState kind="loading" message="Loading incident…" />
+        ) : load.kind === "not_found" ? (
+          <>
+            <PageState kind="error" message={`No incident with ID ${incidentId} exists.`} />
+            <p>
+              <Link to="/incidents">Go to the incident list</Link>
+            </p>
+          </>
         ) : (
           <PageState
             kind="error"
@@ -244,7 +258,7 @@ function DecisionRecorded({ decision }: { decision: DecisionRecord }) {
         </p>
       )}
       {decision.decision === "reject" && decision.window_id !== null && (
-        <p className="decision-action">Simulated isolation released.</p>
+        <p className="decision-action">Simulated isolation released. {simulated}</p>
       )}
     </section>
   );
