@@ -229,6 +229,9 @@ def score_incident(
         (events[link.event_id] for link in incident.events if link.role == EventRole.FLAGGED),
         key=lambda e: (e.timestamp, e.event_id),
     )
+    if not flagged:
+        # The contract already requires a flagged event; this keeps the error explicit.
+        raise ValueError(f"{incident.incident_id}: no flagged event to score")
     strengths = [event_strength(e, reference, config, correlation) for e in flagged]
 
     # Strongest event per (technique, entity); ties keep the earliest event.
@@ -268,7 +271,7 @@ def score_incident(
     if unknown or not rated:
         impact_reason = (
             f"asset not rated ({', '.join(sorted({a or 'none' for a in unknown})) or 'none'}): "
-            f"assumed worst case {_fmt(config.unknown_impact)} (CVSS v4.0 Not Defined = High)"
+            f"assumed {_fmt(config.unknown_impact)} (CVSS v4.0: Not Defined = High, worst case)"
         )
     else:
         value, asset = known[-1]

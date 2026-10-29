@@ -234,10 +234,10 @@ def reference_risk(flagged_ids: list[str]) -> dict:
         q = s * RISK["confidence"]["default"] * RISK["outcome"]["unknown"] * d
         if e.src_ip is not None:
             entity = str(e.src_ip)
-        elif e.user:
+        elif e.user and e.user.strip():
             entity = e.user.strip().casefold()
         else:
-            entity = e.host.strip().lower() if e.host else "none"
+            entity = e.host.strip().lower() if e.host and e.host.strip() else "none"
         key = (e.label.attack_type or "unknown", entity)
         if key not in best or q > best[key][0]:
             best[key] = (q, event_id)
@@ -248,7 +248,10 @@ def reference_risk(flagged_ids: list[str]) -> dict:
     impacts = []
     for event_id in flagged_ids:
         e = BY_ID[event_id]
-        asset = e.host.lower() if e.host else (str(e.dst_ip) if e.dst_ip else None)
+        if e.host and e.host.strip():
+            asset = e.host.strip().lower()
+        else:
+            asset = str(e.dst_ip) if e.dst_ip else None
         levels = [v for p, v in ASSETS.items() if asset and fnmatch.fnmatchcase(asset, p)]
         impacts.append(
             max(RISK["impact"]["levels"][v] for v in levels)

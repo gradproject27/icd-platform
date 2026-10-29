@@ -330,7 +330,7 @@ Deferred until a test asks for them (team, 29 Oct): progression and source bonus
 | Field | Content |
 |---|---|
 | `score`, `level` | The integer score and its level (section 11) |
-| `factors` | Two rows, each with a plain-language `reason`: `likelihood` (value `L`, contribution `100·L`) and `impact` (value `I`, contribution `100·L·I − 100·L`, zero or negative). The two contributions add up to the unrounded score |
+| `factors` | Two rows, each with a plain-language `reason`: `likelihood` (value `L`, contribution `100·L`) and `impact` (value `I`, contribution `100·L·I − 100·L`, zero or negative). The two contributions add up to the unrounded score. The weights are a nominal 1.0: the method multiplies, it does not weight. A dashboard should show the impact row as "points removed by the asset's impact", not as a weighted share |
 | `likelihood`, `impact` | `L` and `I` |
 | `flags` | `asset_unknown`, `outcome_unknown`, `severity_default`: what the score had to assume |
 | `top_contributors` | The 3 strongest groups: technique, entity, strength, strongest event ID and the reason (`S × C × O × D`) |

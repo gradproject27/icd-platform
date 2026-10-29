@@ -389,3 +389,14 @@ def test_a_20_percent_change_moves_at_most_one_fixture_incident_to_another_level
         }
         assert sum(levels[k] != base[k] for k in base) == changed[name], name
         assert levels[incident_id_for("fx-002")] == RiskLevel.HIGH, name
+
+
+def test_an_incident_without_flagged_events_is_refused_explicitly():
+    events = [ev(0, attack="Exploits", host="web-01"), ev(1, 1, status="unflagged", host="web-01")]
+    incident = incident_of(events)
+    only_context = incident.model_construct(
+        **{**dict(incident), "events": [link for link in incident.events if link.role == "context"]}
+    )
+    by_id = {e.event_id: e for e in events}
+    with pytest.raises(ValueError, match="no flagged event"):
+        score_incident(only_context, by_id, T0, NOW, RISK, CORRELATION)
