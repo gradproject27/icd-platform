@@ -61,28 +61,29 @@
     },
     {
       "dataset_id": "unsw-nb15",
-      "profiling_status": "not_profiled_yet",
+      "profiling_status": "profiled",
       "tables": ["UNSW-NB15_1.csv", "UNSW-NB15_2.csv", "UNSW-NB15_3.csv", "UNSW-NB15_4.csv"],
       "label_column": "Label",
       "attack_type_column": "attack_cat",
       "label_scope": "per_record",
       "used_in_week1": true,
-      "retrieved": "2026-10-24",
-      "notes": "Week 2 parser dataset (proposed, C2 Week 2 D1). Headerless CSVs; column 49 Label and column 48 attack_cat as documented in NUSW-NB15_features.csv. The two label values come from the features file; their counts and the measured attack_cat spellings are filled after the profile run (python -m app.ingest.cli unsw-nb15 <file> --profile). The dataset page lists the attack types below without definitions.",
+      "retrieved": "2026-10-31",
+      "notes": "Week 2 parser dataset (confirmed by C2, 28 Oct). Headerless CSVs; column 49 Label and column 48 attack_cat as documented in NUSW-NB15_features.csv (column order checked against the parser, 49 of 49 match). Counts are summed over UNSW-NB15_1.csv to UNSW-NB15_4.csv (2,540,047 data lines; the dataset page says 2,540,044), downloaded on 31 Oct 2026 from the official folder linked on the dataset page. Label holds only 0 and 1; attack_cat is empty exactly on the 2,218,764 Label 0 records. Attack types are kept trimmed (the parser trims attack_cat): ' Fuzzers' appears with a leading space in file 1 and ' Fuzzers ', ' Reconnaissance ', ' Shellcode ' with spaces on both sides in files 2 to 4. 'Backdoors' (file 1 only) and 'Backdoor' (files 2 to 4) are two spellings and are not merged.",
       "values": [
-        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for normal records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured."},
-        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured. attack_cat gives the attack category."}
+        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for normal records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": 2218764, "notes": "File 1: 677,786; file 2: 647,252; file 3: 542,576; file 4: 351,150."},
+        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": 321283, "notes": "File 1: 22,215; file 2: 52,749; file 3: 157,425; file 4: 88,894. attack_cat gives the attack category."}
       ],
       "attack_type_values": [
-        {"raw_value": "Fuzzers", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Analysis", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Backdoors", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "DoS", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Exploits", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Generic", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Reconnaissance", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Shellcode", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
-        {"raw_value": "Worms", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"}
+        {"raw_value": "Fuzzers", "count": 24246, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Analysis", "count": 2677, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Backdoors", "count": 534, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Backdoor", "count": 1795, "meaning_source": "measured in the UNSW-NB15 CSVs (all four files, 31 Oct 2026), not on the dataset page"},
+        {"raw_value": "DoS", "count": 16353, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Exploits", "count": 44525, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Generic", "count": 215481, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Reconnaissance", "count": 13987, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Shellcode", "count": 1511, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"},
+        {"raw_value": "Worms", "count": 174, "meaning_source": "UNSW-NB15 dataset page; spelling measured in the UNSW-NB15 CSVs"}
       ]
     },
     {

@@ -32,7 +32,7 @@ The 9 rows of the data plan and how deep each was profiled this week:
 | 2 | Precinct6 | ML pair training; realism and agreement check. Small sample first, larger slice later | full (small variant, slice) |
 | 3 | OTRF Security Datasets | Technique truth, ATT&CK mapping, AI report tests. Replaces building most of the lab | full (APT29 day 1 and 2, two atomic sets) |
 | 4 | NVD, KEV, EPSS, ATT&CK, CIRCL, NIST | Knowledge base for AI reports. Snapshot and hash | snapshot |
-| 5 | CIC-IDS2017 or UNSW-NB15, one only | CSV demo and ingestion test. Not used for detection training | full, **not profiled yet** (files not downloaded; follow-up PR) |
+| 5 | CIC-IDS2017 or UNSW-NB15, one only | CSV demo and ingestion test. Not used for detection training | UNSW-NB15: full (four CSVs, profiled 31 Oct 2026, section 3.4); CIC-IDS2017: not profiled (not chosen) |
 | 6 | Own lab with Atomic Red Team and Caldera | Only for techniques OTRF does not cover | register only (no data yet) |
 | 7 | Splunk BOTS | Optional second independent source if Months 3 and 4 have spare time | register only |
 | 8 | TON_IoT | Dropped from the critical path. Its sources do not join into incidents and detection is out of scope | register only |
@@ -56,7 +56,7 @@ All downloads were made on 24 Oct 2026 (UTC) and pinned to a revision where the 
 | NVD | CVE API 2.0, `resultsPerPage=1` | API 2.0 | 1 | 2,517 | one API response |
 | CIRCL | `CIRCL/vulnerability-attack-techniques` (data); cards of `vulnerability-scores`, `vulnerability-cwe-patch` | `319c3e32`; `34e6a141`; `5f6c8f60` | 11 | 2,245,585 | `train-00000-of-00001.parquet` (2,037,241) |
 
-The remaining files are licence pages, cards and API metadata (listed in the manifest). UNSW-NB15 and CIC-IDS2017 need a browser download (SharePoint folder; CIC download form) and are not in the data folder yet.
+The remaining files are licence pages, cards and API metadata (listed in the manifest). UNSW-NB15 was downloaded on 31 Oct 2026 (section 3.4). CIC-IDS2017 needs its download form and is not in the data folder.
 
 Precinct6 slice: the repo holds 51,390 files (about 7.84 GB). Not downloaded, because the same content is in another format: `graph/edges.jsonl`, `graph/graph.graphml`, `graph/nodes.jsonl`, `graph/attack_reports.jsonl` and the 51,371 files under `graph/incidents_graphml/`. The 100M variant is not used.
 
@@ -95,7 +95,19 @@ The Windows events are grouped by `Channel`. APT29 day 1 has 11 channels; the la
 
 ### 3.4 UNSW-NB15 and CIC-IDS2017
 
-Not profiled yet. The official pages document: UNSW-NB15, "The total number of records is two million and 540,044 which are stored in the four CSV files" (research.unsw.edu.au UNSW-NB15 page, retrieved 24 Oct 2026); CIC-IDS2017, a labelled-flow archive `GeneratedLabelledFlows.zip` (www.unb.ca CIC-IDS2017 page, retrieved 24 Oct 2026). A follow-up PR adds the measured inventory.
+**UNSW-NB15** (profiled 31 Oct 2026). Downloaded on 31 Oct 2026 from the official folder linked on the dataset page (`CSV Files`), on a GitHub Actions runner; the files are not in the repo or the data folder. Counts come from `python -m app.ingest.cli unsw-nb15 <file> --profile` (counts only).
+
+| File | Format | Size (bytes) | Data lines | Event time range (UTC, `Stime`) | SHA-256 (first 16) |
+|---|---|---|---|---|---|
+| `UNSW-NB15_1.csv` | CSV, headerless, 49 columns | 168,979,718 | 700,001 | 2015-01-22 11:49:37 to 2015-01-22 19:44:02 | `7d851bbeabd27894` |
+| `UNSW-NB15_2.csv` | same | 165,221,021 | 700,001 | 2015-01-22 19:43:15 to 2015-02-18 03:45:29 | `6130ad02873cc606` |
+| `UNSW-NB15_3.csv` | same | 154,588,103 | 700,001 | 2015-02-18 03:44:59 to 2015-02-18 09:00:09 | `ae990a96c3dfcd42` |
+| `UNSW-NB15_4.csv` | same | 97,588,754 | 440,044 | 2015-02-18 08:59:44 to 2015-02-18 12:21:08 | `cdf563692d51d405` |
+| `NUSW-NB15_features.csv` | CSV, column descriptions only | 4,044 | 49 columns described | n/a | `c55f19cceebb6360` |
+
+Total 2,540,047 data lines; the page says "two million and 540,044", 3 fewer (not explained by a header line: the files have none). Every line has 49 columns. The two capture days of the readme (22 Jan and 17 Feb 2015) appear as two runs of `Stime` values; file 2 spans both. The column order of `NUSW-NB15_features.csv` matches the parser's `COLUMNS` (49 of 49; column 44 is spelled `ct_src_ ltm` with a space there).
+
+**CIC-IDS2017**: not profiled (UNSW-NB15 was chosen, Q1). The page documents a labelled-flow archive `GeneratedLabelledFlows.zip` (www.unb.ca CIC-IDS2017 page, retrieved 24 Oct 2026).
 
 ### 3.5 Snapshot sources
 
@@ -178,7 +190,7 @@ The atomic sets have the same columns. In SDWIN-201018195009 the event time colu
 
 ### 4.4 UNSW-NB15 and CIC-IDS2017
 
-Not profiled yet: the files are not downloaded. The follow-up PR adds the same table. Nothing is assumed about their columns here.
+UNSW-NB15: the field mapping is in [ingestion.md](ingestion.md), section 3. Measured on all 2,540,047 records: `srcip` and `dstip` are 100% valid IP addresses (0 empty, 0 not an address); `Stime` parses as a UTC epoch in 100%; `service` is `-` (no service recognised) in 49.07% and one of the 12 named services otherwise; `host`, `user` and `privileged_user` stay null (no such column; D8). CIC-IDS2017: not profiled.
 
 ## 5. Labels
 
@@ -225,7 +237,31 @@ The individual alert tags are not defined in the README. They are alerts of a su
 
 ### 5.4 UNSW-NB15 and CIC-IDS2017
 
-Not profiled yet. The pages list the label vocabulary without definitions: UNSW-NB15 names nine attack types, "Fuzzers, Analysis, Backdoors, DoS, Exploits, Generic, Reconnaissance, Shellcode and Worms"; CIC-IDS2017 names each attack with its day and time window, and Monday as "Benign (Normal human activities)". These appear in the mapping file with null counts and a pending status until the CSV values are measured.
+**UNSW-NB15** (per record, all four files). `Label` holds only `0` and `1`, as `NUSW-NB15_features.csv` documents ("0 for normal and 1 for attack records"):
+
+| `Label` | Status (proposed) | File 1 | File 2 | File 3 | File 4 | Total | Share |
+|---|---|---|---|---|---|---|---|
+| `0` | unflagged | 677,786 | 647,252 | 542,576 | 351,150 | 2,218,764 | 87.35% |
+| `1` | flagged | 22,215 | 52,749 | 157,425 | 88,894 | 321,283 | 12.65% |
+
+`attack_cat` is empty on exactly the `Label` 0 records and set on every `Label` 1 record. Attack types (trimmed, as the parser stores them):
+
+| Attack type | Records | Spelling in the files |
+|---|---|---|
+| Generic | 215,481 | as written |
+| Exploits | 44,525 | as written |
+| Fuzzers | 24,246 | ` Fuzzers` (file 1), ` Fuzzers ` (files 2 to 4) |
+| DoS | 16,353 | as written |
+| Reconnaissance | 13,987 | as written (file 1), ` Reconnaissance ` (files 2 to 4) |
+| Analysis | 2,677 | as written |
+| Backdoor | 1,795 | files 2 to 4 only; not on the dataset page |
+| Shellcode | 1,511 | as written (file 1), ` Shellcode ` (files 2 to 4) |
+| Backdoors | 534 | file 1 only |
+| Worms | 174 | as written |
+
+`Backdoors` and `Backdoor` are two spellings and are not merged (D5); C3's correlation and risk settings already list both. The page names nine attack types without definitions. A full intake of `UNSW-NB15_1.csv` gives 0 quarantined records ([ingestion.md](ingestion.md), section 8).
+
+**CIC-IDS2017**: not profiled. The page names each attack with its day and time window, and Monday as "Benign (Normal human activities)". These stay in the mapping file with null counts and a pending status.
 
 ## 6. Data quality
 
@@ -249,8 +285,12 @@ Effect on ingestion: **reject** (FR-03: no ID or no timestamp, never an Event), 
 | Timestamp without a year | Loghub Android, Linux, Mac, OpenSSH, Proxifier | 2,000 each | 100% | quarantine until a year is configured **(proposed)** |
 | Timestamp without a zone | Loghub (13 of 16 systems), OTRF | n/a | n/a | normalise with a per-source zone setting |
 | Not an address in an address column | Loghub OpenStack `ADDR`, Mac `Address` | 1,845 / 54 | 92.25% / 2.70% | normalise to null |
-| Headerless CSV | UNSW-NB15 (documented: column names come from the features file) | not profiled yet | n/a | normalise: names from the features file |
-| Encoding and label spelling problems | UNSW-NB15, CIC-IDS2017 | not profiled yet | n/a | quarantine unmapped values (Q8) |
+| Headerless CSV | UNSW-NB15 (all four files; column names come from the features file) | 4 files | 100% | normalise: names from the features file (order checked, 49 of 49) |
+| Spaces around attack types | UNSW-NB15 `attack_cat` (` Fuzzers`, ` Fuzzers `, ` Reconnaissance `, ` Shellcode `) | 37,762 | 1.49% | normalise: trimmed (D5) |
+| Two spellings of one attack type | UNSW-NB15 `attack_cat`: `Backdoors` (file 1), `Backdoor` (files 2 to 4) | 534 / 1,795 | 0.02% / 0.07% | keep both; never merged (D5) |
+| Record count differs from the page | UNSW-NB15: 2,540,047 data lines, page says 2,540,044 | 3 | n/a | keep; reported only |
+| Unknown label values, wrong column count, bad timestamps, bad encoding | UNSW-NB15 (all four files); `UNSW-NB15_1.csv` full intake | 0 | 0% | none |
+| Label spelling problems | CIC-IDS2017 | not profiled | n/a | quarantine unmapped values (Q8) |
 | Encoding problems | Loghub raw logs (0 non-UTF-8 lines); OTRF and Precinct6 JSON lines (0 lines that failed to parse) | 0 | 0% | none |
 
 ## 7. Multi-stage attacks and ground truth
@@ -288,9 +328,9 @@ Neither file gives step start or end times (0 time values in the xlsx, 0 `hh:mm`
 
 Usable for: technique truth at dataset level, ATT&CK mapping and AI report tests. Not usable yet for pairwise correlation metrics.
 
-### 7.3 UNSW-NB15: ground-truth file, not profiled yet
+### 7.3 UNSW-NB15: ground-truth file, not compared yet
 
-The page says: "The ground truth table is named UNSW-NB15_GT.csv and the list of event file is called UNSW-NB15_LIST_EVENTS.csv" (retrieved 24 Oct 2026). How many ground-truth rows match records by time and category is measured in the follow-up PR.
+The page says: "The ground truth table is named UNSW-NB15_GT.csv and the list of event file is called UNSW-NB15_LIST_EVENTS.csv" (retrieved 24 Oct 2026). The official folder holds `NUSW-NB15_GT.csv` (86,426,111 bytes) and `UNSW-NB15_LIST_EVENTS.csv` (4,639 bytes) under `CSV Files`; the readme writes `UNSW-NB15_GT.csv`. Matching ground-truth rows to records by time and category is not done yet (Week 3 if C3 needs it).
 
 ### 7.4 CIC-IDS2017: documented attack schedule
 
@@ -315,7 +355,7 @@ Small enough for a laptop:
 
 | Purpose | Subset | Records | Why |
 |---|---|---|---|
-| CSV ingestion test | UNSW-NB15 (proposed choice, Q1), file `UNSW-NB15_1.csv` | not profiled yet | One headerless file tests the features-file path |
+| CSV ingestion test | UNSW-NB15 (Q1), file `UNSW-NB15_1.csv` | 700,001 (22,215 flagged) | One headerless file tests the features-file path; full intake in about 53 s |
 | Correlation development, flagged events | Precinct6 `incident_signals` | 238,511 | All linked to incidents; `src_ip` 100.00% and `dst_ip` 99.96% valid; ports about 96% present |
 | Correlation development, context | Precinct6 live `signals` with `timestamp` in [2024-07-29 00:00, 2024-07-30 00:00) UTC | 411,564: 397,315 benign, 10,734 suspicious, 3,515 malicious | All three labels in one timeline; every malicious row in the slice has a valid `src_ip` |
 | AI report tests | OTRF APT29 day 1 | 196,081 | Documented steps and techniques |
@@ -324,7 +364,7 @@ The two Precinct6 parts are on different timelines: only 43 `incident_signals` r
 
 ## 9. Licensing summary
 
-Every source, its licence or terms as written, and its status are in [dataset-licence-register.md](dataset-licence-register.md). Unresolved: OTRF (conflicting: the `LICENSE` file says MIT, the README heading says GPL-3.0), FIRST EPSS (no licence text found), CIRCL vulnerability-cwe-patch (no licence in its card), NVD (terms page not readable without a browser), UNSW-NB15 and CIC-IDS2017 terms to be re-read when the files are downloaded, and which NIST resource the plan means. No dataset record goes in git.
+Every source, its licence or terms as written, and its status are in [dataset-licence-register.md](dataset-licence-register.md). Unresolved: OTRF (conflicting: the `LICENSE` file says MIT, the README heading says GPL-3.0), FIRST EPSS (no licence text found), CIRCL vulnerability-cwe-patch (no licence in its card), NVD (terms page not readable without a browser), UNSW-NB15 terms re-read on 31 Oct 2026 (academic use granted; the readme in the download is stricter on commercial use than the page), CIC-IDS2017 terms to be re-read if it is ever downloaded, and which NIST resource the plan means. No dataset record goes in git.
 
 ## 10. Open questions and review
 
@@ -334,7 +374,7 @@ Each question has a proposed default that applies until the team decides.
 
 | # | Question | Proposed default | Section |
 |---|---|---|---|
-| Q1 | Which CSV dataset: UNSW-NB15 or CIC-IDS2017? | UNSW-NB15 (proposed); confirm after both are profiled | 1, 8 |
+| Q1 | Which CSV dataset: UNSW-NB15 or CIC-IDS2017? | UNSW-NB15 (confirmed for Week 2 by C2, 28 Oct) | 1, 8 |
 | Q2 | OTRF licence: MIT (`LICENSE` file) or GPL-3.0 (README heading)? | Unresolved; use for development only, never redistribute OTRF data, cite the repo | 9 |
 | Q3 | EPSS licence | Unresolved; use the scores inside ICD, cite FIRST, do not redistribute the snapshot | 9 |
 | Q4 | CIRCL vulnerability-cwe-patch licence | Unresolved; not used in Week 1 (not downloaded) | 9 |
