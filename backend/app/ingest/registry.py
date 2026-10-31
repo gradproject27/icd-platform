@@ -3,9 +3,11 @@
 from app.api.schemas import DatasetSource
 from app.ingest.fixture import parse_fixture
 from app.ingest.interface import Parser
+from app.ingest.unsw_nb15 import parse_unsw_nb15
 
 PARSERS: dict[DatasetSource, Parser] = {
     DatasetSource.FIXTURE: parse_fixture,
+    DatasetSource.UNSW_NB15: parse_unsw_nb15,
 }
 
 DATASET_NAMES: dict[DatasetSource, str] = {

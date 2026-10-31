@@ -19,7 +19,7 @@ Week 2 is in progress. C4 so far: the upload page on C1's real upload and job AP
 
 Not built yet:
 
-- dataset parsers (C2); only the `fixture` format (a JSON list of Events) is ingested so far;
+- dataset parsers beyond UNSW-NB15 (C2: Precinct6 and OTRF in Week 3);
 - the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
@@ -118,7 +118,7 @@ npm run build
 
 The TypeScript types of the six contracts in `frontend/src/api/contracts/` are generated from `contracts/schemas/` and never edited by hand. The types of C1's API shapes (upload, job, dataset list, error) in `frontend/src/api/c1/` are generated the same way from `docs/api/schemas/`, and kept apart from the contracts. After C3 or C1 changes a schema, run `npm run contracts:gen` and commit the result; `npm run contracts:check` fails CI if either folder is out of date.
 
-**Upload page (Week 2).** `/upload` runs on C1's real upload and job API ([docs/api-upload-jobs.md](docs/api-upload-jobs.md)): choose a dataset source from `GET /datasets` and a file, follow the upload percentage, then the job's processing steps and intake counts (records read, events stored, labelled, unlabelled, quarantined) until it is done or failed. The job ID is kept in the URL (`/upload?job=<job_id>`), so a refresh keeps following the same job and never uploads again. All network code is in `frontend/src/api/`: `request()` for JSON calls and `uploadFile()` (XMLHttpRequest, for upload progress and without the 5-second timeout) for the file. To try it, run the whole stack with `docker compose up --build` and open http://localhost:8080/upload; only the `fixture` dataset has a parser so far, for example `fixtures/correlation/events.json`.
+**Upload page (Week 2).** `/upload` runs on C1's real upload and job API ([docs/api-upload-jobs.md](docs/api-upload-jobs.md)): choose a dataset source from `GET /datasets` and a file, follow the upload percentage, then the job's processing steps and intake counts (records read, events stored, labelled, unlabelled, quarantined) until it is done or failed. The job ID is kept in the URL (`/upload?job=<job_id>`), so a refresh keeps following the same job and never uploads again. All network code is in `frontend/src/api/`: `request()` for JSON calls and `uploadFile()` (XMLHttpRequest, for upload progress and without the 5-second timeout) for the file. To try it, run the whole stack with `docker compose up --build` and open http://localhost:8080/upload; the `fixture` dataset (for example `fixtures/correlation/events.json`) and `unsw-nb15` (for example `fixtures/ingest/unsw-nb15-sample.csv`) have parsers.
 
 **Incident list on stub data (Week 2).** `/incidents` lists incidents with time, entities, type, risk, state and analysis status, sorted and filtered in the browser; the filters and the sort stay in the URL (`?level=high&state=awaiting_human_decision&sort=risk`). C3's incident API does not exist yet, so a **dev-only stub server** answers the proposed `GET /incidents` and `GET /incidents/{id}` (shape `IncidentSummary` in `frontend/src/api/proposed.ts`, proposed for C3, not a contract) with 13 example incidents, one per incident in C3's correlation fixtures. Every stub answer carries `X-ICD-Stub: 1`, and the page then shows "STUB DATA: scores and states are examples, not C3 results"; the risk values are hand-written placeholders, not C3's scoring. Run `npm run stub:server` (port 8001; add `-- --api http://localhost:8000` to forward every other path, such as uploads, to the real API) and `npm run dev:stub`, then open http://localhost:5173/incidents. `npm run stub:build` regenerates `frontend/dev/stub-data/incidents.json` from the fixtures and the hand-written `overlay.json`; a test fails if it is out of date. The app never imports the stub data: only the proxy target changes.
 
@@ -160,7 +160,7 @@ curl.exe "http://localhost:8080/api/uploads/<upload_id>/events?label_status=flag
 
 The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
 
-Only `fixture` has a parser so far; an upload for another dataset is stored and its job fails with `no_parser` until C2's parser is registered in `backend/app/ingest/registry.py`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
+Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingestion.md)); an upload for another dataset is stored and its job fails with `no_parser` until its parser is registered in `backend/app/ingest/registry.py`. To run the UNSW-NB15 parser on a local file without the stack: `cd backend` then `python -m app.ingest.cli unsw-nb15 <path>/UNSW-NB15_1.csv`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
 
 ## Shared contracts
 
@@ -244,6 +244,8 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
 | [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the five local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed |
+| [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
+| [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
 | [docs/api-upload-jobs.md](docs/api-upload-jobs.md) | C1 | Week 2 | Upload, job status and analysis API: endpoints, request and response examples for every state, error codes, parser interface for C2 |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
@@ -294,7 +296,7 @@ icd-platform/
 │   │   ├── settings.py   upload dir, size limit, worker timings (from the environment)
 │   │   ├── storage.py    uploaded files on the shared volume
 │   │   ├── api/          upload, job and event endpoints, their shapes (schemas.py) and export.py
-│   │   ├── ingest/       parser interface and registry (C2 adds parsers), fixture parser
+│   │   ├── ingest/       parser interface and registry, fixture parser (C1); UNSW-NB15 parser, normalizer, labels, event types, intake CLI (C2)
 │   │   ├── jobs/         Postgres job queue and the ingest job
 │   │   ├── worker/       the worker process: python -m app.worker
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
@@ -303,7 +305,7 @@ icd-platform/
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
 │   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine)
 │   ├── alembic.ini
-│   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5)
+│   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5), ingest/ (C2 parser)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)
 │   ├── src/              pages, components, API client, generated contract types, countdown
 │   ├── dev/              countdown test server and accuracy script (dev and test only)
@@ -311,7 +313,8 @@ icd-platform/
 ├── contracts/            owned by C3
 │   ├── schemas/          generated JSON Schemas, one per contract
 │   ├── examples/         one valid synthetic example per contract
-│   └── label-mapping.json  dataset labels to EventLabel (owned by C2)
+│   ├── label-mapping.json  dataset labels to EventLabel (owned by C2)
+│   └── event-types.json    event_type vocabulary (owned by C2)
 ├── tools/ai1/            AI1 HPC probe, model benchmark and synthetic samples
 ├── docs/                 design documents and notes (see Documentation above); api/ holds the API schemas and examples
 ├── .github/              CI workflow and PR template

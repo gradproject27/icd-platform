@@ -1,0 +1,185 @@
+{
+  "mapping_version": "1.0",
+  "schema_version": "1.0",
+  "status": "v1, for team review",
+  "owner": "C2",
+  "task": "T1-06",
+  "profiled": "2026-10-24",
+  "documentation": "docs/dataset-profile.md, section 5; docs/dataset-licence-register.md",
+  "rules": {
+    "missing_label": "unlabelled",
+    "match": "exact, case-sensitive raw value as it appears in the source; no trimming, no merging of variants",
+    "unknown_value": "quarantine",
+    "never_infer": "A label is never inferred from IPs, hosts, users or how an event looks (OD-21, FR-41).",
+    "pending_values": "A value with status null and decision pending is present but not mapped. The contract allows unlabelled only when raw_value is null, so its records are quarantined until the team decides (proposed; open question for C3, the alternative is a contract change).",
+    "attack_type_values": "Values of an attack-type column are kept as EventLabel.attack_type, never mapped to a status.",
+    "counts": "Profiled record counts from c2-profiling/out/profile.json (not committed); null where the source is not profiled yet."
+  },
+  "sources": [
+    {
+      "dataset_id": "precinct6",
+      "profiling_status": "profiled",
+      "tables": ["signals/signals.parquet", "signals/incident_signals.parquet"],
+      "label_column": "label_binary",
+      "attack_type_column": null,
+      "label_scope": "per_record",
+      "used_in_week1": true,
+      "retrieved": "2026-10-24",
+      "notes": "Every label comes from WitFoo Precinct's correlation engine; flagged is exactly the set of events linked to Precinct incidents (7,728 of 7,728 in signals, 238,511 of 238,511 in incident_signals). The attack-type columns (mo_name, attack_techniques) are CON-20 columns, so attack_type stays null. Mapping proposed, team to confirm.",
+      "values": [
+        {
+          "raw_value": "malicious",
+          "status": "flagged",
+          "decision": "proposed",
+          "meaning": "the event is a triggering signal (lead) of a Precinct incident",
+          "meaning_source": "precinct6/README.md, Labeling methodology",
+          "count": 246239,
+          "counts_by_table": {"signals": 7728, "incident_signals": 238511},
+          "notes": ""
+        },
+        {
+          "raw_value": "suspicious",
+          "status": "unflagged",
+          "decision": "proposed",
+          "meaning": "the event matched one or more of WitFoo's 261 lead detection rules but is not a lead of any incident.",
+          "meaning_source": "precinct6/README.md, Labeling methodology",
+          "count": 106793,
+          "counts_by_table": {"signals": 106793, "incident_signals": 0},
+          "notes": "Not a lead of any incident, so it enters as context: never discarded, raw value kept visible. Open question: flagged or unflagged."
+        },
+        {
+          "raw_value": "benign",
+          "status": "unflagged",
+          "decision": "proposed",
+          "meaning": "no rule matched and the event is not part of any incident.",
+          "meaning_source": "precinct6/README.md, Labeling methodology",
+          "count": 1897153,
+          "counts_by_table": {"signals": 1897153, "incident_signals": 0},
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "dataset_id": "unsw-nb15",
+      "profiling_status": "not_profiled_yet",
+      "tables": ["UNSW-NB15_1.csv", "UNSW-NB15_2.csv", "UNSW-NB15_3.csv", "UNSW-NB15_4.csv"],
+      "label_column": "Label",
+      "attack_type_column": "attack_cat",
+      "label_scope": "per_record",
+      "used_in_week1": true,
+      "retrieved": "2026-10-24",
+      "notes": "Week 2 parser dataset (proposed, C2 Week 2 D1). Headerless CSVs; column 49 Label and column 48 attack_cat as documented in NUSW-NB15_features.csv. The two label values come from the features file; their counts and the measured attack_cat spellings are filled after the profile run (python -m app.ingest.cli unsw-nb15 <file> --profile). The dataset page lists the attack types below without definitions.",
+      "values": [
+        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for normal records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured."},
+        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack records", "meaning_source": "NUSW-NB15_features.csv, column 49 (Label): 0 for normal and 1 for attack records", "count": null, "notes": "Count to be measured. attack_cat gives the attack category."}
+      ],
+      "attack_type_values": [
+        {"raw_value": "Fuzzers", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Analysis", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Backdoors", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "DoS", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Exploits", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Generic", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Reconnaissance", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Shellcode", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"},
+        {"raw_value": "Worms", "count": null, "meaning_source": "UNSW-NB15 dataset page (spelling to be checked against the CSVs)"}
+      ]
+    },
+    {
+      "dataset_id": "cic-ids2017",
+      "profiling_status": "not_profiled_yet",
+      "tables": [],
+      "label_column": null,
+      "attack_type_column": null,
+      "label_scope": "per_record",
+      "used_in_week1": false,
+      "retrieved": "2026-10-24",
+      "notes": "Alternative CSV dataset; the team picks one of UNSW-NB15 and CIC-IDS2017. Files not downloaded yet. The values below are the names the dataset page gives (attack schedule), not yet checked against the CSV spelling, so every status is pending.",
+      "values": [
+        {"raw_value": "Benign", "status": null, "decision": "pending", "meaning": "Benign (Normal human activities)", "meaning_source": "CIC-IDS2017 dataset page, Monday", "count": null, "notes": "Page wording; the CSV value is to be measured."},
+        {"raw_value": "FTP-Patator", "status": null, "decision": "pending", "meaning": "Brute Force FTP-Patator (9:20 – 10:20 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Tuesday", "count": null, "notes": ""},
+        {"raw_value": "SSH-Patator", "status": null, "decision": "pending", "meaning": "SSH-Patator (14:00 – 15:00 p.m.)", "meaning_source": "CIC-IDS2017 dataset page, Tuesday", "count": null, "notes": ""},
+        {"raw_value": "DoS slowloris", "status": null, "decision": "pending", "meaning": "DoS slowloris (9:47 – 10:10 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Wednesday", "count": null, "notes": ""},
+        {"raw_value": "DoS Slowhttptest", "status": null, "decision": "pending", "meaning": "DoS Slowhttptest (10:14 – 10:35 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Wednesday", "count": null, "notes": ""},
+        {"raw_value": "DoS Hulk", "status": null, "decision": "pending", "meaning": "DoS Hulk (10:43 – 11 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Wednesday", "count": null, "notes": ""},
+        {"raw_value": "DoS GoldenEye", "status": null, "decision": "pending", "meaning": "DoS GoldenEye (11:10 – 11:23 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Wednesday", "count": null, "notes": ""},
+        {"raw_value": "Heartbleed", "status": null, "decision": "pending", "meaning": "Heartbleed Port 444 (15:12 - 15:32)", "meaning_source": "CIC-IDS2017 dataset page, Wednesday", "count": null, "notes": ""},
+        {"raw_value": "Web Attack – Brute Force", "status": null, "decision": "pending", "meaning": "Web Attack – Brute Force (9:20 – 10 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Thursday", "count": null, "notes": "The dash may be stored differently in the CSV."},
+        {"raw_value": "Web Attack – XSS", "status": null, "decision": "pending", "meaning": "Web Attack – XSS (10:15 – 10:35 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Thursday", "count": null, "notes": "The dash may be stored differently in the CSV."},
+        {"raw_value": "Web Attack – Sql Injection", "status": null, "decision": "pending", "meaning": "Web Attack – Sql Injection (10:40 – 10:42 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Thursday", "count": null, "notes": "The dash may be stored differently in the CSV."},
+        {"raw_value": "Infiltration", "status": null, "decision": "pending", "meaning": "Infiltration – Dropbox download Meta exploit Win Vista; Infiltration – Cool disk – MAC; Infiltration – Dropbox download Win Vista", "meaning_source": "CIC-IDS2017 dataset page, Thursday", "count": null, "notes": ""},
+        {"raw_value": "Botnet ARES", "status": null, "decision": "pending", "meaning": "Botnet ARES (10:02 a.m. – 11:02 a.m.)", "meaning_source": "CIC-IDS2017 dataset page, Friday", "count": null, "notes": ""},
+        {"raw_value": "Port Scan", "status": null, "decision": "pending", "meaning": "Port Scan: Firewall Rule on (13:55 – 13:57, ...) Firewall rules off (...)", "meaning_source": "CIC-IDS2017 dataset page, Friday", "count": null, "notes": ""},
+        {"raw_value": "DDoS LOIT", "status": null, "decision": "pending", "meaning": "DDoS LOIT (15:56 – 16:16)", "meaning_source": "CIC-IDS2017 dataset page, Friday", "count": null, "notes": ""}
+      ],
+      "attack_type_values": [
+        {"raw_value": "FTP-Patator", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "SSH-Patator", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "DoS slowloris", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "DoS Slowhttptest", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "DoS Hulk", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "DoS GoldenEye", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Heartbleed", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Web Attack – Brute Force", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Web Attack – XSS", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Web Attack – Sql Injection", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Infiltration", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Botnet ARES", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "Port Scan", "count": null, "meaning_source": "CIC-IDS2017 dataset page"},
+        {"raw_value": "DDoS LOIT", "count": null, "meaning_source": "CIC-IDS2017 dataset page"}
+      ]
+    },
+    {
+      "dataset_id": "loghub-bgl",
+      "profiling_status": "profiled",
+      "tables": ["BGL/BGL_2k.log_structured.csv"],
+      "label_column": "Label",
+      "attack_type_column": null,
+      "label_scope": "per_record",
+      "used_in_week1": false,
+      "retrieved": "2026-10-24",
+      "notes": "Parser tests only (data plan row 9). Alerts of a supercomputer, not attacks. The README defines '-' as non-alert and every other value as an alert; the individual tags are not defined.",
+      "values": [
+        {"raw_value": "-", "status": "unflagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 1857, "notes": ""},
+        {"raw_value": "KERNDTLB", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 60, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "KERNSTOR", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 30, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPSEV", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 17, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "KERNMNTF", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 11, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "KERNTERM", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 7, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "KERNREC", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 5, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPRES", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 4, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPREAD", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 3, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "KERNRTSP", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 2, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPTO", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 2, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPCHILD", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 1, "notes": "Alert category tag; the tag itself is not defined."},
+        {"raw_value": "APPOUT", "status": "flagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/BGL/README.md", "count": 1, "notes": "Alert category tag; the tag itself is not defined."}
+      ]
+    },
+    {
+      "dataset_id": "loghub-thunderbird",
+      "profiling_status": "profiled",
+      "tables": ["Thunderbird/Thunderbird_2k.log_structured.csv"],
+      "label_column": "Label",
+      "attack_type_column": null,
+      "label_scope": "per_record",
+      "used_in_week1": false,
+      "retrieved": "2026-10-24",
+      "notes": "Parser tests only (data plan row 9). The 2k sample holds non-alert messages only.",
+      "values": [
+        {"raw_value": "-", "status": "unflagged", "decision": "proposed", "meaning": "In the first column of the log, \"-\" indicates non-alert messages while others are alert messages.", "meaning_source": "loghub/Thunderbird/README.md", "count": 2000, "notes": ""}
+      ]
+    },
+    {
+      "dataset_id": "otrf",
+      "profiling_status": "profiled",
+      "tables": ["apt29_evals_day1_manual.zip", "apt29_evals_day2_manual.zip", "psh_lsass_memory_dump_comsvcs.zip", "covenant_copy_smb_CreateRequest.zip"],
+      "label_column": null,
+      "attack_type_column": null,
+      "label_scope": "per_dataset",
+      "used_in_week1": true,
+      "retrieved": "2026-10-24",
+      "notes": "OTRF events carry no label field. The ATT&CK techniques are dataset metadata (metadata YAML, APT29 emulation plan), so every event enters as unlabelled with the technique kept as dataset-level metadata, never as a per-event label.",
+      "values": []
+    }
+  ]
+}
