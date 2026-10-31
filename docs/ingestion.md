@@ -98,4 +98,12 @@ Lines are read as bytes with a 64 KiB limit, decoded strictly, and parsed one at
 
 ## 8. Determinism and speed
 
-Same file and same `ingested_at` give the same items (`test_deterministic`). Measured on a 700,000-line synthetic file in the UNSW layout (126 MB): about 90 s for the parser alone, and 4 min 16 s for the whole upload job (parse, store in PostgreSQL in batches of 1,000, check the counts) on the development container. The real `UNSW-NB15_1.csv` time is recorded in the Week 2 PR.
+Same file and same `ingested_at` give the same items (`test_deterministic`). Measured on a 700,000-line synthetic file in the UNSW layout (126 MB): about 90 s for the parser alone, and 4 min 16 s for the whole upload job (parse, store in PostgreSQL in batches of 1,000, check the counts) on the development container. 
+
+**Real file, 31 Oct 2026.** `python -m app.ingest.cli unsw-nb15 UNSW-NB15_1.csv` (parser and intake counting, no database) on a GitHub Actions runner (4 vCPU Intel Xeon Platinum 8573C, 15 GB RAM, Python 3.12):
+
+| File | Bytes | Records read | Normalized | Labelled (flagged / unflagged) | Unlabelled | Quarantined | Time | Records/s |
+|---|---|---|---|---|---|---|---|---|
+| `UNSW-NB15_1.csv` | 168,979,718 | 700,001 | 700,001 | 700,001 (22,215 / 677,786) | 0 | 0 | 52.2 s (second run 52.6 s) | 13,405 |
+
+labelled + unlabelled + quarantined = records read. The full upload job with PostgreSQL was not timed on the real file; on the synthetic file of the same size it took about 2.8 times the parser time.
