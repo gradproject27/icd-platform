@@ -106,4 +106,38 @@ Same file and same `ingested_at` give the same items (`test_deterministic`). Mea
 |---|---|---|---|---|---|---|---|---|
 | `UNSW-NB15_1.csv` | 168,979,718 | 700,001 | 700,001 | 700,001 (22,215 / 677,786) | 0 | 0 | 52.2 s (second run 52.6 s) | 13,405 |
 
-labelled + unlabelled + quarantined = records read. The full upload job with PostgreSQL was not timed on the real file; on the synthetic file of the same size it took about 2.8 times the parser time.
+labelled + unlabelled + quarantined = records read.
+
+**All four files, time and peak memory (T3-05), 2 Nov 2026.** Same command under `/usr/bin/time -v` on a GitHub Actions runner (4 vCPU AMD EPYC 7763, 16 GB RAM, Python 3.12; slower per core than the 31 Oct runner, so file 1 took 73 s here instead of 52 s). The files were downloaded on the runner and deleted with it.
+
+| File | Records read | Flagged / unflagged | Quarantined | Time | Records/s | Peak memory (RSS) |
+|---|---|---|---|---|---|---|
+| `UNSW-NB15_1.csv` | 700,001 | 22,215 / 677,786 | 0 | 73.2 s | 9,566 | 130 MB |
+| `UNSW-NB15_2.csv` | 700,001 | 52,749 / 647,252 | 0 | 70.8 s | 9,893 | 129 MB |
+| `UNSW-NB15_3.csv` | 700,001 | 157,425 / 542,576 | 0 | 69.4 s | 10,088 | 129 MB |
+| `UNSW-NB15_4.csv` | 440,044 | 88,894 / 351,150 | 0 | 43.9 s | 10,034 | 83 MB |
+| **All four** | **2,540,047** | **321,283 / 2,218,764** | **0** | **257.2 s (4 min 17 s)** | **9,876** | **130 MB** (one file at a time) |
+
+Memory does not grow with the file: the parser streams line by line, and the peak is the Python process plus the duplicate-ID set of one file.
+
+**Full upload job with PostgreSQL, file 1.** `docker compose up --build`, then `POST /uploads` with `UNSW-NB15_1.csv` straight to the API, on the same runner:
+
+| Step | Result |
+|---|---|
+| Upload (169 MB, stored and hashed) | 0.6 s |
+| Upload to job `done` (parse, store in batches of 1,000, check counts) | 228.6 s (3 min 49 s); job ran 3 min 47 s |
+| Counts | 700,001 read and stored (22,215 flagged, 677,786 unflagged), 0 quarantined |
+| Peak memory (cgroup `memory.peak`) | worker 188 MB; api 415 MB; db 3.07 GB (includes PostgreSQL's file cache) |
+| Database size after the job | 1,613 MB for 700,001 events (about 2.4 KB per event) |
+
+The job takes about 3.1 times the parser alone; the extra is PostgreSQL inserts.
+
+**TD-5 budget (proposed by C2, 2 Nov 2026; for team approval).** About twice the measured values, rounded, so normal runner differences pass (decision C2-D9). Measured on a 4 vCPU runner; a slower laptop may need more.
+
+| Measure | Measured | Proposed budget |
+|---|---|---|
+| Parser, one 700,001-line file | 73 s, 130 MB | ≤ 150 s and ≤ 300 MB |
+| Parser, all four files (2.54 M records) | 4 min 17 s, 130 MB | ≤ 9 min and ≤ 300 MB |
+| Full upload job, one 700,001-line file | 3 min 49 s; worker 188 MB | ≤ 8 min; worker ≤ 400 MB |
+| Database per stored event | 2.4 KB | ≤ 4 KB (all four files ≈ 6 GB of disk) |
+| Quarantined records on the official files | 0 | 0 (any quarantine on these files is a bug to look at) |

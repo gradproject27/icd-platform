@@ -328,9 +328,31 @@ Neither file gives step start or end times (0 time values in the xlsx, 0 `hh:mm`
 
 Usable for: technique truth at dataset level, ATT&CK mapping and AI report tests. Not usable yet for pairwise correlation metrics.
 
-### 7.3 UNSW-NB15: ground-truth file, not compared yet
+### 7.3 UNSW-NB15: ground-truth file, profiled and matched (2 Nov 2026)
 
-The page says: "The ground truth table is named UNSW-NB15_GT.csv and the list of event file is called UNSW-NB15_LIST_EVENTS.csv" (retrieved 24 Oct 2026). The official folder holds `NUSW-NB15_GT.csv` (86,426,111 bytes) and `UNSW-NB15_LIST_EVENTS.csv` (4,639 bytes) under `CSV Files`; the readme writes `UNSW-NB15_GT.csv`. Matching ground-truth rows to records by time and category is not done yet (Week 3 if C3 needs it).
+The page says: "The ground truth table is named UNSW-NB15_GT.csv and the list of event file is called UNSW-NB15_LIST_EVENTS.csv" (retrieved 24 Oct 2026). The official folder holds `NUSW-NB15_GT.csv` (86,426,111 bytes) and `UNSW-NB15_LIST_EVENTS.csv` (4,639 bytes, 208 rows: attack category, subcategory, number of events) under `CSV Files`; the readme writes `UNSW-NB15_GT.csv`. Profiled on a GitHub Actions runner on 2 Nov 2026 (counts only; the files contain real IPs and are not committed).
+
+| Measure | Value |
+|---|---|
+| Columns (12, with a header line) | `Start time`, `Last time`, `Attack category`, `Attack subcategory`, `Protocol`, `Source IP`, `Source Port`, `Destination IP`, `Destination Port`, `Attack Name`, `Attack Reference`, `.` |
+| Rows | 174,347 (all 12 columns; 0 unparsed times) |
+| Time range (UTC epoch seconds) | 2015-01-22 11:50:14 to 2015-02-18 12:21:09 |
+| Duration `Last time` − `Start time` | min 0 s, median 0 s, 95th percentile 8 s, max 60 s |
+| Attack categories (trimmed) | Exploits 68,217 · Fuzzers 33,638 · DoS 24,582 · Reconnaissance 20,136 · Generic 19,860 · Backdoor 4,097 · Analysis 1,881 · Shellcode 1,511 · Backdoors 256 · Worms 169 |
+| Spelling | same variants as `attack_cat`: spaces around Fuzzers, Reconnaissance, Shellcode; both `Backdoor` and `Backdoors` |
+| Distinct subcategories / attack names / references | 106 / 7,226 / 3,072 |
+| Distinct sources / destinations / source–destination pairs | 4 / 10 / 40 |
+
+**Match with the records.** A GT row matches a record when source IP, source port, destination IP, destination port and protocol are equal and the record's `Stime` is inside [`Start time`, `Last time`]:
+
+| Result | Count |
+|---|---|
+| GT rows that match at least one record | 174,347 of 174,347 (100%) |
+| `Label` 1 records matched by a GT row | 321,283 of 321,283 (100%) |
+| `Label` 0 records matched by a GT row | 0 of 2,218,764 |
+| Matched `Label` 1 records whose `attack_cat` equals the GT category | 321,283 (100%) |
+
+So the GT file and the `Label`/`attack_cat` columns agree exactly; one GT row often covers several flow records (174,347 rows for 321,283 records). For C3 (T3-09, W3-D14): the attacks come from only 4 source and 10 destination addresses (40 pairs), so an `ip_pair` key links very many flagged events; expect a few very large incidents unless the size cap (W3-D13) splits them.
 
 ### 7.4 CIC-IDS2017: documented attack schedule
 
