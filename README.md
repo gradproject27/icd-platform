@@ -305,7 +305,7 @@ icd-platform/
 │   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
 │   │   ├── response/     C5: lifecycle table, freeze check, catalogue (response.toml), simulated executor, engine, expiry loop
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
-│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine)
+│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps)
 │   ├── alembic.ini
 │   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5), ingest/ (C2 parser)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)
