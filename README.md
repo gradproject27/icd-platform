@@ -162,6 +162,8 @@ The job goes `queued`, `running` (with a `stage`), then `done` with the intake c
 
 Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingestion.md)); an upload for another dataset is stored and its job fails with `no_parser` until its parser is registered in `backend/app/ingest/registry.py`. To run the UNSW-NB15 parser on a local file without the stack: `cd backend` then `python -m app.ingest.cli unsw-nb15 <path>/UNSW-NB15_1.csv`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
 
+**Evidence packages (C2, Week 3).** `backend/app/evidence/` builds the masked `EvidencePackage` the AI receives for one incident: up to 50 events, flagged first, then the nearest context; host, IP and user values replaced by per-incident tokens (`host-01`, `ip-01`, `user-01`) before anything leaves the app host. Try it with `cd backend` then `python -m app.evidence.cli ../fixtures/correlation/events.json`. See [docs/evidence-package.md](docs/evidence-package.md).
+
 ## Shared contracts
 
 ICD's components exchange six contracts: **Event**, **Incident**, **EvidencePackage**, **AnalysisReport**, **ResponseAction** and **AuditRecord**. C3 owns them. They are version `1.0` (`SCHEMA_VERSION` in `backend/app/contracts/common.py`) and are a **draft until frozen at M1**.

@@ -1,9 +1,9 @@
 """Event to EvidenceEvent, the citable view AI1 receives (plan section 5; OD-03).
 
-No masking yet: entity fields are copied as they are and the package stays masked=false,
-so C1's handoff refuses it until the Week 3 masker replaces host, IPs and user with tokens.
-The summary never holds an entity (docs/ingestion.md section 6), so only those four fields
-need masking.
+The entity fields are copied as they are. Never send the result as it is: the evidence
+package builder (app/evidence/builder.py) masks host, IPs and user with tokens before the
+package is built, and C1's handoff refuses a package with masked=false. The summary never
+holds an entity (docs/ingestion.md section 6), so only those four fields need masking.
 """
 
 from app.contracts import Event, EventRole, EvidenceEvent
