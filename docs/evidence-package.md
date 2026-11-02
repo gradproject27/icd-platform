@@ -50,9 +50,12 @@ Refused: a linked event that was not given (`MissingEvents`), and an incident ro
 **Calls for C1** (`app/evidence/store.py`):
 
 ```python
-package = build_and_store_package(engine, incident, events, now)    # before the analysis job; send only `package`
+# Before the analysis job; send only `package`:
+package = build_and_store_package(engine, incident, events, now)
+
+# In GET /incidents/{id}/report only:
 masking_map = load_masking_map(engine, report.evidence_package_id, report.incident_id)
-shown = unmask_report(report, masking_map)                          # in GET /incidents/{id}/report only
+shown = unmask_report(report, masking_map)
 ```
 
 The report is stored **masked**, as the model wrote it, so AI1's grounding checks compare it with the package it was given. `unmask_report` returns a copy with real values in the text fields (summary, sequence, findings, weaknesses, impact, recommendations, risk justification, uncertainty); IDs and numbers are unchanged. A token the model invented stays as it is, so the analyst can see it is not a real value. The un-masked copy is never stored or sent to the HPC.
