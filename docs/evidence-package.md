@@ -3,9 +3,9 @@
 | | |
 |---|---|
 | **Owner** | C2, Datasets & Evidence |
-| **Tasks** | T3-06 evidence package builder (workflow step 4); T3-07 masking, first part (workflow step 10) |
+| **Tasks** | T3-06 evidence package builder (workflow step 4); T3-07 masking (workflow step 10) |
 | **Decisions** | Team plan W3-D4, W3-D5; C2-D1 to C2-D7 (approved by C2, 2 Nov 2026) |
-| **Code** | `backend/app/evidence/` (`builder.py`, `masking.py`, `cli.py`); tests in `backend/tests/evidence/` |
+| **Code** | `backend/app/evidence/` (`builder.py`, `masking.py`, `store.py`, `models.py`, `cli.py`), migration `0004`; tests in `backend/tests/evidence/` |
 
 ## 1. What it does
 
@@ -43,7 +43,19 @@ Refused: a linked event that was not given (`MissingEvents`), and an incident ro
 
 ## 4. The map and the report (C2-D6, C2-D7)
 
-`MaskingMap` holds `token → (kind, real value)` for one incident. It never goes to the HPC. The report is stored **masked**, as the model wrote it, so AI1's grounding checks compare it with the package it was given. Only the API un-masks it for the analyst (`MaskingMap.unmask(text)`). Storing the map (migration 0006, `masking_maps`) and the un-masking endpoint come in the next C2 PR (T3-07, due Fri 6).
+`MaskingMap` holds `token → (kind, real value)` for one package. It never goes to the HPC.
+
+**Storage (migration 0004, `masking_maps`).** One row per token: `package_id`, `token`, `incident_id`, `kind` (`host`, `ip`, `user`), `value`, `created_at`; primary key (`package_id`, `token`). The map is keyed by **package**, not by incident: when an incident grows, its new package may number the tokens differently, and a report is always un-masked with the map of the package it was written from (`AnalysisReport.evidence_package_id`). Saving the same package twice changes nothing. The real values stay in the app database, next to the events they come from. The migration is numbered in merge order (W3-D2): the next one is 0005.
+
+**Calls for C1** (`app/evidence/store.py`):
+
+```python
+package = build_and_store_package(engine, incident, events, now)    # before the analysis job; send only `package`
+masking_map = load_masking_map(engine, report.evidence_package_id, report.incident_id)
+shown = unmask_report(report, masking_map)                          # in GET /incidents/{id}/report only
+```
+
+The report is stored **masked**, as the model wrote it, so AI1's grounding checks compare it with the package it was given. `unmask_report` returns a copy with real values in the text fields (summary, sequence, findings, weaknesses, impact, recommendations, risk justification, uncertainty); IDs and numbers are unchanged. A token the model invented stays as it is, so the analyst can see it is not a real value. The un-masked copy is never stored or sent to the HPC.
 
 ## 5. Try it
 

@@ -57,6 +57,17 @@ class MaskingMap:
             self.tokens[token] = key
         return self._by_value[key]
 
+    @classmethod
+    def from_tokens(
+        cls, incident_id: str, tokens: dict[str, tuple[TokenKind, str]]
+    ) -> "MaskingMap":
+        """Rebuild a stored map (app/evidence/store.py)."""
+        masking_map = cls(incident_id)
+        for token, (kind, value) in tokens.items():
+            masking_map.tokens[token] = (TokenKind(kind), value)
+            masking_map._by_value[(TokenKind(kind), value)] = token
+        return masking_map
+
     def real_values(self) -> set[str]:
         return {value for _, value in self.tokens.values()}
 
