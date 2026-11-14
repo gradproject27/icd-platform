@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f-no-entities-3",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-14T14:28:33.927275Z",
+  "generated_by": "local",
+  "model_id": "llama3.2-3b-8k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Flagged record with no host, IP or user",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "What triggered the flagging? (would be settled by: event details) What systems or data were affected? (would be settled by: event details) Limitations: Insufficient evidence to determine the trigger or impact",
+  "confidence": 0.0,
+  "model_self_rating": null
+}

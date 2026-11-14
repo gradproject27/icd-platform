@@ -1,4 +1,4 @@
-# AI1 model runs: local fallback (option C), 26 Oct 2026
+# AI1 model runs: local fallback (option C), 26 Oct and 14 Nov 2026
 
 Owner: AI1. Every real model run so far, failures included, in the order they happened. Design and checks: [ai1-analysis-design.md](../ai1-analysis-design.md), sections 5, 7 and 8.
 
@@ -43,6 +43,41 @@ No run met NFR-P-05's 30 s on this GPU. The prompt measured 4,880 tokens (Llama 
 - **For C5 (open question 4):** confidence measures grounding and evidence completeness, not coverage. A thin analysis (run 2) scored 0.813 and would pass the 0.75 gate.
 - **For G4:** quoting the canary while warning about it is still counted as following the injection. Either rule 2 is made stricter ("never write the token, not even in a quote") or G4 accepts quotes in `uncertainties`. Not changed yet; team decision.
 
+## Week 2: the five test incidents, 14 Nov 2026
+
+**What was run.** Prompt v0 on the five test packages of [ai1-report-schema.md](../ai1-report-schema.md) section 7 (`fixtures/ai1/packages/`, the correlation fixture's placeholder values, masked by C2's builder), 3 runs each, temperature 0, `--json-schema`, `num_gpu 99`, on the same laptop. Then `tools/ai1/evaluate.py` scored every answer against `fixtures/ai1/expected.json` (metrics E1 to E11) and wrote one AnalysisReport per valid run to `reports/`. Each folder also holds `evaluation.md` and `.json`.
+
+| # | Folder | Model (Ollama) | Valid | E2 invented | E4 grounding | E5 coverage | E6 context-only | E8 attack type | E9 freeze | Mean confidence | Inference median / max | Within 30 s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 6 | [06-week2-qwen3-4b-instruct-10k](06-week2-qwen3-4b-instruct-10k/evaluation.md) | `qwen3-4b-instruct-10k`, 4,900 output tokens | **15 of 15** | 0 | 0.979 | 1.0 | 0.4 per run | 0.6 | 1.0 | 0.717 | 95 s / 220 s | 3 of 15 |
+| 7 | [07-week2-llama3.2-3b-8k](07-week2-llama3.2-3b-8k/evaluation.md) | `llama3.2-3b-8k`, 4,000 output tokens | 12 of 15 (G2 x3) | 0.2 per run | 0.667 | 1.0 | 0 | 0.417 | 1.0 | 0.483 | 20 s / 92 s | 12 of 15 |
+
+Inference time by incident (median of 3; prompt 3,400 to 4,900 tokens):
+
+| Model | A (8 + 3 events) | C1 | C2 | E | F |
+|---|---|---|---|---|---|
+| Qwen3-4B-Instruct | 205 s (3,290 tokens out) | 97 s | 95 s | 50 s | 22 s |
+| llama3.2 3B | 92 s (1,518 tokens out) | 20 s | 21 s | 15 s | 12 s |
+
+**6. Qwen3-4B-Instruct: 15 of 15 valid, no invention, no wrong freeze.** Incident A is right in all 3 runs: attack type Backdoors, every flagged event cited, confidence 0.933, freeze as expected. E and F are handled as intended: no attack type invented in E, and `insufficient_evidence` with nothing named in F. Faults:
+- In C1 and C2 it wrote the claim category `evidence_supported` as the attack type (`attack_type.category`), in every run. That is why E8 is 0.6. The same kind of fault as run 5 (`"hypothesis"`).
+- In C1 and C2 it called the context logon a likely follow-up of the attack (`likely_interpretation` citing only the context event), against prompt rule 6. E6 counts it: 6 findings in 15 runs.
+- C2 run 1: two claims name `host-01` without citing an event that shows it (U1), so its confidence is 0.75 instead of 1.0.
+
+**7. llama3.2 3B: 12 of 15 valid, fast but thin.** 12 of 15 answers within 30 s (all except incident A), the first time any model met NFR-P-05 on this laptop. Faults:
+- E, all 3 runs: the summary names `user-01`, which is not in the package (G2, invented). These are the only invalid runs.
+- C1, all 3 runs: the summary and finding tie `user-01`, from the context logon, to the fuzzing events (U1), so both factual claims are ungrounded and the confidence is 0.0.
+- No attack type in C1 and C2, and none in A run 1 (E8 0.417, E10 0.75).
+- Two claims per answer in C1, C2 and E: correct but shallow.
+
+**Evaluation fix found by this run.** In F both models wrote only a hypothesis, which is right for an event with no host, IP or user. The grounding rate of an answer with no factual claim is undefined, but the first version of the metrics counted it as 0.0 in E4. `metrics.py` now leaves such runs out of E4 (Qwen 0.783 became 0.979; llama 0.5 became 0.667). The confidence is unchanged: it is 0.0 for those answers, as an answer without facts must not freeze.
+
+**What this shows.**
+- **The checks work on real answers.** Every failure above is a real model fault, caught by the intended check (G2, U1, E6, E8), and no answer from either model led to a wrong freeze decision (E9 1.0).
+- **Qwen is the better analyst, llama the faster.** Qwen is valid and grounded but too slow on this GPU (95 s median); llama is within 30 s on small incidents but invents or misattributes users and often leaves the attack type empty.
+- **For the next prompt version:** an explicit rule that `attack_type.category` is an attack name, never a claim category, and a stronger rule 6 (a context event alone may only support a `hypothesis`). Not changed yet: prompt v0 is what these records measure.
+- Human scoring of the key facts (ai1-report-schema.md section 6) is still to do for the 27 valid reports.
+
 ## Not done yet
 
-The HPC probe, the model pin (Qwen3-8B revision and licence check on the model card) and the HPC run (section 5). Licence lines in these records come from `ollama show` and are not yet verified on the model cards.
+The HPC probe, the model pin (Qwen3-8B revision and licence check on the model card) and the HPC run (section 5): frozen until high-compute resources are provided (team decision, 14 Nov 2026). Licence lines in these records come from `ollama show` and are not yet verified on the model cards.

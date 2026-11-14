@@ -1,0 +1,31 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "analysis_status": "insufficient_evidence",
+  "summary": {
+    "text": "Flagged record with no host, IP or user",
+    "category": "hypothesis",
+    "cited_event_ids": ["fx-005"],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "findings": [],
+  "recommendations": [],
+  "uncertainties": [
+    {
+      "statement": "What triggered the flagging?",
+      "missing_evidence": "event details"
+    },
+    {
+      "statement": "What systems or data were affected?",
+      "missing_evidence": "event details"
+    }
+  ],
+  "limitations": [
+    "Insufficient evidence to determine the trigger or impact"
+  ],
+  "self_rating": null
+}

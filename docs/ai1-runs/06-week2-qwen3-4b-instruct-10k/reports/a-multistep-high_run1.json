@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-a-multistep-high-1",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-a4c4446ebbc7",
+  "generated_at": "2026-11-14T14:00:06.675969Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "A series of malicious activities began with reconnaissance and ended with the installation of backdoors on multiple hosts, indicating a targeted backdoor attack.",
+  "attack_type": "Backdoors",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was performed from ip-01 to host-01 at 09:00:00Z.",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A service version probe was conducted from ip-01 to host-01 at 09:04:00Z.",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "An exploit request was made against host-01 by user-01 from ip-01 at 09:10:00Z.",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z.",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "A remote login was performed from ip-02 to host-02 using user-01 at 09:30:00Z.",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "A privileged account (user-02) was used on host-02 from host-01 at 09:42:00Z.",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "A new service was installed on host-02 by user-02 at 09:55:00Z.",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "A new service was installed on host-03 by user-02 at 10:08:00Z.",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan was performed from external IP ip-01 to host-01 at 09:00:00Z, indicating reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "statement": "A service version probe was conducted from ip-01 to host-01 at 09:04:00Z, indicating further reconnaissance.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "An exploit request was made against host-01 by user-01 from ip-01 at 09:10:00Z, indicating exploitation of a vulnerability.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "statement": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z, indicating a backdoor is active.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "A remote login was performed from ip-02 to host-02 using user-01 at 09:30:00Z, indicating lateral movement.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "statement": "A privileged account (user-02) was used on host-02 from host-01 at 09:42:00Z, indicating privilege escalation.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "A new service was installed on host-02 by user-02 at 09:55:00Z, indicating a backdoor installation.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "statement": "A new service was installed on host-03 by user-02 at 10:08:00Z, indicating further backdoor deployment.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    },
+    {
+      "statement": "The sequence of events shows a progression from reconnaissance to exploitation, lateral movement, privilege escalation, and backdoor installation, consistent with a backdoor attack.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008",
+        "fx-009",
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the service installed on host-02 and host-03 to determine if it is a known malicious service or backdoor. Why: The installation of new services by user-02 on multiple hosts is a key indicator of backdoor activity, and these services must be analyzed for malicious behavior. Less disruptive option: Review the service list on host-02 and host-03 without immediately removing or disabling the services to avoid disrupting legitimate operations.",
+    "Check for any unauthorized access or privilege escalation attempts on host-01 and host-02. Why: The use of user-01 and then user-02 with elevated privileges on host-02 suggests a privilege escalation, which may have been exploited to gain deeper access. Less disruptive option: Query the audit logs for privilege changes on host-02 without altering existing access controls to preserve system integrity.",
+    "Verify the legitimacy of user-01 and user-02 accounts and their access patterns. Why: The exploitation of host-01 and lateral movement using these users may indicate compromised or misconfigured accounts. Less disruptive option: Review user-01 and user-02 access logs without immediately disabling accounts to avoid disrupting legitimate operations."
+  ],
+  "risk_justification": null,
+  "uncertainty": "It is not known whether the reverse shell or installed services are being used to execute malicious commands or exfiltrate data. (would be settled by: Logs showing the actual payload or command execution from the reverse shell or installed services.) It is not known whether the user accounts used in the attack are legitimate or have been compromised. (would be settled by: Authentication logs or session records that confirm whether user-01 or user-02 are legitimate or compromised.) There is no evidence of data exfiltration or command-and-control communication beyond the reverse shell and service installations. (would be settled by: Network traffic logs showing data exfiltration or C2 communication after the initial backdoor installation.) Limitations: The events do not include file or command execution details that would confirm the purpose or payload of the backdoor services. The logs do not contain authentication logs or session details that would confirm whether user-01 or user-02 are legitimate or compromised. The context events (fx-003, fx-011, fx-014) are unlabelled or unflagged and do not provide evidence of malicious intent, so cannot be used to validate or refute the findings. There is no evidence of data exfiltration or command-and-control communication beyond the reverse shell and service installations.",
+  "confidence": 0.9333,
+  "model_self_rating": null
+}

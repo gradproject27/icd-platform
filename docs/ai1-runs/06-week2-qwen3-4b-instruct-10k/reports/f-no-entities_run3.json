@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f-no-entities-3",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-14T14:20:29.579102Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "No actionable evidence is present to form a summary of the incident.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "It is unknown whether the flagged record with ID fx-005 represents a real security event or a data artifact with no meaningful content. (would be settled by: The actual content, source, or nature of the event with ID fx-005 must be provided to determine if it represents a malicious activity or a benign anomaly.) Limitations: No host, IP, or user is present in any event, making it impossible to identify specific systems or actors. The flagged event has no details about activity, process, or behavior, only a generic label. There are no context events to provide background or support for the flagged record. The event type is 'unknown', and no data is available to interpret its nature or significance.",
+  "confidence": 0.0,
+  "model_self_rating": null
+}

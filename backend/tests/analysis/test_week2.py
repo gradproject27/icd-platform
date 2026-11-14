@@ -193,6 +193,22 @@ def test_failed_analysis_clears_confidence_and_is_not_valid():
     assert not report_valid(failed)
 
 
+def test_a_run_with_only_hypotheses_is_left_out_of_the_grounding_rate():
+    expected = EXPECTED[-1]
+    evidence = _package("f-no-entities")
+    answer = json.loads(_reference("f-no-entities"))
+    answer["summary"]["category"] = "hypothesis"
+    answer["risk_justification"]["category"] = "hypothesis"
+    result = run_analysis(json.dumps(answer), evidence, _meta())
+    assert result.valid and result.grounding.factual_claims == 0
+    score = score_run("f-no-entities", 1, result, evidence, expected)
+    assert score.grounding_rate is None
+    reference = run_analysis(_reference("a-multistep-high"), _package("a-multistep-high"), _meta())
+    full = score_run("a-multistep-high", 1, reference, _package("a-multistep-high"), EXPECTED[0])
+    metrics = {m.key: m for m in summarize([full, score])}
+    assert metrics["E4"].value == 1.0
+
+
 def test_metrics_catch_an_invented_host_and_lost_coverage():
     expected = EXPECTED[0]
     evidence = _package("a-multistep-high")

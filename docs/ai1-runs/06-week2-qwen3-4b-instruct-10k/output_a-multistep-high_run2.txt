@@ -1,0 +1,428 @@
+{
+  "analysis_status": "complete",
+  "findings": [
+    {
+      "category": "evidence_supported",
+      "text": "A network scan was performed from ip-01 to host-01 at 09:00:00Z, indicating reconnaissance activity.",
+      "cited_event_ids": [
+        "fx-002"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A service version probe was conducted from ip-01 to host-01 at 09:04:00Z, indicating further reconnaissance.",
+      "cited_event_ids": [
+        "fx-004"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "An exploit request was made against host-01 as user-01 from ip-01 at 09:10:00Z, indicating exploitation of a vulnerability.",
+      "cited_event_ids": [
+        "fx-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z, indicating a backdoor is active.",
+      "cited_event_ids": [
+        "fx-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A remote login was performed from ip-02 to host-02 as user-01 at 09:30:00Z, indicating lateral movement.",
+      "cited_event_ids": [
+        "fx-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A privileged account (user-02) was used from host-01 on host-02 at 09:42:00Z, indicating privilege escalation.",
+      "cited_event_ids": [
+        "fx-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-03"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A new service was installed on host-02 by user-02 at 09:55:00Z, indicating a backdoor is established.",
+      "cited_event_ids": [
+        "fx-012"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A new service was installed on host-03 by user-02 at 10:08:00Z, indicating further backdoor deployment.",
+      "cited_event_ids": [
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "category": "likely_interpretation",
+      "text": "The sequence of events shows a progression from reconnaissance to exploitation, lateral movement, privilege escalation, and backdoor installation across multiple hosts.",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008",
+        "fx-009",
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02",
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02",
+          "ip-03"
+        ],
+        "users": [
+          "user-01",
+          "user-02"
+        ]
+      }
+    }
+  ],
+  "incident_id": "inc-e8d1f72159481bee",
+  "limitations": [
+    "The events do not include file or command content, so the nature of the backdoor or exploit cannot be determined.",
+    "The logs do not contain authentication or session details for user-01 or user-02, so the legitimacy of their access cannot be verified.",
+    "The context events (fx-003, fx-011, fx-014) are unlabelled or unflagged and do not provide evidence of malicious activity, so they cannot be used to confirm or refute the findings."
+  ],
+  "output_version": "ai1-output-0.1",
+  "recommendations": [
+    {
+      "action": "Investigate the service installed on host-02 and host-03 to determine if it is known malware or a legitimate service.",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ],
+      "rationale": "The installation of new services by user-02 on multiple hosts is a key indicator of backdoor activity, and the service must be verified for legitimacy.",
+      "reversible_alternative": "Review the service configuration and logs for host-02 and host-03 to confirm if the service is part of a known, authorized process before taking action."
+    },
+    {
+      "action": "Check the authentication logs for user-01 and user-02 to verify if their access to systems was legitimate or part of a compromised session.",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-009",
+        "fx-010"
+      ],
+      "rationale": "The use of user-01 and user-02 in exploit and privilege escalation events raises concerns about account compromise or misuse.",
+      "reversible_alternative": "Query the authentication logs for user-01 and user-02 to identify any anomalous login times or locations without disrupting active sessions."
+    },
+    {
+      "action": "Isolate host-01, host-02, and host-03 to prevent further lateral movement or data exfiltration.",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-008",
+        "fx-009",
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ],
+      "rationale": "The sequence of events shows a clear attack chain involving multiple hosts, indicating a potential breach that could be expanding.",
+      "reversible_alternative": "Temporarily restrict network access between these hosts to contain the threat while further investigation is conducted."
+    }
+  ],
+  "summary": {
+    "category": "evidence_supported",
+    "text": "A series of malicious activities began with reconnaissance and progressed to exploitation, lateral movement, privilege escalation, and backdoor installation across multiple hosts.",
+    "cited_event_ids": [
+      "fx-002",
+      "fx-004",
+      "fx-007",
+      "fx-008",
+      "fx-009",
+      "fx-010",
+      "fx-012",
+      "fx-013"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02",
+        "ip-03"
+      ],
+      "users": [
+        "user-01",
+        "user-02"
+      ]
+    }
+  },
+  "uncertainties": [
+    {
+      "missing_evidence": "The actual content or payload of the exploit or backdoor service is not present in the logs.",
+      "statement": "We do not know what specific service or payload was installed on the hosts, nor whether it is malicious or legitimate."
+    },
+    {
+      "missing_evidence": "Authentication logs for user-01 and user-02 are not available.",
+      "statement": "We cannot verify whether the user accounts were legitimately used or compromised during the attack."
+    },
+    {
+      "missing_evidence": "The source of the initial exploit or the origin of user-01 and user-02 is not known.",
+      "statement": "We do not know if the user accounts were created by an insider or were compromised by a prior attack."
+    }
+  ],
+  "attack_type": {
+    "category": "Backdoors",
+    "claim": {
+      "category": "evidence_supported",
+      "text": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z, and new services were installed on host-02 and host-03 by user-02 at 09:55:00Z and 10:08:00Z, indicating the presence of backdoors.",
+      "cited_event_ids": [
+        "fx-008",
+        "fx-012",
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02",
+          "host-03"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01",
+          "user-02"
+        ]
+      }
+    }
+  },
+  "sequence": [
+    {
+      "category": "evidence_supported",
+      "text": "A network scan was performed from ip-01 to host-01 at 09:00:00Z.",
+      "cited_event_ids": [
+        "fx-002"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A service version probe was conducted from ip-01 to host-01 at 09:04:00Z.",
+      "cited_event_ids": [
+        "fx-004"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "An exploit request was made against host-01 as user-01 from ip-01 at 09:10:00Z.",
+      "cited_event_ids": [
+        "fx-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z.",
+      "cited_event_ids": [
+        "fx-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A remote login was performed from ip-02 to host-02 as user-01 at 09:30:00Z.",
+      "cited_event_ids": [
+        "fx-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-03"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A privileged account (user-02) was used from host-01 on host-02 at 09:42:00Z.",
+      "cited_event_ids": [
+        "fx-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [
+          "ip-02",
+          "ip-03"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A new service was installed on host-02 by user-02 at 09:55:00Z.",
+      "cited_event_ids": [
+        "fx-012"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "A new service was installed on host-03 by user-02 at 10:08:00Z.",
+      "cited_event_ids": [
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-03"
+        ],
+        "users": [
+          "user-02"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null
+  }

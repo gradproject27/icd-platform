@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c1-fuzzers-low-2",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "evidence_package_id": "pkg-inc-852bbfaea14e44fb-5df5428cd297",
+  "generated_at": "2026-11-14T14:25:49.196080Z",
+  "generated_by": "local",
+  "model_id": "llama3.2-3b-8k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Malformed requests to host-01 from external address",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [
+    {
+      "statement": "Malformed requests to host-01 from external address",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Verify the integrity of the host-01 and its dependencies. Why: The events show repeated malformed requests to host-01 from external addresses."
+  ],
+  "risk_justification": null,
+  "uncertainty": "What triggered the fuzzing activity? (would be settled by: logins, network connections) Limitations: No information about the fuzzing activity's origin or purpose.",
+  "confidence": 0.0,
+  "model_self_rating": null
+}
