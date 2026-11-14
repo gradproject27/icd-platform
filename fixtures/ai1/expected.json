@@ -1,0 +1,122 @@
+[
+  {
+    "label": "A",
+    "package": "a-multistep-high.json",
+    "incident_id": "inc-e8d1f72159481bee",
+    "case": "Multi-step attack over three hosts: reconnaissance, exploit, reverse shell, privileged account, new services; 3 context events (one unlabelled). Risk 100 high.",
+    "attack_types": [
+      "backdoor",
+      "exploit",
+      "reconnaissance",
+      "recon"
+    ],
+    "outcomes": [
+      "complete"
+    ],
+    "must_cite": [
+      "fx-002",
+      "fx-004",
+      "fx-007",
+      "fx-008",
+      "fx-009",
+      "fx-010",
+      "fx-012",
+      "fx-013"
+    ],
+    "freeze_expected": true,
+    "key_facts": [
+      "ip-01 scans and probes host-01 (fx-002, fx-004)",
+      "Exploit against host-01 as user-01 (fx-007)",
+      "Reverse shell from host-01 back to ip-01 (fx-008)",
+      "Movement from host-01 to host-02 with user-01, then the privileged user-02 (fx-009, fx-010)",
+      "New services on host-02 and host-03 by user-02 (fx-012, fx-013)",
+      "Context events fx-003, fx-011, fx-014 are not called malicious"
+    ]
+  },
+  {
+    "label": "C1",
+    "package": "c1-fuzzers-low.json",
+    "incident_id": "inc-852bbfaea14e44fb",
+    "case": "Two fuzzing events on one host and one context logon at equal distance to two groups. Risk 24 low.",
+    "attack_types": [
+      "fuzz"
+    ],
+    "outcomes": [
+      "complete"
+    ],
+    "must_cite": [
+      "fx-021",
+      "fx-022"
+    ],
+    "freeze_expected": false,
+    "key_facts": [
+      "ip-01 sends malformed requests to host-01 twice, 5 minutes apart (fx-021, fx-022)",
+      "The logon of user-01 (fx-023) is context only",
+      "No sign the requests succeeded"
+    ]
+  },
+  {
+    "label": "C2",
+    "package": "c2-dos-medium.json",
+    "incident_id": "inc-c102ca840a8da1b1",
+    "case": "Two request floods on one host; a context logon of the same user on another host. Risk 57 medium.",
+    "attack_types": [
+      "dos",
+      "denial"
+    ],
+    "outcomes": [
+      "complete"
+    ],
+    "must_cite": [
+      "fx-025",
+      "fx-026"
+    ],
+    "freeze_expected": false,
+    "key_facts": [
+      "ip-01 floods host-01 twice, 6 minutes apart (fx-025, fx-026)",
+      "The logon of user-01 to host-02 (fx-024) is context only",
+      "Possible loss of availability on host-01"
+    ]
+  },
+  {
+    "label": "E",
+    "package": "e-no-attack-type.json",
+    "incident_id": "inc-109bc3e364d7973c",
+    "case": "One flagged event with no attack type and an uninformative summary. Risk 45 medium. Thin evidence.",
+    "attack_types": [],
+    "outcomes": [
+      "insufficient_evidence",
+      "complete"
+    ],
+    "must_cite": [
+      "fx-032"
+    ],
+    "freeze_expected": false,
+    "key_facts": [
+      "Only one flagged record; the activity is not described",
+      "No attack type should be invented"
+    ]
+  },
+  {
+    "label": "F",
+    "package": "f-no-entities.json",
+    "incident_id": "inc-43ea5e3e3693024c",
+    "case": "One flagged Generic event with no host, IP or user. Risk 43 medium. Completeness 0.",
+    "attack_types": [
+      "generic"
+    ],
+    "attack_type_may_be_null": true,
+    "outcomes": [
+      "insufficient_evidence",
+      "complete"
+    ],
+    "must_cite": [
+      "fx-005"
+    ],
+    "freeze_expected": false,
+    "key_facts": [
+      "No affected system can be named",
+      "No host, IP or user should be invented"
+    ]
+  }
+]

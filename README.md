@@ -13,7 +13,7 @@ Week 1 is done. This is what is on `main`:
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
-| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. HPC results and the model pin are still to fill |
+| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). HPC results, the model pin and the real run of the five incidents are still to fill |
 
 Week 2 is in progress. C4 so far: the upload page on C1's real upload and job API (#20), the incident list (#22) and the pending decision panel (#23), the last two on a dev-only stub server until C3's and C5's endpoints exist (see [Frontend](#frontend)).
 
@@ -70,13 +70,13 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **588 passed, 56 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **644 passed**.
+Expected result without a database: **730 passed, 63 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **793 passed**.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
-- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server);
+- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;
@@ -245,6 +245,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/countdown-prototype.md](docs/countdown-prototype.md) | C4 | T1-11 | Server-driven countdown prototype: offset maths, test server, accuracy results, what the real backend must provide |
 | [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
 | [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
+| [docs/ai1-report-schema.md](docs/ai1-report-schema.md) | AI1 | Week 2 | AI report schema v1: evidence file, HPC output file and runner for C1, report and Incident fields for C5, evaluation metrics E1 to E11, the five test incidents |
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the five local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed |
 | [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
@@ -315,9 +316,10 @@ icd-platform/
 ├── contracts/            owned by C3
 │   ├── schemas/          generated JSON Schemas, one per contract
 │   ├── examples/         one valid synthetic example per contract
+│   ├── ai1/              AI1's own generated schemas (LLM output, HPC output file, expected incident)
 │   ├── label-mapping.json  dataset labels to EventLabel (owned by C2)
 │   └── event-types.json    event_type vocabulary (owned by C2)
-├── tools/ai1/            AI1 HPC probe, model benchmark and synthetic samples
+├── tools/ai1/            AI1 HPC probe, analysis runner, model benchmark, evaluation and synthetic samples
 ├── docs/                 design documents and notes (see Documentation above); api/ holds the API schemas and examples
 ├── .github/              CI workflow and PR template
 ├── docker-compose.yml

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "package_id": "pkg-inc-852bbfaea14e44fb-5df5428cd297",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "created_at": "2026-01-15T23:00:00Z",
+  "incident": {
+    "incident_type": "Fuzzers",
+    "risk_score": 24,
+    "risk_level": "low",
+    "first_event_at": "2026-01-15T13:00:00Z",
+    "last_event_at": "2026-01-15T13:14:30Z",
+    "flagged_event_count": 2,
+    "context_event_count": 1,
+    "host_count": 1
+  },
+  "events": [
+    {
+      "event_id": "fx-021",
+      "timestamp": "2026-01-15T13:00:00Z",
+      "event_type": "fuzzing",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Fuzzers",
+      "host": "host-01",
+      "src_ip": "ip-01",
+      "dst_ip": "ip-02",
+      "user": null,
+      "summary": "Malformed requests to host-01 from external address",
+      "source": "fx-021"
+    },
+    {
+      "event_id": "fx-022",
+      "timestamp": "2026-01-15T13:05:00Z",
+      "event_type": "fuzzing",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Fuzzers",
+      "host": "host-01",
+      "src_ip": "ip-01",
+      "dst_ip": "ip-02",
+      "user": null,
+      "summary": "More malformed requests to host-01",
+      "source": "fx-022"
+    },
+    {
+      "event_id": "fx-023",
+      "timestamp": "2026-01-15T13:14:30Z",
+      "event_type": "remote_login",
+      "role": "context",
+      "label_status": "unflagged",
+      "attack_type": null,
+      "host": "host-01",
+      "src_ip": null,
+      "dst_ip": null,
+      "user": "user-01",
+      "summary": "user-01 logged on to host-01 (equal distance to both groups)",
+      "source": "fx-023"
+    }
+  ],
+  "total_event_count": 3,
+  "truncated": false,
+  "masked": true
+}

@@ -1,0 +1,350 @@
+{
+  "$defs": {
+    "AnalysisOutcome": {
+      "description": "The model's own verdict on whether the evidence allows an analysis.",
+      "enum": [
+        "complete",
+        "insufficient_evidence"
+      ],
+      "title": "AnalysisOutcome",
+      "type": "string"
+    },
+    "AttackType": {
+      "additionalProperties": false,
+      "description": "Suspected attack type and the claim behind it.",
+      "properties": {
+        "category": {
+          "description": "Short attack type, for example brute_force.",
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "claim": {
+          "$ref": "#/$defs/Claim",
+          "description": "Why this type fits the events."
+        }
+      },
+      "required": [
+        "category",
+        "claim"
+      ],
+      "title": "AttackType",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "description": "One statement with its support (FR-15).",
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/FindingCategory",
+          "description": "evidence_supported, likely_interpretation or hypothesis."
+        },
+        "cited_event_ids": {
+          "description": "Event IDs from the package. At least one unless the claim is a hypothesis.",
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "type": "string"
+          },
+          "title": "Cited Event Ids",
+          "type": "array"
+        },
+        "entities": {
+          "$ref": "#/$defs/Entities",
+          "description": "Entities named in the text."
+        },
+        "text": {
+          "description": "The statement.",
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "category"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "Entities": {
+      "additionalProperties": false,
+      "description": "Every host, IP and user named in the claim text, written exactly as in the package.",
+      "properties": {
+        "hosts": {
+          "description": "Host values or tokens.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Hosts",
+          "type": "array"
+        },
+        "ips": {
+          "description": "IP values or tokens.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Ips",
+          "type": "array"
+        },
+        "users": {
+          "description": "User values or tokens.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Users",
+          "type": "array"
+        }
+      },
+      "title": "Entities",
+      "type": "object"
+    },
+    "FindingCategory": {
+      "description": "How strongly a finding is supported (FR-15).",
+      "enum": [
+        "evidence_supported",
+        "likely_interpretation",
+        "hypothesis"
+      ],
+      "title": "FindingCategory",
+      "type": "string"
+    },
+    "Recommendation": {
+      "additionalProperties": false,
+      "description": "Advice for the analyst. Never an executed or automatic action (C-10, NFR-SF-02).",
+      "properties": {
+        "action": {
+          "description": "What the analyst could do.",
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "cited_event_ids": {
+          "description": "Events behind the advice.",
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cited Event Ids",
+          "type": "array"
+        },
+        "rationale": {
+          "description": "Why, in terms of the cited events.",
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "reversible_alternative": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A less disruptive option; null if none.",
+          "title": "Reversible Alternative"
+        }
+      },
+      "required": [
+        "action",
+        "rationale",
+        "cited_event_ids"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "description": "Something the evidence does not show, and what would settle it.",
+      "properties": {
+        "missing_evidence": {
+          "description": "Which logs or fields would settle it.",
+          "minLength": 1,
+          "title": "Missing Evidence",
+          "type": "string"
+        },
+        "statement": {
+          "description": "What is not known.",
+          "minLength": 1,
+          "title": "Statement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "statement",
+        "missing_evidence"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The model's answer for one incident (prompt v0).",
+  "properties": {
+    "analysis_status": {
+      "$ref": "#/$defs/AnalysisOutcome",
+      "description": "insufficient_evidence when the events are too thin to assess the incident."
+    },
+    "attack_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AttackType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "null = not determined."
+    },
+    "findings": {
+      "description": "Suspicious behaviour; [] when there is none.",
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "impact": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Claim"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "null = not determined."
+    },
+    "incident_id": {
+      "description": "Copied from the package.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "limitations": {
+      "description": "Limits of this analysis.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Limitations",
+      "type": "array"
+    },
+    "output_version": {
+      "const": "ai1-output-0.1",
+      "description": "Output format version.",
+      "title": "Output Version",
+      "type": "string"
+    },
+    "recommendations": {
+      "description": "Advice; [] allowed.",
+      "items": {
+        "$ref": "#/$defs/Recommendation"
+      },
+      "title": "Recommendations",
+      "type": "array"
+    },
+    "risk_justification": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Claim"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Explains the given deterministic risk score; never a new score."
+    },
+    "self_rating": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The model's own rating 0 to 1. Stored, never gates (OD-16).",
+      "title": "Self Rating"
+    },
+    "sequence": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Ordered steps; null = not determined.",
+      "title": "Sequence"
+    },
+    "summary": {
+      "$ref": "#/$defs/Claim",
+      "description": "Concise summary (FR-14)."
+    },
+    "uncertainties": {
+      "description": "At least one.",
+      "items": {
+        "$ref": "#/$defs/Uncertainty"
+      },
+      "minItems": 1,
+      "title": "Uncertainties",
+      "type": "array"
+    },
+    "weaknesses": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Only when events show them; null = not determined.",
+      "title": "Weaknesses"
+    }
+  },
+  "required": [
+    "output_version",
+    "incident_id",
+    "analysis_status",
+    "summary",
+    "findings",
+    "recommendations",
+    "uncertainties",
+    "limitations"
+  ],
+  "title": "LlmOutput",
+  "type": "object"
+}

@@ -1,0 +1,59 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-109bc3e364d7973c",
+  "analysis_status": "insufficient_evidence",
+  "summary": {
+    "text": "One flagged record on host-01 with traffic from ip-01 to ip-02 has no attack type and no description of the activity.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-032"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02"
+      ],
+      "users": []
+    }
+  },
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Look up the source record of fx-032 to find what activity was flagged.",
+      "rationale": "The package does not say what the record shows.",
+      "cited_event_ids": [
+        "fx-032"
+      ],
+      "reversible_alternative": null
+    }
+  ],
+  "risk_justification": {
+    "text": "The given medium score rests on one flagged record whose activity is not described.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-032"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The kind of activity behind the flag is unknown.",
+      "missing_evidence": "The dataset's attack category or the original log line for fx-032."
+    }
+  ],
+  "limitations": [
+    "One event only; no sequence or impact can be assessed."
+  ],
+  "self_rating": 0.3
+}

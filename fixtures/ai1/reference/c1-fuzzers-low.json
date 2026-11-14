@@ -1,0 +1,143 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "ip-01 sent malformed requests to host-01 twice, five minutes apart.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-021",
+      "fx-022"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": []
+    }
+  },
+  "attack_type": {
+    "category": "fuzzing",
+    "claim": {
+      "text": "Repeated malformed requests from one address fit fuzzing of the host-01 application.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "ip-01 sent malformed requests to host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "Five minutes later ip-01 sent more malformed requests to host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "The same external address sent malformed requests to host-01 twice.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    },
+    {
+      "text": "The logon of user-01 to host-01 at 13:14 may be unrelated; it is a context event only.",
+      "category": "hypothesis",
+      "cited_event_ids": [
+        "fx-023"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Review the host-01 application logs for errors around the malformed requests.",
+      "rationale": "Fuzzing looks for inputs that break the application.",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "reversible_alternative": null
+    }
+  ],
+  "risk_justification": {
+    "text": "The given low score fits two fuzzing events with no sign that they succeeded.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-021",
+      "fx-022"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The events do not show whether any request caused an error or a crash.",
+      "missing_evidence": "Application error logs on host-01."
+    }
+  ],
+  "limitations": [
+    "Only two flagged events and one context event were given."
+  ],
+  "self_rating": 0.8
+}

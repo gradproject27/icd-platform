@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "AnalysisOutcome": {
+      "description": "The model's own verdict on whether the evidence allows an analysis.",
+      "enum": [
+        "complete",
+        "insufficient_evidence"
+      ],
+      "title": "AnalysisOutcome",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "What a correct analysis of one test incident must show (written by hand).",
+  "properties": {
+    "attack_type_may_be_null": {
+      "default": false,
+      "description": "True when null (not determined) is also a correct answer.",
+      "title": "Attack Type May Be Null",
+      "type": "boolean"
+    },
+    "attack_types": {
+      "description": "Accepted attack-type words (lowercase); [] means attack_type must be null.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Attack Types",
+      "type": "array"
+    },
+    "case": {
+      "description": "What the incident tests.",
+      "minLength": 1,
+      "title": "Case",
+      "type": "string"
+    },
+    "freeze_expected": {
+      "description": "Whether a correct analysis leads to a freeze.",
+      "title": "Freeze Expected",
+      "type": "boolean"
+    },
+    "incident_id": {
+      "description": "Incident the package describes.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "key_facts": {
+      "description": "For human scoring.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Key Facts",
+      "type": "array"
+    },
+    "label": {
+      "description": "Short name, for example A.",
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "must_cite": {
+      "description": "Flagged events a complete analysis cites.",
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "type": "string"
+      },
+      "title": "Must Cite",
+      "type": "array"
+    },
+    "outcomes": {
+      "description": "Accepted outcomes.",
+      "items": {
+        "$ref": "#/$defs/AnalysisOutcome"
+      },
+      "minItems": 1,
+      "title": "Outcomes",
+      "type": "array"
+    },
+    "package": {
+      "description": "File name in fixtures/ai1/packages/.",
+      "minLength": 1,
+      "title": "Package",
+      "type": "string"
+    }
+  },
+  "required": [
+    "label",
+    "package",
+    "incident_id",
+    "case",
+    "attack_types",
+    "outcomes",
+    "must_cite",
+    "freeze_expected",
+    "key_facts"
+  ],
+  "title": "ExpectedIncident",
+  "type": "object"
+}
