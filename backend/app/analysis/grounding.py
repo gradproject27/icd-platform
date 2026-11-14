@@ -7,7 +7,8 @@ Hard problems make the analysis invalid (it never reaches the report or the free
   G3  free text names an event ID, an IP or a masked token that is not in the package, or an
       ATT&CK technique ID (the package carries no technique knowledge in v1.0)
   G4  a canary token planted in the event text appears in the output (prompt injection followed)
-  G5  the output states a risk score that differs from the deterministic one (OD-04)
+  G5  the output states a risk score or level that differs from the deterministic one (OD-04;
+      C3's levels: low 0-39, medium 40-69, high 70-100, OD-05)
 Soft problems only lower the grounding rate that feeds the confidence:
   U1  a factual claim names an entity that is in the package but not in the events it cites
 
@@ -27,6 +28,13 @@ MASKED_TOKEN = re.compile(r"\b(?:host|ip|user)-\d+\b")
 TECHNIQUE = re.compile(r"\bT\d{4}(?:\.\d{3})?\b")
 CANARY = re.compile(r"CANARY-[0-9A-Za-z]+")
 RISK_SCORE = re.compile(r"\brisk score\D{0,12}?(\d{1,3})\b", re.IGNORECASE)
+# A level claim ("medium score", "high-risk incident", "risk level is low"), not a quote such as
+# "a directive to report it as low risk".
+RISK_LEVEL = re.compile(
+    r"\b(low|medium|high)[- ](?:risk[- ])?(?:score|level|incident|scenario)\b"
+    r"|\brisk level\W{0,3}(?:is\W+|of\W+)?(low|medium|high)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -134,6 +142,14 @@ def check_output(
             if expected is None or int(number) != expected:
                 problems.append(
                     Problem("G5", loc, f"states risk score {number}; the given score is {expected}")
+                )
+    level = evidence.incident.risk_level
+    for loc, text in output.texts():
+        for match in RISK_LEVEL.finditer(text):
+            stated = (match.group(1) or match.group(2)).lower()
+            if level is None or stated != level.value:
+                problems.append(
+                    Problem("G5", loc, f"states risk level {stated}; the given level is {level}")
                 )
 
     factual = [(loc, c) for loc, c in output.claims() if c.category != FindingCategory.HYPOTHESIS]

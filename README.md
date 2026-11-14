@@ -70,13 +70,13 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **730 passed, 63 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **793 passed**.
+Expected result without a database: **732 passed, 63 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **795 passed**.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
-- the AI1 analysis layer: a good sample output becomes a valid report, 14 broken outputs each fail for the intended check, confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
+- the AI1 analysis layer: a good sample output becomes a valid report, 15 broken outputs each fail for the intended check (including a different risk score or level), confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;

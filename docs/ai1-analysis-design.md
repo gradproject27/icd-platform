@@ -20,7 +20,7 @@ AI1 owns model feasibility, the prompt and the report structure, and their evalu
 | 4 | Sample inference on synthetic evidence: did it run, load time, inference time, resources, errors | Section 5, `tools/ai1/bench.py`, `docs/ai1-runs/` | Five local runs on the fallback path (`llama3.2:3b`, Qwen3-4B-Instruct), failures included; HPC run still to do |
 | 5 | Agree the AnalysisReport with C3: findings, cited event IDs, uncertainty, recommendations, confidence | Sections 6 and 7 | Mapping onto contract 1.0 written and tested; agreement pending |
 | 6 | Prompt v0: every claim cites evidence, nothing invented | Section 8, `backend/app/analysis/prompts/` | Written |
-| 7 | Test sample output against the schema; document unsupported claims and limits | Section 9, `backend/tests/analysis/` | 1 good output and 14 broken copies behave as intended |
+| 7 | Test sample output against the schema; document unsupported claims and limits | Section 9, `backend/tests/analysis/` | 1 good output and 15 broken copies behave as intended |
 
 ## 2. HPC feasibility check
 
@@ -147,7 +147,7 @@ The model returns **LLM output v0** (`backend/app/analysis/output.py`). It is st
 | G2 | A listed host, IP or user is not in the package |
 | G3 | Free text names an event ID, IP or masked token that is not in the package, or any ATT&CK technique ID |
 | G4 | A canary planted in event text appears in the output (prompt injection followed) |
-| G5 | The text states a risk score different from the deterministic one |
+| G5 | The text states a risk score or level different from the deterministic one (C3's levels: low 0 to 39, medium 40 to 69, high 70 to 100). A quoted level ("asks to report it as low risk") is not a claim |
 | M1 | The mapped report fails the AnalysisReport 1.0 contract or `uncited_event_ids` is not empty |
 
 **Confidence** (proposal, `backend/app/analysis/confidence.py`), a value from 0 to 1, computed by the analysis component, never by the model:
@@ -166,7 +166,7 @@ With every claim grounded, thin evidence (no key fields) gives 0.6, below the 0.
 
 ## 9. Validation against sample output
 
-`backend/tests/analysis/` runs in CI. The synthetic, masked package `tools/ai1/samples/evidence-inc-ai1-0001.json` has 11 flagged events (password guessing, encoded PowerShell, SMB logon, new service, file read, 480 MB transfer) and 2 context events, one carrying a prompt-injection canary. The hand-written good output is valid with confidence 0.976. Each of the 14 broken copies fails for exactly the intended check: invented IP (G3), uncited evidence-supported claim (P2), missing event (G1), ATT&CK ID (G3), different risk score (G5), canary repeated (G4), invented user (G2), `[]` instead of `null` (P2), other incident (G0), uncited step (P2), self-rating above 1 (P2), invented event ID in text (G3), model's own `risk_score` field (P2), no uncertainties (P2). A mis-attributed entity stays valid but lowers the confidence (U1).
+`backend/tests/analysis/` runs in CI. The synthetic, masked package `tools/ai1/samples/evidence-inc-ai1-0001.json` has 11 flagged events (password guessing, encoded PowerShell, SMB logon, new service, file read, 480 MB transfer) and 2 context events, one carrying a prompt-injection canary. The hand-written good output is valid with confidence 0.976. Each of the 15 broken copies fails for exactly the intended check: invented IP (G3), uncited evidence-supported claim (P2), missing event (G1), ATT&CK ID (G3), different risk score (G5), different risk level (G5), canary repeated (G4), invented user (G2), `[]` instead of `null` (P2), other incident (G0), uncited step (P2), self-rating above 1 (P2), invented event ID in text (G3), model's own `risk_score` field (P2), no uncertainties (P2). A mis-attributed entity stays valid but lowers the confidence (U1).
 
 **Limits.** The checks cannot tell whether a claim is true, only that its support exists. Unmasked host and user names written only in free text are not detected; the model must list them, and masking (on by default) makes them detectable. Human scoring of factual accuracy and sequence consistency is still needed in the evaluation phase. The sample output is hand-written, not model output.
 
