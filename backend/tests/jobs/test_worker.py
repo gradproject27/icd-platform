@@ -13,7 +13,14 @@ from app.ingest import registry
 from app.ingest.interface import ParseError, Quarantined
 from app.jobs import ingest
 from app.jobs.errors import JobLost
-from app.jobs.queue import claim_next, finish, reap_stale, set_progress, utcnow
+from app.jobs.queue import (
+    claim_next,
+    clear_upload_rows,
+    finish,
+    reap_stale,
+    set_progress,
+    utcnow,
+)
 from app.models import EventRow, JobRow, QuarantineRow
 from app.worker.runner import run_once
 
@@ -235,7 +242,7 @@ def test_job_fails_worker_lost_after_max_attempts(upload, client, engine, settin
         reap_stale(engine, now, settings.lease_seconds)
         if attempt + 1 < settings.job_max_attempts:
             assert job(client, accepted["job_id"]).state == "queued"
-            ingest.clear_upload_rows(engine, claimed.upload_id)
+            clear_upload_rows(engine, claimed.upload_id)
 
     failed = job(client, accepted["job_id"])
     assert (failed.state, failed.error.code, failed.attempts) == ("failed", "worker_lost", 3)
