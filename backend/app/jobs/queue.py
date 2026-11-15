@@ -6,14 +6,16 @@ heartbeat is older than the lease is taken back by reap_stale: queued again whil
 left, failed with worker_lost after that. So no job stays running forever.
 
 Every write after the claim names the worker (worker_id) and only succeeds while that worker
-still holds the job, so a worker that was presumed dead cannot overwrite a newer attempt.
+still holds the job, so a worker that was presumed dead cannot overwrite a newer attempt. Rows
+written for a job (events, quarantined records) go in the same transaction as holds(), which
+locks the job row, so they cannot land after the job was taken back.
 """
 
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import Engine, delete, select, update
+from sqlalchemy import Connection, Engine, delete, select, update
 from sqlalchemy.orm import Session
 
 from app.api.schemas import ApiError, ErrorCode, Job, JobKind, JobStage, JobState
@@ -83,6 +85,20 @@ def _update_owned(engine: Engine, job_id: str, owner: str, values: dict[str, Any
             .values(values)
         )
         return result.rowcount == 1
+
+
+def holds(connection: Connection, job_id: str, owner: str) -> bool:
+    """Lock the job row if worker `owner` still holds it, until the transaction ends."""
+    held = connection.scalar(
+        select(JobRow.job_id)
+        .where(
+            JobRow.job_id == job_id,
+            JobRow.worker_id == owner,
+            JobRow.state == JobState.RUNNING.value,
+        )
+        .with_for_update()
+    )
+    return held is not None
 
 
 def heartbeat(engine: Engine, job_id: str, worker_id: str, now: datetime) -> bool:
