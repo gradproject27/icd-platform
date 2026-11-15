@@ -92,7 +92,7 @@ CI (`.github/workflows/ci.yml`) runs five jobs on every pull request and every p
 | `test` | `alembic upgrade head` and `pytest` against a PostgreSQL service |
 | `frontend` | in `frontend/`: `npm ci`, contract types drift check, ESLint, type check, Vitest, production build |
 | `secret-scan` | gitleaks over the full git history |
-| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision and that the worker started the response expiry loop, checks that `web` serves the dashboard and proxies `/api/health`, then uploads the correlation fixture through nginx and waits for its job to finish with 37 events |
+| `compose-smoke` | starts the stack, waits for every healthcheck, calls `/health`, checks the migration revision and that the worker started the response expiry loop, checks that `web` serves the dashboard and proxies `/api/health`, then runs the C1 Week 2 demo through nginx (`tools/c1/week2_demo.py`: the fixture and the UNSW-NB15 sample, quarantined records, a failure with a reason, refused files) and a worker crash test (stop the worker, upload, the job waits `queued`, start the worker, the job finishes `done`) |
 
 ## Frontend
 
@@ -159,6 +159,8 @@ curl.exe "http://localhost:8080/api/uploads/<upload_id>/events?label_status=flag
 ```
 
 The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
+
+**Demo.** With the stack running, `python tools/c1/week2_demo.py` (standard library only) uploads the fixture and C2's UNSW-NB15 sample and watches their jobs, lists quarantined records, shows a dataset without a parser failing with a reason, and shows refused files. It ends with `every step behaved as expected` (exit code 0) or says what failed. CI runs the same script through nginx. To show a worker crash by hand: `docker compose stop worker`, upload a file (the job stays `queued`), `docker compose start worker`, and the job finishes `done` within a few seconds.
 
 Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingestion.md)); an upload for another dataset is stored and its job fails with `no_parser` until its parser is registered in `backend/app/ingest/registry.py`. To run the UNSW-NB15 parser on a local file without the stack: `cd backend` then `python -m app.ingest.cli unsw-nb15 <path>/UNSW-NB15_1.csv`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
 
@@ -318,6 +320,7 @@ icd-platform/
 │   ├── label-mapping.json  dataset labels to EventLabel (owned by C2)
 │   └── event-types.json    event_type vocabulary (owned by C2)
 ├── tools/ai1/            AI1 HPC probe, model benchmark and synthetic samples
+├── tools/c1/             week2_demo.py: the C1 Week 2 demo, also run by CI
 ├── docs/                 design documents and notes (see Documentation above); api/ holds the API schemas and examples
 ├── .github/              CI workflow and PR template
 ├── docker-compose.yml
