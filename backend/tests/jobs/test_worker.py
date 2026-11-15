@@ -282,3 +282,28 @@ def test_jobs_run_oldest_first(upload, engine, settings):
     first, second = upload(b"[]"), upload(b"[]")
     assert claim_next(engine, "w", utcnow()).job_id == first["job_id"]
     assert claim_next(engine, "w", utcnow()).job_id == second["job_id"]
+
+
+def test_ingest_ends_with_the_incidents_stored(upload, client, engine, settings):
+    from app.incidents.store import load_incidents
+
+    accepted = upload(FIXTURE_EVENTS.read_bytes())
+    work(engine, settings)
+    done = job(client, accepted["job_id"])
+    assert done.state == "done", done.error
+    expected = json.loads((FIXTURE_EVENTS.parent / "expected-incidents.json").read_text())
+    assert len(load_incidents(engine, accepted["upload_id"])) == len(expected["incidents"])
+
+
+def test_correlation_failure_fails_the_job_and_keeps_nothing(
+    upload, client, engine, settings, monkeypatch
+):
+    def broken(*args, **kwargs):
+        raise ValueError("event IDs must be unique")
+
+    monkeypatch.setattr(ingest, "correlate_upload", broken)
+    accepted = upload(FIXTURE_EVENTS.read_bytes())
+    work(engine, settings)
+    failed = job(client, accepted["job_id"])
+    assert (failed.state, failed.error.code) == ("failed", "correlation_failed")
+    assert stored(engine, EventRow, accepted["upload_id"]) == 0

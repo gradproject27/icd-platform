@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas import DatasetSource, ErrorCode, IntakeCounts, JobStage
 from app.contracts import Event
+from app.incidents.store import IncidentConflict, MissingEvents, correlate_upload
 from app.ingest.interface import IntakeContext, ParseError, Parser, Quarantined
 from app.ingest.registry import PARSERS
 from app.jobs.errors import JobFailure, JobLost
@@ -206,4 +207,11 @@ def run_ingest(
             f"Counted {counts['events_stored']} events and {counts['quarantined']} quarantined "
             f"records, but the database holds {stored} and {quarantined}.",
         )
+
+    # Decision D3 (docs/incident-storage.md): the job is done only once its incidents are stored.
+    progress(JobStage.CORRELATING, counts)
+    try:
+        correlate_upload(engine, upload.upload_id, clock(), owner=(job.job_id, worker_id))
+    except (IncidentConflict, MissingEvents, ValueError) as exc:
+        raise JobFailure(ErrorCode.CORRELATION_FAILED, f"Correlation failed: {exc}") from exc
     return counts

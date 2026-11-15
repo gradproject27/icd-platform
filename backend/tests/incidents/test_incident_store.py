@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from app.contracts import Event
 from app.correlation.config import load_config
 from app.correlation.engine import correlate
-from app.incidents import (
+from app.incidents.models import IncidentEventRow, IncidentRow
+from app.incidents.store import (
     IncidentConflict,
     MissingEvents,
     correlate_upload,
@@ -18,7 +19,6 @@ from app.incidents import (
     load_incidents,
     store_incidents,
 )
-from app.incidents.models import IncidentEventRow, IncidentRow
 from app.jobs.ingest import _event_row
 from app.jobs.queue import clear_upload_rows, new_id
 from app.models import EventRow, UploadRow
@@ -117,12 +117,24 @@ def test_unknown_event_stores_nothing(engine):
 
 
 def test_same_incident_id_from_another_upload_is_refused(engine):
+    result = correlate(EVENTS, load_config(), NOW)
     first = stored_upload(engine)
-    correlate_upload(engine, first, NOW)
+    store_incidents(engine, first, result.incidents, result.config_version)
     second = stored_upload(engine)
     with pytest.raises(IncidentConflict):
-        correlate_upload(engine, second, NOW)
-    assert {i.incident_id for i in load_incidents(engine, second)} == set()
+        store_incidents(engine, second, result.incidents, result.config_version)
+    assert load_incidents(engine, second) == []
+
+
+def test_the_same_events_in_two_uploads_give_separate_incidents(engine):
+    first = correlate_upload(engine, stored_upload(engine), NOW)
+    again = correlate_upload(engine, (second := stored_upload(engine)), NOW)
+    assert {i.incident_id for i in first}.isdisjoint(i.incident_id for i in again)
+    assert len(first) == len(again) == len(EXPECTED["incidents"])
+    # Deterministic per upload: correlating the same upload again gives the same IDs.
+    assert [i.incident_id for i in correlate_upload(engine, second, NOW)] == [
+        i.incident_id for i in again
+    ]
 
 
 def test_database_refuses_a_link_to_a_missing_event(engine):

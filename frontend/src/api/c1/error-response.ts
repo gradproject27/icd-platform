@@ -25,6 +25,7 @@ export type ErrorCode =
   | "hpc_timeout"
   | "hpc_job_failed"
   | "report_missing"
+  | "correlation_failed"
   | "internal_error";
 
 /**

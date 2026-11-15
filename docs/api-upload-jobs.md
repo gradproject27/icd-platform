@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C1 (Platform & Integration) |
-| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker. **Not built in Week 2:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff. The team has no HPC access, so this part was set aside; their shapes below stay a proposal. Demo: `tools/c1/week2_demo.py` |
+| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker, which ends by storing the upload's incidents ([incident-storage.md](incident-storage.md)). **Not built in Week 2:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff. The team has no HPC access, so this part was set aside; their shapes below stay a proposal. Demo: `tools/c1/week2_demo.py` |
 | Week 2 plan | Section 4, steps 1 to 5; handoff "C1 to C4: endpoint request/response examples" |
 | Shapes (source of truth) | `backend/app/api/schemas.py` |
 | JSON Schemas (generated) | `docs/api/schemas/*.schema.json` |
@@ -102,6 +102,7 @@ queued ──► running ──► done
 | `validating` | Checks the stored file | Checks the evidence package (masked, valid) |
 | `parsing` | C2's parser reads the file | |
 | `storing` | Events and quarantined records are written | |
+| `correlating` | C3's correlation groups the stored events into incidents, which are stored | |
 | `submitting` | | Evidence file sent to the HPC (or local backend) |
 | `waiting_hpc` | | HPC job queued or running |
 | `collecting` | | Report file fetched and checked |
@@ -119,7 +120,7 @@ queued ──► running ──► done
 | Uploaded | `POST /uploads` answered 202 |
 | Validating | `state = running`, `stage = validating` (or still `queued`) |
 | Parsing | `stage = parsing` or `storing` |
-| Correlating | **Not in Week 2.** Correlation is wired to ingestion in Week 3; until then skip this step or show it as "not yet" |
+| Correlating | `stage = correlating` (from Week 3: the job is `done` only once its incidents are stored) |
 | Done | `state = done` |
 
 ### Counts
@@ -152,6 +153,7 @@ A failed ingest keeps nothing from that upload, so a retry starts clean.
 | `hpc_timeout` | analysis | The HPC job did not finish in time |
 | `hpc_job_failed` | analysis | The HPC job ended with an error |
 | `report_missing` | analysis | The HPC job finished but wrote no report file |
+| `correlation_failed` | ingest | The correlation could not store the upload's incidents; nothing from the upload is kept |
 | `internal_error` | both | Anything else; the server log has details |
 
 ### Analysis jobs
@@ -207,6 +209,6 @@ A test fails if a committed schema is out of date. C4 can generate TypeScript ty
 |---|---|---|---|
 | 1 | Accepted formats and size limit | `.csv .json .jsonl .log .txt`, 512 MB | C2 |
 | 2 | Parser signature (section 5) | As written | C2 |
-| 3 | Should ingest also run correlation in the same job from Week 3? | A follow-up `correlate` stage in the same job | C3, C1 |
+| 3 | Should ingest also run correlation in the same job from Week 3? | **Decided (15 Nov):** yes, a `correlating` stage at the end of the ingest job | C3, C1 |
 | 4 | Who may upload (OD-24) | Security Engineer and System Administrator, from Week 5 when login exists | C5 |
 | 5 | Duplicate upload guard (same SHA-256), Week 4 | Warn and link to the earlier upload | C2 |

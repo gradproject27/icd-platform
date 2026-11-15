@@ -70,7 +70,7 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **733 passed, 75 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **808 passed**.
+Expected result without a database: **733 passed, 78 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **811 passed**.
 
 The tests cover:
 
@@ -158,7 +158,7 @@ curl.exe http://localhost:8080/api/jobs/<job_id>
 curl.exe "http://localhost:8080/api/uploads/<upload_id>/events?label_status=flagged"
 ```
 
-The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
+The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. The last stage, `correlating`, runs C3's correlation over the stored events and stores the upload's incidents ([docs/incident-storage.md](docs/incident-storage.md)); the job is `done` only once they are stored. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
 
 **Demo.** With the stack running, `python tools/c1/week2_demo.py` (standard library only) uploads the fixture and C2's UNSW-NB15 sample and watches their jobs, lists quarantined records, shows a dataset without a parser failing with a reason, and shows refused files. It ends with `every step behaved as expected` (exit code 0) or says what failed. CI runs the same script through nginx. To show a worker crash by hand: `docker compose stop worker`, upload a file (the job stays `queued`), `docker compose start worker`, and the job finishes `done` within a few seconds.
 

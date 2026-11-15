@@ -15,8 +15,10 @@ from sqlalchemy.orm import Session
 
 from app.contracts import Event, Incident
 from app.correlation.config import CorrelationConfig, load_config
-from app.correlation.engine import correlate
+from app.correlation.engine import correlate, incident_id_for
 from app.incidents.models import IncidentEventRow, IncidentRow
+from app.jobs.errors import JobLost
+from app.jobs.queue import holds
 from app.models import EventRow
 
 
@@ -46,12 +48,18 @@ def _row(upload_id: str, incident: Incident, config_version: str) -> dict:
 
 
 def store_incidents(
-    engine: Engine, upload_id: str, incidents: Sequence[Incident], config_version: str
+    engine: Engine,
+    upload_id: str,
+    incidents: Sequence[Incident],
+    config_version: str,
+    owner: tuple[str, str] | None = None,
 ) -> int:
     """Store C3's incidents for one upload in one transaction. Returns how many were stored.
 
     Raises IncidentConflict if an incident ID is stored for another upload, and MissingEvents
     if an incident links an event that is not stored for this upload. Nothing is written then.
+    `owner` is (job_id, worker_id) when a job stores them: the write happens only while that
+    worker still holds the job, otherwise JobLost.
     """
     ids = [incident.incident_id for incident in incidents]
     if len(ids) != len(set(ids)):
@@ -60,6 +68,8 @@ def store_incidents(
         return 0
     linked = {link.event_id for incident in incidents for link in incident.events}
     with Session(engine) as session, session.begin():
+        if owner is not None and not holds(session.connection(), *owner):
+            raise JobLost
         others = session.scalars(
             select(IncidentRow.incident_id).where(
                 IncidentRow.incident_id.in_(ids), IncidentRow.upload_id != upload_id
@@ -133,13 +143,30 @@ def load_incidents(engine: Engine, upload_id: str) -> list[Incident]:
     return [Incident.model_validate(data) for data in rows]
 
 
+def scoped(upload_id: str, incident: Incident) -> Incident:
+    """The incident with its ID scoped to its upload.
+
+    C3 derives the ID from the event that started the incident, and event IDs repeat across
+    uploads (the same file uploaded twice, or two files with the same record numbers), so two
+    uploads would otherwise produce the same incident ID. The ID stays deterministic: the same
+    upload always gives the same IDs.
+    """
+    start = incident.events[0].event_id  # correlate() lists the starting event first
+    return incident.model_copy(update={"incident_id": incident_id_for(f"{upload_id}/{start}")})
+
+
 def correlate_upload(
-    engine: Engine, upload_id: str, now: datetime, config: CorrelationConfig | None = None
+    engine: Engine,
+    upload_id: str,
+    now: datetime,
+    config: CorrelationConfig | None = None,
+    owner: tuple[str, str] | None = None,
 ) -> list[Incident]:
     """Run C3's correlation over the stored events of one upload and store the incidents."""
     config = config or load_config()
     with Session(engine) as session:
         data = session.scalars(select(EventRow.data).where(EventRow.upload_id == upload_id)).all()
     result = correlate([Event.model_validate(item) for item in data], config, now)
-    store_incidents(engine, upload_id, result.incidents, result.config_version)
-    return list(result.incidents)
+    incidents = [scoped(upload_id, incident) for incident in result.incidents]
+    store_incidents(engine, upload_id, incidents, result.config_version, owner)
+    return incidents

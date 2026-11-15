@@ -263,7 +263,7 @@ function UploadForm(props: UploadFormProps) {
   );
 }
 
-type StepStatus = "done" | "current" | "not yet" | "not reached" | "from Week 3";
+type StepStatus = "done" | "current" | "not yet" | "not reached";
 
 interface Step {
   label: string;
@@ -275,7 +275,9 @@ function processingSteps(job: Job | null): Step[] {
   const state = job?.state;
   const stage = job?.stage;
   const parsing = state === "running" && (stage === "parsing" || stage === "storing");
-  const validating = state === "queued" || (state === "running" && !parsing);
+  const correlating = state === "running" && stage === "correlating";
+  const validating = state === "queued" || (state === "running" && !parsing && !correlating);
+  const pastParsing = correlating || state === "done";
   const failed = state === "failed";
   const later: StepStatus = failed ? "not reached" : "not yet";
 
@@ -283,10 +285,10 @@ function processingSteps(job: Job | null): Step[] {
     { label: "Uploaded", status: "done" },
     {
       label: "Validating",
-      status: job === null ? "not yet" : validating ? "current" : parsing || state === "done" ? "done" : later,
+      status: job === null ? "not yet" : validating ? "current" : parsing || pastParsing ? "done" : later,
     },
-    { label: "Parsing", status: parsing ? "current" : state === "done" ? "done" : later },
-    { label: "Correlation (from Week 3)", status: "from Week 3" },
+    { label: "Parsing", status: parsing ? "current" : pastParsing ? "done" : later },
+    { label: "Correlating", status: correlating ? "current" : state === "done" ? "done" : later },
     { label: "Done", status: state === "done" ? "done" : later },
   ];
 }

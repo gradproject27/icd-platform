@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C1 (Platform & Integration) |
-| Status | **Built:** tables, `store_incidents()`, `correlate_upload()`. **Not wired yet:** running the correlation after each ingest (decision D3) |
+| Status | **Built:** tables, `store_incidents()`, `correlate_upload()`, and the `correlating` stage at the end of every ingest job (decision D3) |
 | Code | `backend/app/incidents/` (`models.py`, `store.py`), migration `0005`; tests in `backend/tests/incidents/` |
 
 C3's correlation (`app.correlation.engine.correlate`) returns `Incident` contracts. Until now nothing kept them. This adds a fixed place in the database for incidents and their links to the stored events. C2's evidence builder and C5's response engine can then read an incident by its ID.
@@ -23,7 +23,7 @@ C3's correlation (`app.correlation.engine.correlate`) returns `Incident` contrac
 ## For C3: how to store incidents
 
 ```python
-from app.incidents import store_incidents
+from app.incidents.store import store_incidents
 
 result = correlate(events, config, now)
 store_incidents(engine, upload_id, result.incidents, result.config_version)
@@ -32,7 +32,7 @@ store_incidents(engine, upload_id, result.incidents, result.config_version)
 Or in one call, from the events already stored for an upload:
 
 ```python
-from app.incidents import correlate_upload
+from app.incidents.store import correlate_upload
 
 incidents = correlate_upload(engine, upload_id, now)
 ```
@@ -52,6 +52,6 @@ To read incidents back, use `load_incident(engine, incident_id)` and `load_incid
 |---|---|---|---|
 | D1 | Owner of incident storage | C1 owns the tables and `store_incidents`; C3 owns what goes in them | Team |
 | D2 | Migration order | Numbered in merge order (W3-D2): `0005` is this one. Any later migration takes the next number when it merges | Team |
-| D3 | When the correlation runs | A `correlating` stage at the end of the ingest job: after the events are stored, the worker calls `correlate_upload`, and the job is `done` only when the incidents are stored too. A separate job is the alternative | C3, C1 |
-| D4 | Same events in two uploads | Refused with `IncidentConflict`. The duplicate-upload guard (same SHA-256, Week 4) should stop it earlier | C2, C3 |
+| D3 | When the correlation runs | **Decided 15 Nov:** a `correlating` stage at the end of the ingest job. After the events are stored, the worker calls `correlate_upload`, and the job is `done` only when the incidents are stored too. If it fails, the job fails with `correlation_failed` and nothing from the upload is kept | C3, C1 |
+| D4 | Same events in two uploads | `correlate_upload` scopes each incident ID to its upload (C3's `incident_id_for` over `upload_id/starting event`), so the same events in two uploads give two sets of incidents, still deterministic per upload. `store_incidents` called directly with an ID already stored for another upload refuses with `IncidentConflict`. The duplicate-upload guard (same SHA-256, Week 4) should stop most duplicates earlier. C3 may prefer to add the scope inside `correlate()` | C2, C3 |
 | D5 | Incident state | The `status` column is the contract's value as stored. C5 keeps the live state in `incident_lifecycle` (C5 decision D1) until C5 moves it here | C5 |

@@ -124,6 +124,7 @@
         "hpc_timeout",
         "hpc_job_failed",
         "report_missing",
+        "correlation_failed",
         "internal_error"
       ],
       "title": "ErrorCode",
@@ -204,6 +205,7 @@
         "validating",
         "parsing",
         "storing",
+        "correlating",
         "submitting",
         "waiting_hpc",
         "collecting"
