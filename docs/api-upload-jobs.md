@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C1 (Platform & Integration) |
-| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker. **Next C1 PR:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff |
+| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker. **Not built in Week 2:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff. The team has no HPC access, so this part was set aside; their shapes below stay a proposal. Demo: `tools/c1/week2_demo.py` |
 | Week 2 plan | Section 4, steps 1 to 5; handoff "C1 to C4: endpoint request/response examples" |
 | Shapes (source of truth) | `backend/app/api/schemas.py` |
 | JSON Schemas (generated) | `docs/api/schemas/*.schema.json` |
@@ -28,8 +28,8 @@ There is no login in Week 2 (login is Week 5), so no endpoint needs a session ye
 | `GET /jobs/{job_id}` | Status of any job (ingest or analysis) | 200 `Job` | `job-*.json` |
 | `GET /uploads/{upload_id}/events` | The Events stored from an upload, in `event_id` order. Query: `label_status` (`flagged`, `unflagged`, `unlabelled`), `limit` (1 to 500, default 100), `after` (the last `event_id` of the previous page) | 200 `EventPage` | [event-page.json](api/examples/event-page.json) |
 | `GET /uploads/{upload_id}/quarantine` | Records that could not become Events, with the reason. Query: `limit`, `after` (a `seq`) | 200 `QuarantinePage` | [quarantine-page.json](api/examples/quarantine-page.json) |
-| `POST /analysis-jobs` | Queue an analysis of one `EvidencePackage` (JSON body). Used by AI1 and the demo in Week 2; the pipeline calls it in Week 3 | **202** `JobAccepted`, header `Location` | [job-accepted.json](api/examples/job-accepted.json) |
-| `GET /jobs/{job_id}/report` | The `AnalysisReport` of a done analysis job with a valid report | 200 `AnalysisReport` (contract) | `contracts/examples/analysis-report.example.json` |
+| `POST /analysis-jobs` | **Not built yet (proposal).** Queue an analysis of one `EvidencePackage` (JSON body) | **202** `JobAccepted`, header `Location` | [job-accepted.json](api/examples/job-accepted.json) |
+| `GET /jobs/{job_id}/report` | **Not built yet (proposal).** The `AnalysisReport` of a done analysis job with a valid report | 200 `AnalysisReport` (contract) | `contracts/examples/analysis-report.example.json` |
 
 ## 3. Upload request
 
