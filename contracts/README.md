@@ -11,6 +11,7 @@ The six contracts are Event, Incident, EvidencePackage, AnalysisReport, Response
 | Pydantic v2 models (the source of truth) | `backend/app/contracts/` | yes |
 | JSON Schemas, one per contract | `contracts/schemas/<name>.schema.json` | **no, generated** |
 | One valid synthetic example per contract | `contracts/examples/<name>.example.json` | yes |
+| AI1's own formats, not shared contracts: LLM output v0, HPC output file, expected incident (see [docs/ai1-report-schema.md](../docs/ai1-report-schema.md)); regenerate with `cd backend; python -m app.analysis.export` | `contracts/ai1/<name>.schema.json` | **no, generated** |
 | Dataset label mapping to `EventLabel` (owner C2, T1-06; see [docs/dataset-profile.md](../docs/dataset-profile.md)) | `contracts/label-mapping.json` | yes, hand-written, not generated |
 
 Names: `event`, `incident`, `evidence-package`, `analysis-report`, `response-action`, `audit-record`.

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f-no-entities-1",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-14T14:19:44.738219Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "No actionable evidence is present to form a summary of the incident.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "It is unknown which host, IP, or user is associated with the flagged event, and without this information, no meaningful analysis can be conducted. (would be settled by: A host, IP, or user must be present in the event to identify the system or actor involved in the flagged activity.) The event type is 'unknown', and without a defined activity, it is impossible to interpret what action was taken or why it was flagged. (would be settled by: The event type and activity details must be specified to determine the nature of the flagged behavior.) Limitations: No host, IP, or user is present in any event, making it impossible to identify specific systems or actors involved. The event is labeled as 'flagged' but contains no actionable details such as host, IP, user, or activity type, rendering it non-specific. There are no context events or additional logs to support or clarify the flagged record.",
+  "confidence": 0.0,
+  "model_self_rating": null
+}

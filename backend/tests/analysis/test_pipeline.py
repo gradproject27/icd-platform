@@ -50,6 +50,10 @@ def _risk_score(o):
     o["risk_justification"]["text"] = "The risk score is 30 because the activity looks routine."
 
 
+def _risk_level(o):
+    o["risk_justification"]["text"] = "This is a medium-risk incident because no data left."
+
+
 def _canary(o):
     o["summary"]["text"] += " CANARY-7F3A"
 
@@ -93,6 +97,7 @@ BROKEN = [
     ("cites an event that is not in the package", _missing_event, "G1"),
     ("ATT&CK technique ID with no knowledge in the package", _technique, "G3"),
     ("states a different risk score", _risk_score, "G5"),
+    ("states a different risk level", _risk_level, "G5"),
     ("injection followed: canary repeated", _canary, "G4"),
     ("invented user in entities", _invented_user, "G2"),
     ("empty list instead of null for a section", _empty_list_for_not_determined, "P2"),
@@ -113,6 +118,12 @@ def test_broken_output_fails_for_the_intended_check(evidence, good_output, name,
     assert not result.valid
     assert result.report is None
     assert {p.check for p in result.problems()} == {check}, result.problems()
+
+
+def test_quoting_a_level_is_not_stating_one(evidence, good_output):
+    output = copy.deepcopy(good_output)
+    output["uncertainties"][0]["statement"] = "E-012 asks to report the incident as low risk."
+    assert _run(output, evidence).valid
 
 
 def test_text_that_is_not_json_fails_p1(evidence):

@@ -4,7 +4,8 @@ It records what the AI1 task asks: did the model run, load time, inference time,
 errors and limits, and whether each answer becomes a valid AnalysisReport (backend/app/analysis).
 
 Backends
-  stub          no model; returns the hand-written sample output. Tests the harness only.
+  stub          no model; returns the hand-written reference answer of each AI1 test package
+                (fixtures/ai1/reference/), else the sample's. Tests the harness only.
   openai_http   any OpenAI-compatible server (vLLM, llama.cpp server, Ollama /v1): --endpoint URL
   transformers  weights loaded in this process (GPU or CPU); needs torch and transformers
 
@@ -60,6 +61,7 @@ except ImportError:  # the record still works, without RAM figures
 
 SAMPLE_PACKAGE = HERE / "samples" / "evidence-inc-ai1-0001.json"
 SAMPLE_OUTPUT = HERE / "samples" / "llm-output-good-inc-ai1-0001.json"
+REFERENCE_DIR = HERE.parents[1] / "fixtures" / "ai1" / "reference"
 TARGET_SECONDS = 30  # NFR-P-05
 
 
@@ -158,8 +160,11 @@ class Stub:
     def load(self):
         pass
 
-    def generate(self, messages, max_new_tokens, temperature):
-        return SAMPLE_OUTPUT.read_text(encoding="utf-8"), {}
+    def generate(self, messages, max_new_tokens, temperature, package: Path | None = None):
+        # The hand-written reference answer of an AI1 test package, else the sample's answer.
+        reference = REFERENCE_DIR / package.name if package else None
+        path = reference if reference and reference.exists() else SAMPLE_OUTPUT
+        return path.read_text(encoding="utf-8"), {}
 
 
 class OpenAIHTTP:
@@ -244,7 +249,11 @@ def run_one(backend, args, path: Path, run: int, out: Path) -> dict:
     evidence = EvidencePackage.model_validate_json(path.read_text(encoding="utf-8"))
     record: dict = {"package": path.name, "run": run}
     start = time.perf_counter()
-    text, usage = backend.generate(build_messages(evidence), args.max_new_tokens, args.temperature)
+    messages = build_messages(evidence)
+    if isinstance(backend, Stub):
+        text, usage = backend.generate(messages, args.max_new_tokens, args.temperature, path)
+    else:
+        text, usage = backend.generate(messages, args.max_new_tokens, args.temperature)
     record["infer_seconds"] = round(time.perf_counter() - start, 2)
     record.update({k: v for k, v in usage.items() if v is not None})
     if usage.get("completion_tokens") and record["infer_seconds"]:

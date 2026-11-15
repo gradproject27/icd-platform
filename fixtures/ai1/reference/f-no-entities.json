@@ -1,0 +1,54 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "analysis_status": "insufficient_evidence",
+  "summary": {
+    "text": "One flagged record of type Generic has no host, IP or user, so it cannot be tied to any system.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-005"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Find the source record of fx-005 and recover its host or address fields.",
+      "rationale": "Without them the event cannot be linked to a system.",
+      "cited_event_ids": [
+        "fx-005"
+      ],
+      "reversible_alternative": null
+    }
+  ],
+  "risk_justification": {
+    "text": "The given medium score rests on one flagged record with no affected system.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-005"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "No affected host, address or account is known.",
+      "missing_evidence": "The host, IP and user fields of the original record."
+    }
+  ],
+  "limitations": [
+    "One event only, with no entity fields."
+  ],
+  "self_rating": 0.2
+}

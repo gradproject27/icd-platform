@@ -1,0 +1,45 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Request flood against host-01 while user-01 is logged on",
+    "category": "likely_interpretation",
+    "cited_event_ids": ["fx-025"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01", "ip-02"],
+      "users": ["user-01"]
+    }
+  },
+  "findings": [
+    {
+      "text": "Second request flood against host-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": ["fx-026"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01", "ip-02"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Verify if user-01 has legitimate access to host-01",
+      "rationale": "user-01 logged on to host-02 again (nearer to the second group)",
+      "cited_event_ids": ["fx-024"],
+      "reversible_alternative": null
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "Was the second request flood a legitimate response to the first one?",
+      "missing_evidence": "the events do not show the response to the first request flood"
+    }
+  ],
+  "limitations": [
+    "the analysis is limited to the provided events"
+  ],
+  "self_rating": null
+}

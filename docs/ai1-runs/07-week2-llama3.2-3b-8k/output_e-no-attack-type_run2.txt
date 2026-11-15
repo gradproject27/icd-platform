@@ -1,0 +1,33 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-109bc3e364d7973c",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Flagged record on host-01 with no attack type",
+    "category": "hypothesis",
+    "cited_event_ids": ["fx-032"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01", "ip-02"],
+      "users": ["user-01"]
+    }
+  },
+  "findings": [],
+  "recommendations": [
+    {
+      "action": "Verify the flagged record on host-01 for any suspicious activity",
+      "rationale": "The flagged record on host-01 has no attack type, which is unusual.",
+      "cited_event_ids": ["fx-032"]
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "What type of attack led to the flagged record on host-01?",
+      "missing_evidence": "attack_type"
+    }
+  ],
+  "limitations": [
+    "Insufficient evidence to determine the attack type"
+  ],
+  "self_rating": null
+}

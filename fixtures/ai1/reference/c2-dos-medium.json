@@ -1,0 +1,168 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "ip-01 flooded host-01 with requests twice, at 13:24 and 13:30, while user-01 was logged on.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "attack_type": {
+    "category": "dos_request_flood",
+    "claim": {
+      "text": "Two request floods against one host from one address fit a denial of service attempt.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "ip-01 flooded host-01 with requests while user-01 was logged on.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "Six minutes later a second flood hit host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "Two request floods from ip-01 hit host-01 six minutes apart.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "The earlier logon of user-01 to host-02 is a context event and is not shown to be part of the attack.",
+      "category": "hypothesis",
+      "cited_event_ids": [
+        "fx-024"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": {
+    "text": "The service on host-01 may have been slowed or unavailable during the floods.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [],
+      "users": []
+    }
+  },
+  "recommendations": [
+    {
+      "action": "Check whether the service on host-01 stayed available during both floods.",
+      "rationale": "The floods targeted host-01 twice.",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "reversible_alternative": null
+    },
+    {
+      "action": "Consider rate limiting requests from ip-01.",
+      "rationale": "Both floods came from ip-01.",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "reversible_alternative": "Alert on request rates from ip-01 before limiting them."
+    }
+  ],
+  "risk_justification": {
+    "text": "The given medium score fits two floods against one host with no sign of compromise.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The events do not show whether the service on host-01 went down.",
+      "missing_evidence": "Availability monitoring or response-time logs for host-01."
+    }
+  ],
+  "limitations": [
+    "Only two flagged events and one context event were given."
+  ],
+  "self_rating": 0.8
+}

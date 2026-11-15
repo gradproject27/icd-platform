@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-a-multistep-high-2",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-a4c4446ebbc7",
+  "generated_at": "2026-11-14T14:23:33.636627Z",
+  "generated_by": "local",
+  "model_id": "llama3.2-3b-8k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Port scan of host-01 from external address, Service version probe of host-01, Exploit request against host-01 application as user-01, Reverse shell from host-01 back to external address, user-01 used from host-01 against host-02, Privileged account user-02 used from host-01 on host-02, New service installed on host-02 by user-02, New service installed on host-03 by user-02",
+  "attack_type": "Backdoors",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "Port scan of host-01 from external address",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "Service version probe of host-01",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "Exploit request against host-01 application as user-01",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "Reverse shell from host-01 back to external address",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "user-01 used from host-01 against host-02",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "Privileged account user-02 used from host-01 on host-02",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "New service installed on host-02 by user-02",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "New service installed on host-03 by user-02",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Port scan of host-01 from external address",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "statement": "Service version probe of host-01",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "Exploit request against host-01 application as user-01",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "statement": "Reverse shell from host-01 back to external address",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "user-01 used from host-01 against host-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "statement": "Privileged account user-02 used from host-01 on host-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "New service installed on host-02 by user-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "statement": "New service installed on host-03 by user-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Monitor host-01 for suspicious activity Why: Multiple flagged events indicate potential backdoor activity on host-01",
+    "Restrict user-01 access to host-01 Why: User-01 was involved in multiple exploit requests and reverse shell activity",
+    "Investigate privilege use by user-02 Why: User-02 was involved in multiple privileged account activities"
+  ],
+  "risk_justification": "Multiple flagged events indicate potential backdoor activity, which could lead to unauthorized access and data exfiltration",
+  "uncertainty": "What was the initial intent of the attacker? (would be settled by: Initial intent) Limitations: Insufficient evidence to determine the initial intent of the attacker",
+  "confidence": 0.9333,
+  "model_self_rating": null
+}

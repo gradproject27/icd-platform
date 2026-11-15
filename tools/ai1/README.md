@@ -6,6 +6,9 @@ Owner: AI1. Design and decisions: [docs/ai1-analysis-design.md](../../docs/ai1-a
 |---|---|
 | `hpc_probe.sh` | Read-only HPC feasibility probe (10 checks). Run `bash tools/ai1/hpc_probe.sh login` on the login node, then `bash tools/ai1/hpc_probe.sh compute` inside a short compute job. It installs and downloads nothing. |
 | `bench.py` | Runs prompt v0 on evidence packages and writes `model_run_record.md` and `.json`. Backends: `stub`, `openai_http`, `transformers`. |
+| `icd_analyze.py` | The HPC analysis command (C1's `ICD_ANALYZE_CMD`): one evidence file in, one `icd-hpc-output-v1` file out ([docs/ai1-report-schema.md](../../docs/ai1-report-schema.md), section 4). |
+| `make_packages.py` | Rebuilds the five test packages in `fixtures/ai1/packages/` from C3's correlation fixture. |
+| `evaluate.py` | Scores a `bench.py` run folder against `fixtures/ai1/expected.json`: metrics E1 to E11, one AnalysisReport per valid run in `reports/`. |
 | `run_bench.sbatch` | Slurm job for `bench.py` with the pinned weights (edit the `CHANGE_ME` lines). |
 | `requirements-bench.txt` | Packages for `bench.py` outside the api image. |
 | `samples/evidence-inc-ai1-0001.json` | Synthetic, masked EvidencePackage 1.0: 11 flagged and 2 context events, one with a prompt-injection canary (`CANARY-7F3A`). |
@@ -15,6 +18,13 @@ Quick check from the repo root, with the backend venv active:
 
 ```powershell
 python tools/ai1/bench.py --backend stub --runs 1 --out tools/ai1/runs/stub
+```
+
+Week 2 evaluation of the five test incidents (the stub returns the hand-written reference answers; use `openai_http` or `transformers` for a real model):
+
+```powershell
+python tools/ai1/bench.py --backend stub --packages (Get-ChildItem fixtures/ai1/packages/*.json) --runs 1 --out tools/ai1/runs/stub-5
+python tools/ai1/evaluate.py tools/ai1/runs/stub-5
 ```
 
 Local run on the fallback path (option C in the design note) with [Ollama](https://ollama.com/). Make a copy of the model with an 8k context that runs fully on the GPU, otherwise the prompt (about 5,000 tokens) is cut and Ollama may split the model between CPU and GPU:

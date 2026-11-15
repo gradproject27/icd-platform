@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c2-dos-medium-2",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-14T14:15:00.480757Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Two denial-of-service flood attacks were detected against host-01 from ip-01, with a remote login on host-02 by user-01 occurring earlier.",
+  "attack_type": "evidence_supported",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "At 13:16:00Z, user-01 logged into host-02.",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "At 13:24:00Z, a denial-of-service flood attack began against host-01 from ip-01 targeting ip-02 while user-01 was logged on.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "At 13:30:00Z, a second denial-of-service flood attack occurred against host-01 from ip-01 targeting ip-02.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A denial-of-service flood attack occurred against host-01 from ip-01 targeting ip-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "statement": "A second denial-of-service flood attack occurred against host-01 from ip-01 targeting ip-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    },
+    {
+      "statement": "The remote login event on host-02 may indicate user-01's presence on a different host, which could be part of a broader access pattern, though it does not directly support malicious intent.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source IP ip-01 for other suspicious activities, including network traffic patterns or previous flagged events. Why: Both DoS flood events originate from the same source IP, ip-01, and are flagged as malicious, suggesting a consistent attacker source. Less disruptive option: Review logs from ip-01 for a limited time window (e.g., 1 hour before and after the events) to assess for anomalies without disrupting network operations.",
+    "Verify whether user-01 has legitimate access to host-01 and host-02, and whether their login activity on host-02 is authorized. Why: A login on host-02 by user-01 may indicate a broader access pattern, and verifying authorization helps determine if the activity is legitimate or suspicious. Less disruptive option: Check access policies and audit logs for user-01's authorized sessions without immediately revoking their credentials."
+  ],
+  "risk_justification": null,
+  "uncertainty": "It is not known whether the DoS attacks were initiated by a legitimate user, a compromised account, or a botnet. (would be settled by: Logs from host-01 or host-02 showing service-level metrics, process execution, or file access during the attack window.) It is not known whether ip-01 is a known malicious IP or part of a larger attack pattern. (would be settled by: Event logs from the source IP ip-01 showing prior malicious activity or connection history.) It is not known whether user-01 was actively involved in the attacks or if their login on host-02 is unrelated. (would be settled by: Event logs from user-01 showing other activity on host-01 or host-02 during the time window.) Limitations: The events do not include any file access, process execution, or service-level details that could reveal whether the DoS attacks were part of a larger attack chain or were initiated by a compromised account. The role of user-01 in the attacks is not established; the login on host-02 does not confirm or deny their involvement in the DoS activity. No logs from host-02 or other hosts are provided that could show whether the DoS attacks were coordinated or part of a larger incident.",
+  "confidence": 1.0,
+  "model_self_rating": null
+}

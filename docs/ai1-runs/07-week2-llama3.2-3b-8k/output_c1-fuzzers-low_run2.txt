@@ -1,0 +1,44 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Malformed requests to host-01 from external address",
+    "category": "likely_interpretation",
+    "cited_event_ids": ["fx-021", "fx-022"],
+    "entities": {
+      "hosts": ["host-01"],
+      "ips": ["ip-01", "ip-02"],
+      "users": ["user-01"]
+    }
+  },
+  "findings": [
+    {
+      "text": "Malformed requests to host-01 from external address",
+      "category": "evidence_supported",
+      "cited_event_ids": ["fx-021", "fx-022"],
+      "entities": {
+        "hosts": ["host-01"],
+        "ips": ["ip-01", "ip-02"],
+        "users": ["user-01"]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Verify the integrity of the host-01 and its dependencies.",
+      "rationale": "The events show repeated malformed requests to host-01 from external addresses.",
+      "cited_event_ids": ["fx-021", "fx-022", "fx-023"]
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "What triggered the fuzzing activity?",
+      "missing_evidence": "logins, network connections"
+    }
+  ],
+  "limitations": [
+    "No information about the fuzzing activity's origin or purpose."
+  ],
+  "self_rating": null
+}

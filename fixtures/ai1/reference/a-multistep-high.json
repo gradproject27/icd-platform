@@ -1,0 +1,324 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-e8d1f72159481bee",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "The external address ip-01 scanned and probed host-01, exploited its application as user-01 and opened a reverse shell back to ip-01. user-01 and then the privileged account user-02 were used from host-01 against host-02, and new services were installed on host-02 and host-03 by user-02.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-002",
+      "fx-004",
+      "fx-007",
+      "fx-008",
+      "fx-009",
+      "fx-010",
+      "fx-012",
+      "fx-013"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": [
+        "user-01",
+        "user-02"
+      ]
+    }
+  },
+  "attack_type": {
+    "category": "backdoors_after_exploitation",
+    "claim": {
+      "text": "Reconnaissance and an exploit were followed by a reverse shell and new services on two more hosts, which fits backdoor installation after exploitation.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-007",
+        "fx-008",
+        "fx-012",
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "ip-01 scanned host-01 and probed its service versions.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "An exploit request against the host-01 application ran as user-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "A reverse shell connected from host-01 back to ip-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "user-01 was used from host-01 against host-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "The privileged account user-02 was used from host-01 on host-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "text": "New services were installed on host-02 and then on host-03 by user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02",
+          "host-03"
+        ],
+        "ips": [],
+        "users": [
+          "user-02"
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "A reverse shell from host-01 to ip-01 followed the exploit request within eight minutes.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-008"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "The attacker moved from host-01 to host-02 and then used the privileged account user-02.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-009",
+        "fx-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01",
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "text": "The services installed on host-02 and host-03 by user-02 are consistent with persistence.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02",
+          "host-03"
+        ],
+        "ips": [],
+        "users": [
+          "user-02"
+        ]
+      }
+    },
+    {
+      "text": "The credentials of user-02 may have been taken on host-01; the events do not show how.",
+      "category": "hypothesis",
+      "cited_event_ids": [
+        "fx-010"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": [
+          "user-02"
+        ]
+      }
+    }
+  ],
+  "weaknesses": [
+    {
+      "text": "The application on host-01 accepted an exploit request from an external address.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-007"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "impact": {
+    "text": "host-01, host-02 and host-03 may be under attacker control, including through the privileged account user-02.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-008",
+      "fx-010",
+      "fx-012",
+      "fx-013"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03"
+      ],
+      "ips": [],
+      "users": [
+        "user-02"
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "action": "Review the new services on host-02 and host-03 and who created them.",
+      "rationale": "They were installed by user-02 right after the privileged account was used.",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ],
+      "reversible_alternative": "Disable the services instead of deleting them, so they can be examined."
+    },
+    {
+      "action": "Review recent use of user-01 and user-02 and consider resetting their credentials.",
+      "rationale": "Both accounts were used during the attack, user-02 with privileges.",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-009",
+        "fx-010"
+      ],
+      "reversible_alternative": "Require re-authentication at the next logon instead of a reset."
+    },
+    {
+      "action": "Check the host-01 application for the exploited flaw and the reverse shell to ip-01.",
+      "rationale": "The chain started with an exploit request and a shell back to ip-01.",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-008"
+      ],
+      "reversible_alternative": "Monitor traffic to ip-01 before blocking it."
+    }
+  ],
+  "risk_justification": {
+    "text": "The given high score fits an exploit, a reverse shell, use of a privileged account and new services on three hosts.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-007",
+      "fx-008",
+      "fx-010",
+      "fx-012",
+      "fx-013"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The events do not show what the new services run.",
+      "missing_evidence": "Service image paths and file hashes on host-02 and host-03."
+    },
+    {
+      "statement": "The events do not say whether each step succeeded.",
+      "missing_evidence": "Outcome or action fields for each flagged event."
+    }
+  ],
+  "limitations": [
+    "Host, IP and user values are pseudonymised tokens.",
+    "Three context events were given; they are treated as background only."
+  ],
+  "self_rating": 0.85
+}

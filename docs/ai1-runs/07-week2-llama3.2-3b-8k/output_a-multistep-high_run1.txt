@@ -1,0 +1,145 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-e8d1f72159481bee",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Port scan of host-01 from external address, Service version probe of host-01, Exploit request against host-01 application as user-01, Reverse shell from host-01 back to external address, user-01 used from host-01 against host-02, Privileged account user-02 used from host-01 on host-02, New service installed on host-02 by user-02, New service installed on host-03 by user-02",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-002",
+      "fx-004",
+      "fx-007",
+      "fx-008",
+      "fx-009",
+      "fx-010",
+      "fx-012",
+      "fx-013",
+      "fx-003",
+      "fx-011",
+      "fx-014"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02",
+        "host-03"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02",
+        "ip-04"
+      ],
+      "users": [
+        "user-01",
+        "user-02"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "text": "Port scan of host-01 from external address",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "text": "Service version probe of host-01",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "text": "Exploit request against host-01 application as user-01",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "text": "Reverse shell from host-01 back to external address",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "text": "user-01 used from host-01 against host-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "text": "Privileged account user-02 used from host-01 on host-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "text": "New service installed on host-02 by user-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "text": "New service installed on host-03 by user-02",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Monitor host-01 for suspicious activity",
+      "rationale": "Multiple flagged events indicate potential backdoor activity on host-01",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008"
+      ]
+    },
+    {
+      "action": "Restrict user-01 access to host-01",
+      "rationale": "User-01 was involved in multiple exploit requests and reverse shell activity",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-008",
+        "fx-009"
+      ]
+    },
+    {
+      "action": "Investigate privilege use by user-02",
+      "rationale": "User-02 was involved in multiple privileged account activities",
+      "cited_event_ids": [
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "uncertainties": [
+    {
+      "statement": "Was the initial port scan a reconnaissance step or a genuine vulnerability scan?",
+      "missing_evidence": "initial_scan_type"
+    },
+    {
+      "statement": "Was the exploit request against host-01 application a reconnaissance step or a genuine vulnerability scan?",
+      "missing_evidence": "exploit_request_type"
+    },
+    {
+      "statement": "Was the reverse shell from host-01 back to external address a reconnaissance step or a genuine backdoor activity?",
+      "missing_evidence": "reverse_shell_type"
+    }
+  ],
+  "limitations": [
+    "No information about the initial port scan or exploit request types",
+    "No information about the reverse shell type"
+  ],
+  "self_rating": null
+}

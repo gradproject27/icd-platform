@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c2-dos-medium-1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-14T14:26:32.402351Z",
+  "generated_by": "local",
+  "model_id": "llama3.2-3b-8k",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Request flood against host-01 while user-01 is logged on",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [
+    {
+      "statement": "Second request flood against host-01",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Verify if user-01 has legitimate access to host-01 Why: user-01 logged on to host-02 again (nearer to the second group)"
+  ],
+  "risk_justification": null,
+  "uncertainty": "Was the second request flood a legitimate response to the first one? (would be settled by: the events do not show the response to the first request flood) Limitations: the analysis is limited to the provided events",
+  "confidence": 1.0,
+  "model_self_rating": null
+}

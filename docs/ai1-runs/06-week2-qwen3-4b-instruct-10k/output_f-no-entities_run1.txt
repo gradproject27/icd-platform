@@ -1,0 +1,37 @@
+{
+  "analysis_status": "insufficient_evidence",
+  "findings": [],
+  "incident_id": "inc-43ea5e3e3693024c",
+  "limitations": [
+    "No host, IP, or user is present in any event, making it impossible to identify specific systems or actors involved.",
+    "The event is labeled as 'flagged' but contains no actionable details such as host, IP, user, or activity type, rendering it non-specific.",
+    "There are no context events or additional logs to support or clarify the flagged record."
+  ],
+  "output_version": "ai1-output-0.1",
+  "recommendations": [],
+  "summary": {
+    "category": "hypothesis",
+    "text": "No actionable evidence is present to form a summary of the incident.",
+    "cited_event_ids": [
+      "fx-005"
+    ],
+    "entities": {
+      "hosts": [],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "missing_evidence": "A host, IP, or user must be present in the event to identify the system or actor involved in the flagged activity.",
+      "statement": "It is unknown which host, IP, or user is associated with the flagged event, and without this information, no meaningful analysis can be conducted."
+    },
+    {
+      "missing_evidence": "The event type and activity details must be specified to determine the nature of the flagged behavior.",
+      "statement": "The event type is 'unknown', and without a defined activity, it is impossible to interpret what action was taken or why it was flagged."
+    }
+  ],
+  "attack_type": null,
+  "sequence": null,
+  "weaknesses": null
+}
