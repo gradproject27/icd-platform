@@ -25,6 +25,7 @@ export type ErrorCode =
   | "hpc_timeout"
   | "hpc_job_failed"
   | "report_missing"
+  | "correlation_failed"
   | "internal_error";
 /**
  * This interface was referenced by `Job`'s JSON-Schema
@@ -37,7 +38,8 @@ export type JobKind = "ingest" | "analysis";
  * This interface was referenced by `Job`'s JSON-Schema
  * via the `definition` "JobStage".
  */
-export type JobStage = "validating" | "parsing" | "storing" | "submitting" | "waiting_hpc" | "collecting";
+export type JobStage =
+  "validating" | "parsing" | "storing" | "correlating" | "submitting" | "waiting_hpc" | "collecting";
 /**
  * Where a job is. done and failed are final; a job never stays running forever.
  *

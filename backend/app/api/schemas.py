@@ -59,6 +59,7 @@ class JobStage(StrEnum):
     VALIDATING = "validating"
     PARSING = "parsing"
     STORING = "storing"
+    CORRELATING = "correlating"
     SUBMITTING = "submitting"
     WAITING_HPC = "waiting_hpc"
     COLLECTING = "collecting"
@@ -87,6 +88,7 @@ class ErrorCode(StrEnum):
     HPC_TIMEOUT = "hpc_timeout"
     HPC_JOB_FAILED = "hpc_job_failed"
     REPORT_MISSING = "report_missing"
+    CORRELATION_FAILED = "correlation_failed"
     INTERNAL_ERROR = "internal_error"
 
 

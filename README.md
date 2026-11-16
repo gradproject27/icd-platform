@@ -70,7 +70,7 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **733 passed, 66 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **799 passed**.
+Expected result without a database: **733 passed, 78 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **811 passed**.
 
 The tests cover:
 
@@ -158,7 +158,7 @@ curl.exe http://localhost:8080/api/jobs/<job_id>
 curl.exe "http://localhost:8080/api/uploads/<upload_id>/events?label_status=flagged"
 ```
 
-The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
+The job goes `queued`, `running` (with a `stage`), then `done` with the intake counts (records read, flagged, unflagged, unlabelled, quarantined), or `failed` with a reason code. The last stage, `correlating`, runs C3's correlation over the stored events and stores the upload's incidents ([docs/incident-storage.md](docs/incident-storage.md)); the job is `done` only once they are stored. A job never stays `running`: if the worker dies, the job is retried, and after 3 attempts it fails with `worker_lost`. Every endpoint, state and error code, with examples, is in [docs/api-upload-jobs.md](docs/api-upload-jobs.md).
 
 **Demo.** With the stack running, `python tools/c1/week2_demo.py` (standard library only) uploads the fixture and C2's UNSW-NB15 sample and watches their jobs, lists quarantined records, shows a dataset without a parser failing with a reason, and shows refused files. It ends with `every step behaved as expected` (exit code 0) or says what failed. CI runs the same script through nginx. To show a worker crash by hand: `docker compose stop worker`, upload a file (the job stays `queued`), `docker compose start worker`, and the job finishes `done` within a few seconds.
 
@@ -219,7 +219,7 @@ The response engine (C5, `backend/app/response/`) decides when an incident freez
 
 The schema is managed by [Alembic](https://alembic.sqlalchemy.org/) in `backend/migrations`. The URL always comes from `DATABASE_URL`; it is never written in `alembic.ini`. The `api` container runs `alembic upgrade head` before it starts uvicorn, so `docker compose up` always brings the schema up to date.
 
-Revision `0001` is the empty baseline, `0002` adds uploads, jobs, stored events and quarantined records (C1), and `0003` adds the response engine's tables: lifecycle state, status history, response windows, simulated actions and the append-only audit trail (C5). Incidents themselves are stored from Week 3.
+Revision `0001` is the empty baseline, `0002` adds uploads, jobs, stored events and quarantined records (C1), and `0003` adds the response engine's tables: lifecycle state, status history, response windows, simulated actions and the append-only audit trail (C5), `0004` adds C2's masking maps, and `0005` adds stored incidents and their event links (C1, [docs/incident-storage.md](docs/incident-storage.md)).
 
 Add ORM models as subclasses of `app.db.Base`, then create a revision:
 
@@ -251,6 +251,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the seven local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed; runs 6 and 7 are the Week 2 evaluation of the five test incidents (metrics, reports) |
 | [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
+| [docs/incident-storage.md](docs/incident-storage.md) | C1 | Week 3 | Incident storage: `incidents` and `incident_events` tables (migration 0005), `store_incidents()` for C3, `correlate_upload()`, open decisions D1 to D3 |
 | [docs/api-upload-jobs.md](docs/api-upload-jobs.md) | C1 | Week 2 | Upload, job status and analysis API: endpoints, request and response examples for every state, error codes, parser interface for C2 |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
@@ -308,7 +309,7 @@ icd-platform/
 │   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
 │   │   ├── response/     C5: lifecycle table, freeze check, catalogue (response.toml), simulated executor, engine, expiry loop
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
-│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps)
+│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps, 0005 incidents)
 │   ├── alembic.ini
 │   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5), ingest/ (C2 parser)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)

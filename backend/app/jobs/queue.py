@@ -19,6 +19,7 @@ from sqlalchemy import Connection, Engine, delete, select, update
 from sqlalchemy.orm import Session
 
 from app.api.schemas import ApiError, ErrorCode, Job, JobKind, JobStage, JobState
+from app.incidents.models import IncidentRow
 from app.models import EventRow, JobRow, QuarantineRow
 
 
@@ -162,11 +163,17 @@ def fail(
     )
 
 
+def delete_upload_rows(connection: Connection | Session, upload_id: str) -> None:
+    """Delete everything stored from one upload: its incidents (with their event links),
+    events and quarantined records."""
+    for model in (IncidentRow, EventRow, QuarantineRow):
+        connection.execute(delete(model).where(model.upload_id == upload_id))
+
+
 def clear_upload_rows(engine: Engine, upload_id: str) -> None:
     """Remove what an earlier or failed attempt stored, so a retry starts clean."""
     with engine.begin() as connection:
-        connection.execute(delete(EventRow).where(EventRow.upload_id == upload_id))
-        connection.execute(delete(QuarantineRow).where(QuarantineRow.upload_id == upload_id))
+        delete_upload_rows(connection, upload_id)
 
 
 def reap_stale(engine: Engine, now: datetime, lease_seconds: float) -> list[str]:
@@ -195,10 +202,7 @@ def reap_stale(engine: Engine, now: datetime, lease_seconds: float) -> list[str]
                 "Nothing from this job was kept."
             )
             if job.upload_id is not None:
-                session.execute(delete(EventRow).where(EventRow.upload_id == job.upload_id))
-                session.execute(
-                    delete(QuarantineRow).where(QuarantineRow.upload_id == job.upload_id)
-                )
+                delete_upload_rows(session, job.upload_id)
     return reaped
 
 

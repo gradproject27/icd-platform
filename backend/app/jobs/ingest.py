@@ -11,15 +11,16 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import ValidationError
-from sqlalchemy import Engine, delete, func, insert, select
+from sqlalchemy import Engine, func, insert, select
 from sqlalchemy.orm import Session
 
 from app.api.schemas import DatasetSource, ErrorCode, IntakeCounts, JobStage
 from app.contracts import Event
+from app.incidents.store import IncidentConflict, MissingEvents, correlate_upload
 from app.ingest.interface import IntakeContext, ParseError, Parser, Quarantined
 from app.ingest.registry import PARSERS
 from app.jobs.errors import JobFailure, JobLost
-from app.jobs.queue import holds, set_progress
+from app.jobs.queue import delete_upload_rows, holds, set_progress
 from app.models import EventRow, JobRow, QuarantineRow, UploadRow
 from app.settings import Settings
 
@@ -110,10 +111,7 @@ class _Intake:
         with engine.begin() as connection:
             if not holds(connection, self.job_id, self.worker_id):
                 raise JobLost
-            connection.execute(delete(EventRow).where(EventRow.upload_id == self.upload_id))
-            connection.execute(
-                delete(QuarantineRow).where(QuarantineRow.upload_id == self.upload_id)
-            )
+            delete_upload_rows(connection, self.upload_id)
 
     def flush(self, engine: Engine) -> None:
         with engine.begin() as connection:
@@ -209,4 +207,11 @@ def run_ingest(
             f"Counted {counts['events_stored']} events and {counts['quarantined']} quarantined "
             f"records, but the database holds {stored} and {quarantined}.",
         )
+
+    # Decision D3 (docs/incident-storage.md): the job is done only once its incidents are stored.
+    progress(JobStage.CORRELATING, counts)
+    try:
+        correlate_upload(engine, upload.upload_id, clock(), owner=(job.job_id, worker_id))
+    except (IncidentConflict, MissingEvents, ValueError) as exc:
+        raise JobFailure(ErrorCode.CORRELATION_FAILED, f"Correlation failed: {exc}") from exc
     return counts

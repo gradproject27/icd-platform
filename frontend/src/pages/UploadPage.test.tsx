@@ -147,7 +147,7 @@ describe("UploadPage", () => {
     const steps = () => screen.getByRole("list", { name: "Processing steps" });
     expect(steps()).toHaveTextContent("Uploaded: done");
     expect(steps()).toHaveTextContent("Validating: current");
-    expect(steps()).toHaveTextContent("Correlation (from Week 3): from Week 3");
+    expect(steps()).toHaveTextContent("Correlating: not yet");
 
     await poll();
     expect(steps()).toHaveTextContent("Parsing: current");
