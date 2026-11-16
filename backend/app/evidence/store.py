@@ -1,6 +1,7 @@
 """Store the masking map and put real values back into a report (T3-07; C2-D6, C2-D7).
 
     package = build_and_store_package(engine, incident, events, now)   # before the AI call
+    package = build_and_store_for_incident(engine, incident_id, now)  # same, from stored rows
     masking_map = load_masking_map(engine, report.evidence_package_id, report.incident_id)
     report = unmask_report(report, masking_map)
 
@@ -14,11 +15,18 @@ from datetime import datetime
 
 from sqlalchemy import Engine, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from app.contracts import AnalysisReport, Event, EvidencePackage, Incident
 from app.evidence.builder import build_package
 from app.evidence.masking import MaskingMap
 from app.evidence.models import MaskingMapRow
+from app.incidents.models import IncidentEventRow, IncidentRow
+from app.models import EventRow
+
+
+class IncidentNotStored(LookupError):
+    """No stored incident has this ID."""
 
 
 def save_masking_map(
@@ -69,6 +77,52 @@ def build_and_store_package(
     package, masked = build_package(incident, events, now)
     save_masking_map(engine, package, masked.masking_map, now)
     return package
+
+
+def load_incident_events(engine: Engine, incident_id: str) -> tuple[Incident, list[Event]]:
+    """A stored incident and the stored events it links (C1's tables, migration 0005)."""
+    with Session(engine) as session:
+        data = session.scalar(
+            select(IncidentRow.data).where(IncidentRow.incident_id == incident_id)
+        )
+        if data is None:
+            raise IncidentNotStored(incident_id)
+        rows = session.scalars(
+            select(EventRow.data)
+            .join(
+                IncidentEventRow,
+                (IncidentEventRow.upload_id == EventRow.upload_id)
+                & (IncidentEventRow.event_id == EventRow.event_id),
+            )
+            .where(IncidentEventRow.incident_id == incident_id)
+            .order_by(EventRow.event_id)
+        ).all()
+    return Incident.model_validate(data), [Event.model_validate(row) for row in rows]
+
+
+def build_and_store_for_incident(
+    engine: Engine, incident_id: str, now: datetime
+) -> EvidencePackage:
+    """Build the masked package of a stored incident and store its map.
+
+    This is the call the analysis job makes before the AI call. The same stored incident always
+    gives the same package (same ID), so a second call stores nothing new.
+    """
+    incident, events = load_incident_events(engine, incident_id)
+    return build_and_store_package(engine, incident, events, now)
+
+
+def build_and_store_for_upload(
+    engine: Engine, upload_id: str, now: datetime
+) -> list[EvidencePackage]:
+    """One masked package per stored incident of an upload, earliest incident first."""
+    with Session(engine) as session:
+        ids = session.scalars(
+            select(IncidentRow.incident_id)
+            .where(IncidentRow.upload_id == upload_id)
+            .order_by(IncidentRow.first_event_at, IncidentRow.incident_id)
+        ).all()
+    return [build_and_store_for_incident(engine, incident_id, now) for incident_id in ids]
 
 
 def _unmask(value: str | None, masking_map: MaskingMap) -> str | None:

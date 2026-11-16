@@ -45,18 +45,25 @@ Refused: a linked event that was not given (`MissingEvents`), and an incident ro
 
 `MaskingMap` holds `token → (kind, real value)` for one package. It never goes to the HPC.
 
-**Storage (migration 0004, `masking_maps`).** One row per token: `package_id`, `token`, `incident_id`, `kind` (`host`, `ip`, `user`), `value`, `created_at`; primary key (`package_id`, `token`). The map is keyed by **package**, not by incident: when an incident grows, its new package may number the tokens differently, and a report is always un-masked with the map of the package it was written from (`AnalysisReport.evidence_package_id`). Saving the same package twice changes nothing. The real values stay in the app database, next to the events they come from. The migration is numbered in merge order (W3-D2): the next one is 0005.
+**Storage (migration 0004, `masking_maps`).** One row per token: `package_id`, `token`, `incident_id`, `kind` (`host`, `ip`, `user`), `value`, `created_at`; primary key (`package_id`, `token`). The map is keyed by **package**, not by incident: when an incident grows, its new package may number the tokens differently, and a report is always un-masked with the map of the package it was written from (`AnalysisReport.evidence_package_id`). Saving the same package twice changes nothing. The real values stay in the app database, next to the events they come from. The migration is numbered in merge order (W3-D2); C1's incidents table became 0005.
 
 **Calls for C1** (`app/evidence/store.py`):
 
 ```python
-# Before the analysis job; send only `package`:
+# Before the analysis job; send only `package`.
+# From a stored incident (C1's tables, migration 0005):
+package = build_and_store_for_incident(engine, incident_id, now)
+# Or every stored incident of an upload, earliest first:
+packages = build_and_store_for_upload(engine, upload_id, now)
+# Or from an incident and events already in memory:
 package = build_and_store_package(engine, incident, events, now)
 
 # In GET /incidents/{id}/report only:
 masking_map = load_masking_map(engine, report.evidence_package_id, report.incident_id)
 shown = unmask_report(report, masking_map)
 ```
+
+`build_and_store_for_incident` reads the incident from `incidents` and only the events it links from `incident_events` joined to `events`, then builds exactly the package `build_package` gives in memory (a test checks this on the correlation fixture). The same stored incident always gives the same package ID, so calling it again stores nothing new. An unknown incident ID raises `IncidentNotStored`.
 
 The report is stored **masked**, as the model wrote it, so AI1's grounding checks compare it with the package it was given. `unmask_report` returns a copy with real values in the text fields (summary, sequence, findings, weaknesses, impact, recommendations, risk justification, uncertainty); IDs and numbers are unchanged. A token the model invented stays as it is, so the analyst can see it is not a real value. The un-masked copy is never stored or sent to the HPC.
 
