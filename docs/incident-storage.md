@@ -32,10 +32,16 @@ store_incidents(engine, upload_id, result.incidents, result.config_version)
 Or in one call, from the events already stored for an upload:
 
 ```python
-from app.incidents.store import correlate_upload
+from app.incidents.store import correlate_upload, rescore_upload
 
-incidents = correlate_upload(engine, upload_id, now)
+incidents = correlate_upload(engine, upload_id, now)  # correlate, score, store
+rescore_upload(engine, upload_id, now)  # after risk.toml changes
 ```
+
+What `correlate_upload` does (C3 Week 3, decisions of 16 Nov 2026):
+- **Scores before storing (D1).** Every incident is stored with its `RiskAssessment`, so `risk_score` and `risk_level` are never null and C5's freeze check (`is_high`) can act on it.
+- **Loads only the events that can matter (D7).** It loads the flagged events, then reads only the key columns (`host`, `src_ip`, `dst_ip`, `user`) of the other events and loads in full only those sharing a key value with a flagged event. No other event can become context, so the incidents are the same. A synthetic 700,001-event upload took 2.7 GB in memory when every event was loaded. The risk clock `W` still comes from the latest event of the whole upload (`max(timestamp)`).
+- **Scopes the IDs inside `correlate` (D4).** `correlate(..., scope=upload_id)` gives the same IDs as the former `scoped()` helper, and the size-cap `group_id` is scoped too.
 
 How `store_incidents` behaves:
 - **All or nothing.** It writes every incident of the call and all its links in one transaction, or nothing.
@@ -53,5 +59,5 @@ To read incidents back, use `load_incident(engine, incident_id)` and `load_incid
 | D1 | Owner of incident storage | C1 owns the tables and `store_incidents`; C3 owns what goes in them | Team |
 | D2 | Migration order | Numbered in merge order (W3-D2): `0005` is this one. Any later migration takes the next number when it merges | Team |
 | D3 | When the correlation runs | **Decided 15 Nov:** a `correlating` stage at the end of the ingest job. After the events are stored, the worker calls `correlate_upload`, and the job is `done` only when the incidents are stored too. If it fails, the job fails with `correlation_failed` and nothing from the upload is kept | C3, C1 |
-| D4 | Same events in two uploads | `correlate_upload` scopes each incident ID to its upload (C3's `incident_id_for` over `upload_id/starting event`), so the same events in two uploads give two sets of incidents, still deterministic per upload. `store_incidents` called directly with an ID already stored for another upload refuses with `IncidentConflict`. The duplicate-upload guard (same SHA-256, Week 4) should stop most duplicates earlier. C3 may prefer to add the scope inside `correlate()` | C2, C3 |
+| D4 | Same events in two uploads | `correlate_upload` scopes each incident ID to its upload (C3's `incident_id_for` over `upload_id/starting event`), so the same events in two uploads give two sets of incidents, still deterministic per upload. `store_incidents` called directly with an ID already stored for another upload refuses with `IncidentConflict`. The duplicate-upload guard (same SHA-256, Week 4) should stop most duplicates earlier. **Done by C3 (16 Nov 2026):** the scope is now inside `correlate(..., scope=...)`, same IDs | C2, C3 |
 | D5 | Incident state | The `status` column is the contract's value as stored. C5 keeps the live state in `incident_lifecycle` (C5 decision D1) until C5 moves it here | C5 |

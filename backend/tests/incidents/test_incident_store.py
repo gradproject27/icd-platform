@@ -1,5 +1,6 @@
 import json
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -10,13 +11,16 @@ from sqlalchemy.orm import Session
 from app.contracts import Event
 from app.correlation.config import load_config
 from app.correlation.engine import correlate
+from app.correlation.risk import load_risk_config, score_incidents
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.incidents.store import (
     IncidentConflict,
     MissingEvents,
+    _events_that_can_matter,
     correlate_upload,
     load_incident,
     load_incidents,
+    rescore_upload,
     store_incidents,
 )
 from app.jobs.ingest import _event_row
@@ -158,3 +162,74 @@ def test_clearing_an_upload_removes_its_incidents(engine):
 
 def test_no_incidents_is_fine(engine):
     assert store_incidents(engine, stored_upload(engine), [], "v") == 0
+
+
+# --- C3 Week 3, Step 3 (decisions D1 and D7 of 16 Nov 2026) --------------------------------
+
+
+def _noise(n: int) -> list[Event]:
+    """Unflagged events on IP pairs no flagged event uses: they can never become context. Some
+    are hours later than the fixture, so they move the risk score's clock W."""
+    template = next(e for e in EVENTS if e.label.status.value == "unflagged")
+    return [
+        template.model_copy(
+            update={
+                "event_id": f"noise-{k:04d}",
+                "timestamp": template.timestamp + timedelta(hours=k % 13),
+                "src_ip": f"192.0.2.{k % 200 + 1}",
+                "dst_ip": "192.0.2.250",
+                "host": None,
+                "user": None,
+            }
+        )
+        for k in range(n)
+    ]
+
+
+def test_every_stored_incident_has_its_risk(engine):
+    upload_id = stored_upload(engine)
+    incidents = correlate_upload(engine, upload_id, NOW)
+    assert all(i.risk is not None for i in incidents)
+    with Session(engine) as session:
+        rows = session.execute(select(IncidentRow.risk_score, IncidentRow.risk_level)).all()
+    assert all(score is not None and level is not None for score, level in rows)
+    assert load_incidents(engine, upload_id) == sorted(
+        incidents, key=lambda i: (i.first_event_at, i.incident_id)
+    )
+
+
+def test_stored_result_equals_correlating_every_event(engine):
+    events = EVENTS + _noise(300)
+    upload_id = stored_upload(engine, events)
+    stored = correlate_upload(engine, upload_id, NOW)
+    result = correlate(events, load_config(), NOW, scope=upload_id)
+    expected = score_incidents(result.incidents, events, NOW)
+    assert [i.model_dump() for i in stored] == [i.model_dump() for i in expected]
+
+
+def test_only_events_that_can_matter_are_loaded(engine):
+    upload_id = stored_upload(engine, EVENTS + _noise(300))
+    with Session(engine) as session:
+        loaded, reference = _events_that_can_matter(session, upload_id, load_config())
+    ids = {e.event_id for e in loaded}
+    assert not any(i.startswith("noise-") for i in ids)
+    assert {e.event_id for e in EVENTS if e.label.status.value == "flagged"} <= ids
+    assert reference == max(e.timestamp for e in EVENTS + _noise(300))
+
+
+def test_rescoring_changes_only_the_risk(engine):
+    upload_id = stored_upload(engine)
+    before = correlate_upload(engine, upload_id, NOW)
+    stricter = replace(load_risk_config(), unknown_impact=0.33)
+    after = rescore_upload(engine, upload_id, NOW, risk=stricter)
+    assert [i.incident_id for i in after] == [
+        i.incident_id for i in sorted(before, key=lambda i: (i.first_event_at, i.incident_id))
+    ]
+    assert sum(i.risk.score for i in after) < sum(i.risk.score for i in before)
+    strip = lambda i: i.model_dump(exclude={"risk"})  # noqa: E731
+    assert sorted(map(str, map(strip, after))) == sorted(map(str, map(strip, before)))
+    assert [i.risk for i in load_incidents(engine, upload_id)] == [i.risk for i in after]
+
+
+def test_rescoring_an_upload_without_incidents_does_nothing(engine):
+    assert rescore_upload(engine, stored_upload(engine, _noise(3)), NOW) == []

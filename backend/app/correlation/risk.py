@@ -330,15 +330,21 @@ def score_incidents(
     evaluated_at: datetime,
     config: RiskConfig | None = None,
     correlation: CorrelationConfig | None = None,
+    reference: datetime | None = None,
 ) -> tuple[Incident, ...]:
-    """Score every incident of a batch against the same dataset clock W."""
+    """Score every incident of a batch against the same dataset clock W.
+
+    W is the latest time in events unless reference gives it: pass it when events holds only
+    part of the batch, so the scores stay those of the whole batch.
+    """
     config = config or load_risk_config()
     correlation = correlation or load_config()
     by_id = {e.event_id: e for e in events}
     incidents = tuple(incidents)
     if not incidents:
         return ()
-    reference = dataset_clock(by_id.values())
+    if reference is None:
+        reference = dataset_clock(by_id.values())
     scored = []
     for incident in incidents:
         flagged = [link for link in incident.events if link.role == EventRole.FLAGGED]

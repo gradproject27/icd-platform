@@ -137,6 +137,39 @@ class RiskAssessment(_Contract):
     )
 
 
+class SplitReason(StrEnum):
+    """Why correlation cut one group of related events into several incidents (contracts 1.2)."""
+
+    SIZE_CAP = "size_cap"
+
+
+class IncidentSplit(_Contract):
+    """This incident is one part of a group that correlation split (contracts 1.2, additive)."""
+
+    reason: SplitReason = Field(description="Why the group was split.")
+    cap: int = Field(ge=1, description="The size cap in force: most linked events per incident.")
+    group_id: Id = Field(
+        description="ID the whole group would have had; the same for every part (it is the "
+        "ID of part 1)."
+    )
+    part: int = Field(ge=1, description="Which part this is, 1 = earliest, in time order.")
+    parts: int = Field(ge=2, description="How many parts the group was split into.")
+    gap_seconds: float | None = Field(
+        default=None,
+        ge=0,
+        description="Length of the time gap the group was cut at, just before this part; null "
+        "for part 1.",
+    )
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        if self.part > self.parts:
+            raise ValueError("part must not be greater than parts")
+        if (self.gap_seconds is None) != (self.part == 1):
+            raise ValueError("gap_seconds is null exactly for part 1")
+        return self
+
+
 class Incident(_Contract):
     """A group of related events (FR-07, FR-08, FR-11, FR-18 to FR-20, FR-31, FR-42)."""
 
@@ -174,6 +207,16 @@ class Incident(_Contract):
         default=None,
         description="Confidence of the latest valid analysis (OD-16); set exactly when "
         "analysis succeeded (FR-42).",
+    )
+    correlation_config_version: NonEmptyStr | None = Field(
+        default=None,
+        description="Version of the correlation configuration that built the incident "
+        "(contracts 1.2); null = not recorded.",
+    )
+    split: IncidentSplit | None = Field(
+        default=None,
+        description="Set when the incident is one part of a group that correlation split "
+        "(contracts 1.2); null = not split.",
     )
 
     @model_validator(mode="after")

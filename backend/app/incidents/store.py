@@ -9,13 +9,15 @@ same upload again gives the same rows (C3's incident IDs are deterministic).
 from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import Engine, delete, select
+from sqlalchemy import Engine, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.contracts import Event, Incident
+from app.contracts import Event, Incident, LabelStatus
 from app.correlation.config import CorrelationConfig, load_config
-from app.correlation.engine import correlate, incident_id_for
+from app.correlation.engine import correlate
+from app.correlation.keys import key_values, key_values_of
+from app.correlation.risk import RiskConfig, score_incidents
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.jobs.errors import JobLost
 from app.jobs.queue import holds
@@ -143,16 +145,50 @@ def load_incidents(engine: Engine, upload_id: str) -> list[Incident]:
     return [Incident.model_validate(data) for data in rows]
 
 
-def scoped(upload_id: str, incident: Incident) -> Incident:
-    """The incident with its ID scoped to its upload.
+# Rows read per round trip while matching unflagged events, and IDs per IN (...) list.
+_STREAM_ROWS = 10_000
+_ID_CHUNK = 1_000
 
-    C3 derives the ID from the event that started the incident, and event IDs repeat across
-    uploads (the same file uploaded twice, or two files with the same record numbers), so two
-    uploads would otherwise produce the same incident ID. The ID stays deterministic: the same
-    upload always gives the same IDs.
+
+def _events_that_can_matter(
+    session: Session, upload_id: str, config: CorrelationConfig
+) -> tuple[list[Event], datetime | None]:
+    """The flagged events of an upload, plus only the other events that share a key value with
+    one of them, and the latest event time of the whole upload (the risk score's clock W).
+
+    An event that shares no key value with a flagged event can never become context
+    (design note section 6), so leaving it out gives the same incidents with far less memory
+    (decision D7 of 16 Nov 2026: 700,001 events took 2.7 GB in memory).
     """
-    start = incident.events[0].event_id  # correlate() lists the starting event first
-    return incident.model_copy(update={"incident_id": incident_id_for(f"{upload_id}/{start}")})
+    of_upload = EventRow.upload_id == upload_id
+    flagged = [
+        Event.model_validate(data)
+        for data in session.scalars(
+            select(EventRow.data).where(of_upload, EventRow.label_status == LabelStatus.FLAGGED)
+        )
+    ]
+    reference = session.scalar(select(func.max(EventRow.timestamp)).where(of_upload))
+    wanted = {value for event in flagged for value in key_values(event, config)}
+    if not wanted:
+        return flagged, reference
+    keys = select(
+        EventRow.event_id, EventRow.host, EventRow.src_ip, EventRow.dst_ip, EventRow.user
+    ).where(of_upload, EventRow.label_status != LabelStatus.FLAGGED)
+    matching = [
+        event_id
+        for event_id, *fields in session.execute(keys.execution_options(yield_per=_STREAM_ROWS))
+        if not wanted.isdisjoint(key_values_of(*fields, config))
+    ]
+    context = []
+    for start in range(0, len(matching), _ID_CHUNK):
+        ids = matching[start : start + _ID_CHUNK]
+        context += [
+            Event.model_validate(data)
+            for data in session.scalars(
+                select(EventRow.data).where(of_upload, EventRow.event_id.in_(ids))
+            )
+        ]
+    return flagged + context, reference
 
 
 def correlate_upload(
@@ -161,12 +197,54 @@ def correlate_upload(
     now: datetime,
     config: CorrelationConfig | None = None,
     owner: tuple[str, str] | None = None,
+    risk: RiskConfig | None = None,
 ) -> list[Incident]:
-    """Run C3's correlation over the stored events of one upload and store the incidents."""
+    """Run C3's correlation over the stored events of one upload, score every incident and
+    store them (decision D1 of 16 Nov 2026: an incident is never stored without its score).
+
+    Incident IDs are scoped to the upload (D4), so the same events in two uploads give two
+    sets of incidents.
+    """
     config = config or load_config()
     with Session(engine) as session:
-        data = session.scalars(select(EventRow.data).where(EventRow.upload_id == upload_id)).all()
-    result = correlate([Event.model_validate(item) for item in data], config, now)
-    incidents = [scoped(upload_id, incident) for incident in result.incidents]
+        events, reference = _events_that_can_matter(session, upload_id, config)
+    result = correlate(events, config, now, scope=upload_id)
+    incidents = list(
+        score_incidents(result.incidents, events, now, risk, config, reference=reference)
+    )
     store_incidents(engine, upload_id, incidents, result.config_version, owner)
     return incidents
+
+
+def rescore_upload(
+    engine: Engine,
+    upload_id: str,
+    now: datetime,
+    risk: RiskConfig | None = None,
+    config: CorrelationConfig | None = None,
+    owner: tuple[str, str] | None = None,
+) -> list[Incident]:
+    """Score an upload's stored incidents again, for example after risk.toml changed.
+
+    The grouping is not run again: the stored incidents keep their events and IDs, and only
+    their risk changes.
+    """
+    config = config or load_config()
+    with Session(engine) as session:
+        rows = session.execute(
+            select(IncidentRow.data, IncidentRow.correlation_config_version)
+            .where(IncidentRow.upload_id == upload_id)
+            .order_by(IncidentRow.first_event_at, IncidentRow.incident_id)
+        ).all()
+        if not rows:
+            return []
+        events, reference = _events_that_can_matter(session, upload_id, config)
+    incidents = [Incident.model_validate(data) for data, _ in rows]
+    scored = list(score_incidents(incidents, events, now, risk, config, reference=reference))
+    # The grouping is unchanged, so each incident keeps the correlation version it was built with.
+    by_version: dict[str, list[Incident]] = {}
+    for incident, (_, version) in zip(scored, rows, strict=True):
+        by_version.setdefault(version, []).append(incident)
+    for version, batch in by_version.items():
+        store_incidents(engine, upload_id, batch, version, owner)
+    return scored

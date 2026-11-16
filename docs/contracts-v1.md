@@ -114,6 +114,8 @@ In the tables below, **Required** means the key must be present. "default" means
 | `analysis_attempts` | integer ≥ 0 | default `0` | n/a | OD-09 |
 | `latest_report_id` | Id | no | `null` until a report is valid | FR-42 |
 | `confidence` | number 0 to 1 | no | Set exactly when `analysis_status == succeeded`: every analysed incident has a confidence, and no valid analysis means no confidence | OD-16, FR-42 |
+| `correlation_config_version` | string, min 1 | no (1.2) | `null` = not recorded. Version of `correlation.toml` that built the incident, for example `correlation-v1` | R6, AS-04 |
+| `split` | IncidentSplit | no (1.2) | `null` = not split. Set when the incident is one part of a group that correlation cut because of the size cap | W3-D13, 16 Nov 2026 |
 
 **IncidentStatus** values, with the display names from the response workflow spec, section 2. `IncidentStatus.label` returns the display name.
 
@@ -155,6 +157,10 @@ In the tables below, **Required** means the key must be present. "default" means
 **RiskFactor**: `name` (string, min 1), `value` (number 0 to 1, the normalized factor), `weight` (number ≥ 0), `contribution` (number, the points the factor adds to the score), `reason` (string or `null`, the plain-language reason; added in 1.1).
 
 **RiskContributor** (1.1): `technique` (attack type, `unknown` when missing), `entity` (source-side entity, or `none`), `strength` (0 to 1), `event_id` (the group's strongest flagged event), `reason` (string).
+
+**IncidentSplit** (1.2): `reason` (`size_cap`), `cap` (integer ≥ 1, the cap in force), `group_id` (the ID the whole group would have had, which is the ID of part 1; the same on every part), `part` (1 = earliest), `parts` (≥ 2, `part` ≤ `parts`), `gap_seconds` (the time gap the group was cut at, just before this part; `null` exactly for part 1).
+
+**Contracts 1.2 (16 Nov 2026, additive).** `Incident.correlation_config_version` and `Incident.split` are optional with a `null` default, so every 1.0 and 1.1 document stays valid and `schema_version` stays `"1.0"`. They record which correlation configuration built the incident (R6) and why a large group was cut into several incidents (design note section 7.4).
 
 **Contracts 1.1 (29 Oct 2026, additive).** The fields marked 1.1 are optional with a default, so every 1.0 document stays valid and `schema_version` stays `"1.0"` (change rule 4 in `contracts/README.md`: bump only for a change that is not backward compatible). They carry the output of the risk method of 29 Oct 2026 (design note section 9).
 

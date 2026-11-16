@@ -164,6 +164,8 @@ The job goes `queued`, `running` (with a `stage`), then `done` with the intake c
 
 Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingestion.md)); an upload for another dataset is stored and its job fails with `no_parser` until its parser is registered in `backend/app/ingest/registry.py`. To run the UNSW-NB15 parser on a local file without the stack: `cd backend` then `python -m app.ingest.cli unsw-nb15 <path>/UNSW-NB15_1.csv`. Files are limited to 512 MB (`MAX_UPLOAD_MB`) and `.csv .json .jsonl .log .txt`.
 
+**Correlation report (C3, Week 3).** `cd backend` then `python -m app.correlation.report unsw-nb15 <path>/UNSW-NB15_1.csv --out correlation-report` correlates a dataset file with the size cap (500 events per incident, larger groups cut at their largest time gap), scores every incident and writes `report.json` (size distribution, splits, over-merge markers, risk levels) and `incidents.csv`, counts only and no addresses. No database is needed. See [docs/correlation-and-risk-design.md](docs/correlation-and-risk-design.md), section 7.4.
+
 **Evidence packages (C2, Week 3).** `backend/app/evidence/` builds the masked `EvidencePackage` the AI receives for one incident: up to 50 events, flagged first, then the nearest context; host, IP and user values replaced by per-incident tokens (`host-01`, `ip-01`, `user-01`) before anything leaves the app host. Try it with `cd backend` then `python -m app.evidence.cli ../fixtures/correlation/events.json`. See [docs/evidence-package.md](docs/evidence-package.md).
 
 ## Shared contracts
@@ -264,7 +266,6 @@ These are written down but not yet agreed:
 
 | Decision | Who | Where |
 |---|---|---|
-| Risk weights v0. The decision record is empty; risk scoring (T2-09) does not start until it is filled in. | Whole team | [correlation-and-risk-design.md, section 10](docs/correlation-and-risk-design.md#10-proposed-v0-weights-and-decision-record) |
 | Review of EvidencePackage and AnalysisReport (T1-09): AI1's answers are written, C3 to agree | AI1, C3 | [ai1-analysis-design.md, section 6](docs/ai1-analysis-design.md#6-report-schema-llm-output-v0-mapped-onto-analysisreport-10) |
 | Agreement on each contract: Event and EvidencePackage (C2); ResponseAction, AuditRecord and Incident (C5); Incident (C1) | C2, C5, C1 | [contracts-v1.md, section 7](docs/contracts-v1.md#7-agreement-checklist) |
 | Response window API for the dashboard: REST and WebSocket paths, one socket per incident or per user, reads after a refresh. The countdown prototype already follows spec section 7 | C1, C5 | [countdown-prototype.md, sections 7 and 8](docs/countdown-prototype.md#8-open-questions-for-c1-and-c5) |
