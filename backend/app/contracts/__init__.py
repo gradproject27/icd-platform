@@ -8,12 +8,14 @@ from app.contracts.incident import (
     AnalysisStatus,
     Incident,
     IncidentEventLink,
+    IncidentSplit,
     IncidentStatus,
     LinkKey,
     RiskAssessment,
     RiskContributor,
     RiskFactor,
     RiskFlag,
+    SplitReason,
 )
 from app.contracts.report import AnalysisReport, Finding, FindingCategory, SequenceStep
 from app.contracts.response import (
@@ -44,6 +46,7 @@ __all__ = [
     "Incident",
     "IncidentContext",
     "IncidentEventLink",
+    "IncidentSplit",
     "IncidentStatus",
     "LabelStatus",
     "LinkKey",
@@ -56,5 +59,6 @@ __all__ = [
     "RiskLevel",
     "ScenarioId",
     "SequenceStep",
+    "SplitReason",
     "UserRole",
 ]

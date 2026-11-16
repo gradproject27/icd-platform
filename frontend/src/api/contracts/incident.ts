@@ -36,6 +36,13 @@ export type RiskFlag = "asset_unknown" | "outcome_unknown" | "severity_default";
  */
 export type RiskLevel = "low" | "medium" | "high";
 /**
+ * Why correlation cut one group of related events into several incidents (contracts 1.2).
+ *
+ * This interface was referenced by `Incident`'s JSON-Schema
+ * via the `definition` "SplitReason".
+ */
+export type SplitReason = "size_cap";
+/**
  * Lifecycle state (FR-31, TD-11). new replaces the former name Detected.
  *
  * This interface was referenced by `Incident`'s JSON-Schema
@@ -57,6 +64,10 @@ export interface Incident {
    * Confidence of the latest valid analysis (OD-16); set exactly when analysis succeeded (FR-42).
    */
   confidence?: number | null;
+  /**
+   * Version of the correlation configuration that built the incident (contracts 1.2); null = not recorded.
+   */
+  correlation_config_version?: string | null;
   /**
    * When the incident was created, UTC.
    */
@@ -95,6 +106,10 @@ export interface Incident {
    * Contract version.
    */
   schema_version?: "1.0";
+  /**
+   * Set when the incident is one part of a group that correlation split (contracts 1.2); null = not split.
+   */
+  split?: IncidentSplit | null;
   status?: IncidentStatus;
   /**
    * Last change, UTC; not before created_at.
@@ -223,4 +238,33 @@ export interface RiskContributor {
    * Attack type of the group; unknown when missing.
    */
   technique: string;
+}
+/**
+ * This incident is one part of a group that correlation split (contracts 1.2, additive).
+ *
+ * This interface was referenced by `Incident`'s JSON-Schema
+ * via the `definition` "IncidentSplit".
+ */
+export interface IncidentSplit {
+  /**
+   * The size cap in force: most linked events per incident.
+   */
+  cap: number;
+  /**
+   * Length of the time gap the group was cut at, just before this part; null for part 1.
+   */
+  gap_seconds?: number | null;
+  /**
+   * ID the whole group would have had; the same for every part (it is the ID of part 1).
+   */
+  group_id: string;
+  /**
+   * Which part this is, 1 = earliest, in time order.
+   */
+  part: number;
+  /**
+   * How many parts the group was split into.
+   */
+  parts: number;
+  reason: SplitReason;
 }

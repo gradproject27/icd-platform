@@ -59,7 +59,7 @@
         "value": 1.0,
         "weight": 1.0,
         "contribution": 0.0,
-        "reason": "asset not rated (ws-17): assumed worst case 1.00 (CVSS v4.0 Not Defined = High)"
+        "reason": "asset not rated (ws-17): assumed 1.00 (CVSS v4.0: Not Defined = High, worst case)"
       }
     ],
     "config_version": "risk-config-example",
@@ -83,5 +83,6 @@
   "analysis_status": "succeeded",
   "analysis_attempts": 1,
   "latest_report_id": "rpt-2026-0001",
-  "confidence": 0.82
+  "confidence": 0.82,
+  "correlation_config_version": "correlation-v1"
 }

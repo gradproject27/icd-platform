@@ -260,6 +260,23 @@ The dataset is uploaded in batches. Each correlation run:
 
 Results are deterministic for the same uploads in the same order (AS-04). If two batches overlap in event time, an incident that a later batch would have extended can already be closed for updates, so the upload order can change the result. This is a consequence of the idle rule of OD-15, and is reported with the evaluation.
 
+### 7.4 Size cap and split (Week 3)
+
+UNSW-NB15 has no host or user, so only the `ip_pair` key links its flow records, and its attacks come from 4 sources and 10 destinations (40 pairs, `dataset-profile.md` section 7.3). A long attack on one pair would become one very large incident, too large to analyse or review. The size cap (W3-D13) bounds every incident. Decisions of 16 Nov 2026 (C3 Week 3, Step 3):
+
+| # | Rule | Decision |
+|---|---|---|
+| D2 | The cap counts **every linked event**, flagged and context together | `size_cap.max_incident_events = 500` in `correlation.toml` |
+| D3 | A group over the cap is cut at its **largest time gap between two consecutive flagged events**, earliest gap on a tie, again until every part fits. A context event stays with the flagged event it was attached to (section 6). A part with one flagged event cannot be cut and is kept whole (the report marks it `over_cap`) | `split_points()` in `engine.py` |
+| D4 | Each part is its own incident. Its first flagged event starts it (empty `link_keys`), its ID comes from that event, and `Incident.split` records `reason = size_cap`, the cap, `group_id` (the ID of part 1), `part`, `parts` and the gap it was cut at | Contracts 1.2, additive |
+| D5 | Every incident records `correlation_config_version` (R6) | Contracts 1.2, additive |
+| D6 | The cap changed `correlation.toml`, so `config_version` is `correlation-v1` | |
+| D8 | Over-merge markers, **report only**: more than the cap (one flagged event, cannot be cut), longer than 120 minutes, 4 or more attack types | `app.correlation.report` |
+
+The cut keeps everything deterministic: the same events give the same parts and IDs in any input order. Parts can be uneven: on a synthetic file in the UNSW-NB15_1 layout, a 600-event group became parts of 6, 130 and 464 events. The real distribution is measured with `python -m app.correlation.report` (section 14).
+
+The incident type (section 8) and the risk score (section 9) are computed per part. A part is scored on its own flagged events.
+
 ## 8. Incident type
 
 C5's scenario lookup reads `Incident.incident_type` (OD-20; response workflow spec, section 9).
@@ -343,8 +360,9 @@ Deferred until a test asks for them (team, 29 Oct): progression and source bonus
 
 | Moment | Source |
 |---|---|
-| When the incident is created | FR-18 |
+| When the incident is created. Since Week 3 (decision D1, 16 Nov 2026), `correlate_upload` scores every incident **before** it is stored, so no stored incident is unscored. `W` is the latest event time of the whole upload | FR-18 |
 | Every time the incident is updated (section 7.2) | FR-18, FR-09 |
+| After `risk.toml` changes: `rescore_upload` scores an upload's stored incidents again, without changing their events or IDs | AS-04 |
 
 The score is computed **before and independent of** AI analysis. Re-analysis uses the new score (FR-16). The LLM receives the score and level in the evidence package (`IncidentContext.risk_score`, `risk_level`, OD-03) and explains them. It never changes them (OD-04, FR-19).
 
@@ -437,6 +455,7 @@ The correlation configuration was created in T2-08 and the risk configuration in
 | `kill_chain.attack_types` | Section 8 table | Stage per attack type (section 8) | Team decision Q9 |
 | `update_idle_windows` | 2 (30 minutes) | Update rule (section 4) | OD-15 |
 | `keys` | `["host", "ip_pair", "user"]` | Relatedness keys (section 3) | OD-02 |
+| `size_cap.max_incident_events` | 500 | Size cap (section 7.4) | W3-D13, 16 Nov 2026 |
 | `key_denylist` | `[]` (empty) | Denylist (section 3, proposed) | OD-02 |
 | `severity.default`, `severity.stage`, `severity.source_values` | 0.5; stage 1 0.3, 2 0.6, 3 0.9, 4 0.9, 5 0.7; Precinct6 values | `S_i` (section 9.2) | Team, 29 Oct (Q8) |
 | `confidence.default`, `confidence.dataset` | 1.0; precinct6 0.8 | `C_i` | Team, 29 Oct (Q4) |
@@ -447,6 +466,8 @@ The correlation configuration was created in T2-08 and the risk configuration in
 | `thresholds.medium` | 40 | Level: Medium from 40 | OD-05, FR-20 |
 | `thresholds.high` | 70 | Level: High from 70 | OD-05, FR-20 |
 | `config_version` | For example `risk-v0` | Stored in every `RiskAssessment` | AS-04, FR-19 |
+
+`correlation.toml` has its own `config_version` (`correlation-v1` since the size cap), stored on every incident as `correlation_config_version`.
 
 Any change to a value in `risk.toml` changes `config_version`, so every stored score can be traced to the configuration that produced it.
 

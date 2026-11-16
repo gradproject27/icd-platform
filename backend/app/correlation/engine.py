@@ -13,6 +13,12 @@ Follows docs/correlation-and-risk-design.md, sections 3 to 8, with the team answ
    events never merge groups and never use the escalated window.
 3. Each group becomes one Incident in state new. Its type is the attack type of the most
    advanced kill-chain stage reached by its flagged events.
+4. Size cap (W3-D13, decisions of 16 Nov 2026): a group that links more than
+   `max_incident_events` events (flagged and context together) is cut at its largest time gap
+   between two consecutive flagged events (ties: the earliest gap), again until every part
+   fits. A context event stays with the flagged event it was attached to. Each part becomes its
+   own incident and records the split (`Incident.split`). A part with one flagged event cannot
+   be cut further and is kept as it is.
 
 The function never reads the clock: `now` is passed in, so the same events, configuration and
 `now` always give the same incidents (AS-04). The risk score is left null (T2-09).
@@ -29,8 +35,10 @@ from app.contracts import (
     EventRole,
     Incident,
     IncidentEventLink,
+    IncidentSplit,
     LabelStatus,
     LinkKey,
+    SplitReason,
 )
 from app.correlation.config import CorrelationConfig
 from app.correlation.keys import KeyValue, key_values, ordered
@@ -71,9 +79,14 @@ def _order(event: Event) -> tuple[datetime, str]:
     return (event.timestamp, event.event_id)
 
 
-def incident_id_for(start_event_id: str) -> str:
-    """Stable ID from the flagged event that started the incident (decision D3)."""
-    return "inc-" + hashlib.sha256(start_event_id.encode("utf-8")).hexdigest()[:16]
+def incident_id_for(start_event_id: str, scope: str | None = None) -> str:
+    """Stable ID from the flagged event that started the incident (decision D3).
+
+    With a scope (C1's upload ID, incident storage D4), the same events in two uploads give two
+    different IDs, still the same every time for one upload.
+    """
+    key = start_event_id if scope is None else f"{scope}/{start_event_id}"
+    return "inc-" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
 
 
 def incident_type_for(flagged: list[Event], config: CorrelationConfig) -> str | None:
@@ -115,8 +128,66 @@ def _group_flagged(
     return uf, [later or earlier for later, earlier in zip(link_keys, earlier_keys, strict=True)]
 
 
-def correlate(events: list[Event], config: CorrelationConfig, now: datetime) -> CorrelationResult:
-    """Group one batch of events into incidents (single batch; cross-upload updates: Week 3)."""
+class _MaxGap:
+    """Largest gap in a range of a sorted time list, in O(1) per query (sparse table).
+
+    gap k is times[k] - times[k - 1]; the query answers the k with the largest gap in
+    [lo + 1, hi - 1], the earliest k on a tie.
+    """
+
+    def __init__(self, times: list[datetime]) -> None:
+        self.times = times
+        level = list(range(1, len(times)))
+        self.table = [level]
+        width = 1
+        while 2 * width <= len(self.table[0]):
+            prev = self.table[-1]
+            level = [self._best(prev[k], prev[k + width]) for k in range(len(prev) - width)]
+            self.table.append(level)
+            width *= 2
+
+    def _gap(self, k: int) -> timedelta:
+        return self.times[k] - self.times[k - 1]
+
+    def _best(self, a: int, b: int) -> int:
+        return a if self._gap(a) >= self._gap(b) else b  # a < b: the earlier wins ties
+
+    def argmax(self, lo: int, hi: int) -> int:
+        first, last = lo, hi - 2  # positions in level 0 hold k = position + 1
+        depth = (last - first + 1).bit_length() - 1
+        row = self.table[depth]
+        return self._best(row[first], row[last - (1 << depth) + 1])
+
+
+def split_points(times: list[datetime], sizes: list[int], cap: int) -> list[int]:
+    """Where to cut one group: the start positions of every part after the first, in order.
+
+    times are the group's flagged events in order; sizes[k] is how many links flagged event k
+    brings (itself and its context events). A part is cut at its largest gap until it fits.
+    """
+    prefix = [0]
+    for size in sizes:
+        prefix.append(prefix[-1] + size)
+    finder = _MaxGap(times)
+    cuts: list[int] = []
+    pending = [(0, len(times))]
+    while pending:
+        lo, hi = pending.pop()
+        if prefix[hi] - prefix[lo] <= cap or hi - lo < 2:
+            continue
+        k = finder.argmax(lo, hi)
+        cuts.append(k)
+        pending += [(lo, k), (k, hi)]
+    return sorted(cuts)
+
+
+def correlate(
+    events: list[Event], config: CorrelationConfig, now: datetime, scope: str | None = None
+) -> CorrelationResult:
+    """Group one batch of events into incidents (single batch; cross-upload updates: Week 3).
+
+    scope, when given, goes into every incident ID (see incident_id_for).
+    """
     ids = [e.event_id for e in events]
     if len(ids) != len(set(ids)):
         raise ValueError("event IDs must be unique")
@@ -137,7 +208,7 @@ def correlate(events: list[Event], config: CorrelationConfig, now: datetime) -> 
         for value in key_values(event, config):
             by_value[value].append(i)
     times_by_value = {v: [flagged[i].timestamp for i in idx] for v, idx in by_value.items()}
-    attached: dict[int, list[tuple[Event, set[LinkKey]]]] = defaultdict(list)
+    attached: dict[int, list[tuple[Event, set[LinkKey]]]] = defaultdict(list)  # by flagged event
     unassigned: list[str] = []
     for c in context:
         best: tuple[timedelta, int, int] | None = None
@@ -156,40 +227,82 @@ def correlate(events: list[Event], config: CorrelationConfig, now: datetime) -> 
             continue
         f_values = set(key_values(flagged[best[2]], config))
         shared = {k for k, v in key_values(c, config) if (k, v) in f_values}
-        attached[best[1]].append((c, shared))
+        attached[best[2]].append((c, shared))
 
+    cap = config.max_incident_events
     incidents = []
-    for gi, group in enumerate(groups):
-        group_flagged = [flagged[i] for i in group]
-        links = [
-            IncidentEventLink(
-                event_id=flagged[i].event_id,
-                role=EventRole.FLAGGED,
-                link_keys=[] if n == 0 else ordered(flagged_keys[i]),
-                linked_at=now,
+    for group in groups:
+        parts = [group]
+        if cap is not None:
+            sizes = [1 + len(attached[i]) for i in group]
+            cuts = split_points([flagged[i].timestamp for i in group], sizes, cap)
+            bounds = [0, *cuts, len(group)]
+            parts = [group[a:b] for a, b in zip(bounds, bounds[1:], strict=False)]
+        group_id = incident_id_for(flagged[group[0]].event_id, scope)
+        for number, part in enumerate(parts, start=1):
+            split = None
+            if len(parts) > 1:
+                gap = None
+                if number > 1:
+                    before = parts[number - 2][-1]
+                    gap = (flagged[part[0]].timestamp - flagged[before].timestamp).total_seconds()
+                split = IncidentSplit(
+                    reason=SplitReason.SIZE_CAP,
+                    cap=cap,
+                    group_id=group_id,
+                    part=number,
+                    parts=len(parts),
+                    gap_seconds=gap,
+                )
+            incidents.append(
+                _incident(flagged, part, attached, flagged_keys, config, now, scope, split)
             )
-            for n, i in enumerate(group)
-        ]
-        links += [
-            IncidentEventLink(
-                event_id=c.event_id, role=EventRole.CONTEXT, link_keys=ordered(keys), linked_at=now
-            )
-            for c, keys in attached[gi]
-        ]
-        times = [e.timestamp for e in group_flagged] + [c.timestamp for c, _ in attached[gi]]
-        incidents.append(
-            Incident(
-                incident_id=incident_id_for(group_flagged[0].event_id),
-                incident_type=incident_type_for(group_flagged, config),
-                created_at=now,
-                updated_at=now,
-                first_event_at=min(times),
-                last_event_at=max(times),
-                events=links,
-            )
-        )
     return CorrelationResult(
         incidents=tuple(incidents),
         unassigned_event_ids=tuple(sorted(unassigned)),
         config_version=config.config_version,
+    )
+
+
+def _incident(
+    flagged: list[Event],
+    part: list[int],
+    attached: dict[int, list[tuple[Event, set[LinkKey]]]],
+    flagged_keys: list[set[LinkKey]],
+    config: CorrelationConfig,
+    now: datetime,
+    scope: str | None,
+    split: IncidentSplit | None,
+) -> Incident:
+    """One incident from flagged events (in order) and the context attached to them."""
+    part_flagged = [flagged[i] for i in part]
+    context = sorted((c for i in part for c in attached[i]), key=lambda item: _order(item[0]))
+    links = [
+        IncidentEventLink(
+            event_id=flagged[i].event_id,
+            role=EventRole.FLAGGED,
+            # The first flagged event starts the incident, also when an earlier part has the
+            # event it was linked to.
+            link_keys=[] if n == 0 else ordered(flagged_keys[i]),
+            linked_at=now,
+        )
+        for n, i in enumerate(part)
+    ]
+    links += [
+        IncidentEventLink(
+            event_id=c.event_id, role=EventRole.CONTEXT, link_keys=ordered(keys), linked_at=now
+        )
+        for c, keys in context
+    ]
+    times = [e.timestamp for e in part_flagged] + [c.timestamp for c, _ in context]
+    return Incident(
+        incident_id=incident_id_for(part_flagged[0].event_id, scope),
+        incident_type=incident_type_for(part_flagged, config),
+        created_at=now,
+        updated_at=now,
+        first_event_at=min(times),
+        last_event_at=max(times),
+        events=links,
+        correlation_config_version=config.config_version,
+        split=split,
     )

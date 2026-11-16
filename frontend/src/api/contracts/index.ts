@@ -29,12 +29,14 @@ export type {
   AnalysisStatus,
   Incident,
   IncidentEventLink,
+  IncidentSplit,
   IncidentStatus,
   LinkKey,
   RiskAssessment,
   RiskContributor,
   RiskFactor,
   RiskFlag,
+  SplitReason,
 } from "./incident";
 export type {
   ActionState,

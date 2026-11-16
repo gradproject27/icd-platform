@@ -22,12 +22,15 @@ class CorrelationConfig:
     denied_users: frozenset[str] = frozenset()
     stage_names: dict[int, str] = field(default_factory=dict)
     attack_type_stages: dict[str, int] = field(default_factory=dict)
+    max_incident_events: int | None = None  # size cap (W3-D13); None = no cap
 
     def __post_init__(self) -> None:
         if self.window <= timedelta(0):
             raise ValueError("window must be positive")
         if self.escalated_window < self.window:
             raise ValueError("escalated_window must not be shorter than window")
+        if self.max_incident_events is not None and self.max_incident_events < 2:
+            raise ValueError("max_incident_events must be at least 2")
 
     def stage(self, attack_type: str | None) -> int:
         """Kill-chain stage of a dataset attack type; 0 when unknown or missing."""
@@ -51,4 +54,5 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> CorrelationConfig:
         denied_users=frozenset(v.strip().casefold() for v in deny.get("user", [])),
         stage_names={int(k): v for k, v in chain.get("stage_names", {}).items()},
         attack_type_stages=dict(chain.get("attack_types", {})),
+        max_incident_events=raw.get("size_cap", {}).get("max_incident_events"),
     )
