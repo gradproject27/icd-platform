@@ -279,7 +279,8 @@ def test_two_workers_never_take_the_same_job(upload, engine):
 
 
 def test_jobs_run_oldest_first(upload, engine, settings):
-    first, second = upload(b"[]"), upload(b"[]")
+    # Two different files: the same file twice is refused as a duplicate upload.
+    first, second = upload(b"[]"), upload(b"[ ]")
     assert claim_next(engine, "w", utcnow()).job_id == first["job_id"]
     assert claim_next(engine, "w", utcnow()).job_id == second["job_id"]
 

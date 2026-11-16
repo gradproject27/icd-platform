@@ -14,6 +14,7 @@ is not part of this demo.
 
 import argparse
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -48,9 +49,18 @@ def upload(base: str, name: str, content: bytes, dataset_id: str):
         + b"\r\n",
         f"--{boundary}--\r\n".encode(),
     ]
-    return call(
+    status, body = call(
         "POST", f"{base}/uploads", b"".join(parts), f"multipart/form-data; boundary={boundary}"
     )
+    error = (body or {}).get("error") if isinstance(body, dict) else None
+    if status == 409 and error and error["code"] == "duplicate_upload":
+        # Run again on the same stack: the duplicate-upload guard (C2) refuses the same file
+        # and names the earlier upload, so the demo shows that one instead.
+        earlier = re.search(r"upl-[0-9a-f]+", error["message"]).group(0)
+        print(f"    {name} was already uploaded as {earlier} (409 duplicate_upload); using it")
+        _, shown = call("GET", f"{base}/uploads/{earlier}")
+        return 202, {"upload_id": shown["upload_id"], "job_id": shown["job_id"]}
+    return status, body
 
 
 def watch(base: str, job_id: str, timeout: float) -> dict:

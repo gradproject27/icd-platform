@@ -8,14 +8,23 @@ from app.api.schemas import ApiError, ErrorCode, ErrorResponse
 
 
 class ApiException(Exception):
-    def __init__(self, status_code: int, code: ErrorCode, message: str) -> None:
+    def __init__(
+        self,
+        status_code: int,
+        code: ErrorCode,
+        message: str,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.status_code, self.code, self.message = status_code, code, message
+        self.headers = headers
 
 
-def error_response(status_code: int, code: ErrorCode, message: str) -> JSONResponse:
+def error_response(
+    status_code: int, code: ErrorCode, message: str, headers: dict[str, str] | None = None
+) -> JSONResponse:
     body = ErrorResponse(error=ApiError(code=code, message=message))
-    return JSONResponse(body.model_dump(mode="json"), status_code=status_code)
+    return JSONResponse(body.model_dump(mode="json"), status_code=status_code, headers=headers)
 
 
 def _describe(exc: RequestValidationError) -> str:
@@ -27,7 +36,7 @@ def _describe(exc: RequestValidationError) -> str:
 def install(app: FastAPI) -> None:
     @app.exception_handler(ApiException)
     async def _api(_: Request, exc: ApiException) -> JSONResponse:
-        return error_response(exc.status_code, exc.code, exc.message)
+        return error_response(exc.status_code, exc.code, exc.message, exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:

@@ -74,6 +74,7 @@ class ErrorCode(StrEnum):
     FILE_EMPTY = "file_empty"
     FILE_TOO_LARGE = "file_too_large"
     FORMAT_NOT_ACCEPTED = "format_not_accepted"
+    DUPLICATE_UPLOAD = "duplicate_upload"
     INVALID_EVIDENCE = "invalid_evidence"
     NOT_FOUND = "not_found"
     REPORT_NOT_AVAILABLE = "report_not_available"

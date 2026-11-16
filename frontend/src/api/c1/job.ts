@@ -12,6 +12,7 @@ export type ErrorCode =
   | "file_empty"
   | "file_too_large"
   | "format_not_accepted"
+  | "duplicate_upload"
   | "invalid_evidence"
   | "not_found"
   | "report_not_available"
