@@ -74,6 +74,7 @@ Every error body has the same shape ([error-response.schema.json](api/schemas/er
 | 422 | `validation_error` | A field is missing or malformed | yes |
 | 422 | `invalid_evidence` | `POST /analysis-jobs` body is not a valid `EvidencePackage` | yes |
 | 404 | `not_found` | Unknown `upload_id` or `job_id` | n/a |
+| 409 | `duplicate_upload` | The same file (same SHA-256) was already uploaded for the same `dataset_id`, and that upload's ingest job has not failed. The `Location` header is `/uploads/{earlier upload_id}` and the message names it. A failed earlier upload does not count, so a retry works. Two identical uploads at once: exactly one is accepted ([error-duplicate-upload.json](api/examples/error-duplicate-upload.json)) | yes |
 | 409 | `report_not_available` | `GET /jobs/{id}/report` on a job that is not done or has no valid report | n/a |
 
 A rejected upload stores nothing and creates no job, which matches the wireframe state "Upload rejected" (`docs/wireframes.md` 4.2).
@@ -211,4 +212,4 @@ A test fails if a committed schema is out of date. C4 can generate TypeScript ty
 | 2 | Parser signature (section 5) | As written | C2 |
 | 3 | Should ingest also run correlation in the same job from Week 3? | **Decided (15 Nov):** yes, a `correlating` stage at the end of the ingest job | C3, C1 |
 | 4 | Who may upload (OD-24) | Security Engineer and System Administrator, from Week 5 when login exists | C5 |
-| 5 | Duplicate upload guard (same SHA-256), Week 4 | Warn and link to the earlier upload | C2 |
+| 5 | Duplicate upload guard (same SHA-256), Week 4 | **Decided (16 Nov, C2-D13):** refuse with 409 `duplicate_upload` and point to the earlier upload (`Location` header), not "warn and accept", because accepting would store the events again and create a second set of incidents. Same file for another dataset, or after a failed upload, is accepted. Code: `app/api/duplicates.py` | C2 |

@@ -129,3 +129,59 @@ def test_page_limit_is_checked(upload, client):
     accepted = upload(b"[]")
     response = client.get(f"/uploads/{accepted['upload_id']}/events?limit=501")
     assert_error(response, 422, "validation_error")
+
+
+# Duplicate-upload guard (C2, decided 16 Nov 2026): same SHA-256 and dataset, earlier upload
+# not failed -> 409 duplicate_upload pointing to the earlier upload; nothing is stored.
+
+
+def post(client, content: bytes, dataset_id: str = "fixture"):
+    return client.post(
+        "/uploads", data={"dataset_id": dataset_id}, files={"file": ("events.json", content)}
+    )
+
+
+def test_same_file_again_is_refused_and_points_to_the_first(client, engine, settings):
+    content = FIXTURE_EVENTS.read_bytes()
+    first = UploadAccepted.model_validate(post(client, content).json())
+    response = post(client, content)
+    assert_error(response, 409, "duplicate_upload")
+    assert response.headers["location"] == f"/uploads/{first.upload_id}"
+    assert first.upload_id in response.json()["error"]["message"]
+    assert rows(engine, UploadRow) == rows(engine, JobRow) == 1
+    assert [p.name for p in settings.upload_dir.iterdir()] == [first.upload_id]
+
+
+def test_same_file_for_another_dataset_is_accepted(client, engine):
+    assert post(client, b"[]").status_code == 202
+    assert post(client, b"[]", dataset_id="unsw-nb15").status_code == 202
+    assert rows(engine, UploadRow) == 2
+
+
+def test_different_file_is_accepted(client, engine):
+    assert post(client, b"[]").status_code == 202
+    assert post(client, b"[ ]").status_code == 202
+    assert rows(engine, UploadRow) == 2
+
+
+def test_retry_after_a_failed_upload_is_accepted(client, engine):
+    first = post(client, b"[]").json()
+    with Session(engine) as session, session.begin():
+        session.get(JobRow, first["job_id"]).state = "failed"
+    second = post(client, b"[]")
+    assert second.status_code == 202, second.text
+    assert second.json()["upload_id"] != first["upload_id"]
+    # The new upload is not failed, so a third copy is refused and points to it.
+    third = post(client, b"[]")
+    assert_error(third, 409, "duplicate_upload")
+    assert third.headers["location"] == f"/uploads/{second.json()['upload_id']}"
+
+
+def test_two_identical_uploads_at_once_accept_exactly_one(client, engine):
+    from concurrent.futures import ThreadPoolExecutor
+
+    content = b'[{"x": 1}]'
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        codes = sorted(pool.map(lambda _: post(client, content).status_code, range(4)))
+    assert codes == [202, 409, 409, 409]
+    assert rows(engine, UploadRow) == 1

@@ -12,6 +12,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.duplicates import DuplicateUpload, lock_and_find_duplicate
 from app.api.errors import ApiException
 from app.api.schemas import (
     ACCEPTED_EXTENSIONS,
@@ -118,12 +119,25 @@ async def create_upload(
 
     def store() -> None:
         with Session(get_engine(), expire_on_commit=False) as session, session.begin():
+            earlier = lock_and_find_duplicate(session, sha256, dataset.value)
+            if earlier is not None:
+                raise DuplicateUpload(earlier)
             session.add(upload)
             session.flush()
             session.add(job)
 
     try:
         await run_in_threadpool(store)
+    except DuplicateUpload as duplicate:
+        delete_stored(settings.upload_dir, upload_id)
+        earlier_url = f"/uploads/{duplicate.upload_id}"
+        raise ApiException(
+            409,
+            ErrorCode.DUPLICATE_UPLOAD,
+            f"This file was already uploaded for this dataset as {duplicate.upload_id}. "
+            "Open that upload instead.",
+            headers={"Location": earlier_url},
+        ) from None
     except Exception:
         delete_stored(settings.upload_dir, upload_id)
         raise

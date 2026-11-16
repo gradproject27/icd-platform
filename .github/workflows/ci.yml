@@ -114,7 +114,9 @@ jobs:
       - name: Worker crash test (a job waits while the worker is down, then finishes)
         run: |
           docker compose stop worker
-          job_id=$(curl -fsS -F dataset_id=fixture -F file=@fixtures/correlation/events.json http://localhost:8080/api/uploads | jq -r .job_id)
+          # A new file: the demo already uploaded events.json, and the duplicate guard refuses it.
+          { cat fixtures/correlation/events.json; echo; } > "$RUNNER_TEMP/crash-test.json"
+          job_id=$(curl -fsS -F dataset_id=fixture -F "file=@$RUNNER_TEMP/crash-test.json" http://localhost:8080/api/uploads | jq -r .job_id)
           sleep 3
           state=$(curl -fsS "http://localhost:8080/api/jobs/$job_id" | jq -r .state)
           echo "worker stopped: $state"
