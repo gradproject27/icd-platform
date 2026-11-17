@@ -9,6 +9,7 @@ export function Layout() {
         <nav className="app-header__nav" aria-label="Main">
           <NavLink to="/upload">Upload</NavLink>
           <NavLink to="/incidents">Incidents</NavLink>
+          <NavLink to="/review">Review</NavLink>
         </nav>
         <HealthIndicator />
       </header>

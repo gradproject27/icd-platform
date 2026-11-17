@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import stubData from "../../dev/stub-data/incidents.json";
-import type { ResponseAction } from "../api/contracts";
+import type { ResponseAction, UserRole } from "../api/contracts";
 import type { DecisionRecord, IncidentSummary } from "../api/proposed";
 import { FakeWebSocket, mockWebSocket } from "../test/fakeWebSocket";
 import { jsonResponse, mockFetch } from "../test/fetch";
@@ -67,6 +67,8 @@ interface Api {
   window?: unknown;
   decision?: DecisionRecord | null | (() => DecisionRecord | null);
   submit?: () => Response;
+  /** The role GET /me answers with; without it /me is a 404 and the role is unknown. */
+  me?: UserRole;
 }
 
 function serve(incidentId: string, api: Api = {}) {
@@ -91,6 +93,7 @@ function serve(incidentId: string, api: Api = {}) {
     if (path === `/api/response-windows/${incidentId}`) {
       return api.window ? jsonResponse(api.window) : jsonResponse({ detail: "no response window" }, 404);
     }
+    if (path === "/api/me" && api.me) return jsonResponse({ user: "dev", role: api.me });
     if (path === `/api/incidents/${incidentId}/decisions` && init?.method === "POST") {
       return api.submit ? api.submit() : jsonResponse(record({ incident_id: incidentId }), 201);
     }
@@ -477,5 +480,117 @@ describe("PendingDecisionPage", () => {
 
     expect(screen.getByText("This incident is not awaiting a decision (status: Resolved).")).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Your decision" })).not.toBeInTheDocument();
+  });
+
+  // ---- S8-D10: no response needed, escalated incidents, read-only roles ------------------------
+
+  it("records 'No response needed' without a window, only with a comment", async () => {
+    const fetchMock = serve("inc-stub-03", {
+      submit: () =>
+        jsonResponse(
+          record({
+            incident_id: "inc-stub-03",
+            window_id: null,
+            decision: "no_action",
+            scenario_id: null,
+            comment: "Benign scan",
+            incident_status: "resolved",
+          }),
+          201,
+        ),
+    });
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    fireEvent.click(option(/^No response needed/));
+    const review = screen.getByRole("button", { name: "Review decision" });
+    expect(review).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Comment (required for No response needed)"), { target: { value: "   " } });
+    expect(review).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Comment (required for No response needed)"), { target: { value: " Benign scan " } });
+    fireEvent.click(review);
+
+    const confirm = screen.getByRole("region", { name: "Confirm your decision" });
+    expect(confirm).toHaveTextContent("Decision: No response needed");
+    expect(confirm).toHaveTextContent("Scenario: none");
+    expect(confirm).toHaveTextContent("Nothing is executed. The decision is recorded and audited.");
+    fireEvent.click(screen.getByRole("button", { name: "Submit decision" }));
+    await advance(0);
+
+    expect(postedBody(fetchMock)).toEqual({ decision: "no_action", scenario_id: null, window_id: null, comment: "Benign scan" });
+    const recorded = screen.getByRole("region", { name: "Decision recorded" });
+    expect(recorded).toHaveTextContent("Decision: No response needed");
+    expect(recorded).toHaveTextContent("Status: Resolved");
+  });
+
+  it("does not offer 'No response needed' while a response window is open", async () => {
+    serve("inc-stub-01", { window: openWindow("inc-stub-01") });
+    renderPage("inc-stub-01");
+    await advance(0);
+
+    expect(option("Approve recommended action (S2, SIMULATED)")).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /^No response needed/ })).not.toBeInTheDocument();
+  });
+
+  it("offers select and 'No response needed' on an escalated incident, but not reject", async () => {
+    serve("inc-stub-10", { window: { ...openWindow("inc-stub-10"), status: "expired" } });
+    renderPage("inc-stub-10");
+    await advance(0);
+
+    expect(screen.queryByText(/The options are closed/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Reject/ })).not.toBeInTheDocument();
+    expect(option("Select another scenario (SIMULATED):")).toBeEnabled();
+    expect(option(/^No response needed/)).toBeEnabled();
+  });
+
+  it("shows the options again under a recorded decision once the incident is escalated (T12)", async () => {
+    serve("inc-stub-10", {
+      window: { ...openWindow("inc-stub-10"), status: "decided" },
+      decision: record({ incident_id: "inc-stub-10", incident_status: "escalated" }),
+    });
+    renderPage("inc-stub-10");
+    await advance(0);
+
+    expect(screen.getByRole("region", { name: "Decision recorded" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Your decision" })).toBeInTheDocument();
+  });
+
+  it("explains a 422 from the server and records nothing", async () => {
+    serve("inc-stub-03", {
+      submit: () => jsonResponse({ error: { code: "validation_error", message: "No_action needs a comment." } }, 422),
+    });
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    fireEvent.click(option(/^No response needed/));
+    fireEvent.change(screen.getByLabelText("Comment (required for No response needed)"), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review decision" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit decision" }));
+    await advance(0);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Your decision was not recorded. No_action needs a comment.");
+    expect(screen.queryByRole("region", { name: "Decision recorded" })).not.toBeInTheDocument();
+  });
+
+  it.each<UserRole>(["soc_manager", "security_engineer", "system_administrator"])(
+    "is read-only for the %s: recommendation shown, no options",
+    async (role) => {
+      serve("inc-stub-03", { me: role });
+      renderPage("inc-stub-03");
+      await advance(0);
+
+      expect(screen.getByRole("region", { name: /Recommended response/ })).toBeInTheDocument();
+      expect(screen.getByText("Only a SOC Analyst can decide.")).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Your decision" })).not.toBeInTheDocument();
+    },
+  );
+
+  it("offers the options to the SOC Analyst", async () => {
+    serve("inc-stub-03", { me: "soc_analyst" });
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    expect(screen.getByRole("group", { name: "Your decision" })).toBeInTheDocument();
+    expect(screen.queryByText("Only a SOC Analyst can decide.")).not.toBeInTheDocument();
   });
 });
