@@ -79,6 +79,7 @@ function IncidentDetail({ incidentId }: { incidentId: string }) {
         {DECISION_STATES.has(incident.status ?? "new") && (
           <Link to={`/incidents/${encoded}/decision`}>Pending decision</Link>
         )}
+        <Link to={`/incidents/${encoded}/audit`}>Audit trail</Link>
       </nav>
 
       <RiskAndConfidence incident={incident} confidence={incident.confidence} />

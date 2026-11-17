@@ -739,3 +739,28 @@ input {
   border-radius: 4px;
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
+
+/* Audit trail (S8-D11): details as key: value text, never raw JSON. */
+
+.audit-details {
+  margin: 0;
+}
+
+.audit-details div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.audit-details dt {
+  color: var(--muted);
+}
+
+.audit-details dt::after {
+  content: ":";
+}
+
+.audit-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
