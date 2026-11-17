@@ -23,9 +23,10 @@ Not built yet:
 - the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
 - the correlation engine and risk-score code (C3, Week 2);
 - real LLM backends (AI1); only `mock` exists;
-- the HTTP decision and response-window endpoints and the WebSocket (C5, Week 3); the dashboard's countdown and decision panel still run against the dev-only stub server (`frontend/dev/`);
+- the wiring that registers stored incidents with the response engine and runs their analysis, so real incidents stay `new` with no response window yet; the incident, window and decision endpoints and the WebSocket exist ([docs/api-incidents.md](docs/api-incidents.md));
+- AI report storage (C1, AI1); `GET /incidents/{id}/report` answers 404 `report_not_available`;
 - the dashboard's incident detail, AI report and login screens; they are still shells (decision D10);
-- authentication (C5, Week 3); the response engine (below) has no HTTP endpoints or WebSocket yet.
+- authentication (C5, Week 3); until then decisions are made as the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE`.
 
 ## Prerequisites
 
@@ -255,6 +256,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
 | [docs/incident-storage.md](docs/incident-storage.md) | C1 | Week 3 | Incident storage: `incidents` and `incident_events` tables (migration 0005), `store_incidents()` for C3, `correlate_upload()`, open decisions D1 to D3 |
 | [docs/api-upload-jobs.md](docs/api-upload-jobs.md) | C1 | Week 2 | Upload, job status and analysis API: endpoints, request and response examples for every state, error codes, parser interface for C2 |
+| [docs/api-incidents.md](docs/api-incidents.md) | C4 (wiring), C1, C5 | Step 8 | Incident, events, original record, report, audit, response-window and decision endpoints and the WebSocket the dashboard uses; error codes; gaps |
 | [docs/github-setup.md](docs/github-setup.md) | C1 | | GitHub setup: manual steps to create the repo, add members and protect `main` |
 | [docs/scope-change-note.md](docs/scope-change-note.md) | C1 | T1-02 | Scope-change note: roadmap vs. approved specification, for the supervisor (draft, not yet sent) |
 | [contracts/README.md](contracts/README.md) | C3 | T1-07 | Where the contract models, schemas and examples live; how to regenerate; change rule |

@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "already_decided",
+    "message": "Reject is not open in resolved."
+  }
+}

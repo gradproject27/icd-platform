@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "report_not_available",
+    "message": "No AI report is stored for this incident yet."
+  }
+}

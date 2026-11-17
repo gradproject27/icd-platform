@@ -1,0 +1,627 @@
+{
+  "$defs": {
+    "AnalysisStatus": {
+      "description": "Status of the AI analysis. Analysis failed is a status, not a lifecycle state (OD-09).",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "succeeded",
+        "failed"
+      ],
+      "title": "AnalysisStatus",
+      "type": "string"
+    },
+    "EventRole": {
+      "description": "Why an event belongs to an incident. Context events are never treated as malicious.",
+      "enum": [
+        "flagged",
+        "context"
+      ],
+      "title": "EventRole",
+      "type": "string"
+    },
+    "Incident": {
+      "additionalProperties": false,
+      "description": "A group of related events (FR-07, FR-08, FR-11, FR-18 to FR-20, FR-31, FR-42).",
+      "properties": {
+        "analysis_attempts": {
+          "default": 0,
+          "description": "Number of analysis attempts.",
+          "minimum": 0,
+          "title": "Analysis Attempts",
+          "type": "integer"
+        },
+        "analysis_status": {
+          "$ref": "#/$defs/AnalysisStatus",
+          "default": "not_started",
+          "description": "Status of the AI analysis (OD-09)."
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Confidence of the latest valid analysis (OD-16); set exactly when analysis succeeded (FR-42).",
+          "title": "Confidence"
+        },
+        "correlation_config_version": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Version of the correlation configuration that built the incident (contracts 1.2); null = not recorded.",
+          "title": "Correlation Config Version"
+        },
+        "created_at": {
+          "description": "When the incident was created, UTC.",
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "events": {
+          "description": "Linked events (FR-08); event IDs are unique.",
+          "items": {
+            "$ref": "#/$defs/IncidentEventLink"
+          },
+          "minItems": 1,
+          "title": "Events",
+          "type": "array"
+        },
+        "first_event_at": {
+          "description": "Timestamp of the earliest event, UTC.",
+          "format": "date-time",
+          "title": "First Event At",
+          "type": "string"
+        },
+        "incident_id": {
+          "description": "Unique incident ID.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "incident_type": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "C3 classification, read by C5's scenario lookup (OD-20); null = not classified yet.",
+          "title": "Incident Type"
+        },
+        "last_event_at": {
+          "description": "Timestamp of the latest event, UTC; not before first_event_at.",
+          "format": "date-time",
+          "title": "Last Event At",
+          "type": "string"
+        },
+        "latest_report_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ID of the latest valid AnalysisReport; required when analysis succeeded.",
+          "title": "Latest Report Id"
+        },
+        "risk": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskAssessment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deterministic risk assessment; null = not scored yet."
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "description": "Contract version.",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "split": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IncidentSplit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Set when the incident is one part of a group that correlation split (contracts 1.2); null = not split."
+        },
+        "status": {
+          "$ref": "#/$defs/IncidentStatus",
+          "default": "new",
+          "description": "Lifecycle state (FR-31, TD-11)."
+        },
+        "updated_at": {
+          "description": "Last change, UTC; not before created_at.",
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "incident_id",
+        "created_at",
+        "updated_at",
+        "first_event_at",
+        "last_event_at",
+        "events"
+      ],
+      "title": "Incident",
+      "type": "object"
+    },
+    "IncidentEntities": {
+      "additionalProperties": false,
+      "description": "Distinct host, user and IP values of the incident's events, flagged and context.",
+      "properties": {
+        "hosts": {
+          "description": "Sorted, unique.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Hosts",
+          "type": "array"
+        },
+        "ips": {
+          "description": "Source and destination IPs, sorted, unique.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Ips",
+          "type": "array"
+        },
+        "users": {
+          "description": "Sorted, unique.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Users",
+          "type": "array"
+        }
+      },
+      "required": [
+        "hosts",
+        "users",
+        "ips"
+      ],
+      "title": "IncidentEntities",
+      "type": "object"
+    },
+    "IncidentEventLink": {
+      "additionalProperties": false,
+      "description": "Link from an incident to one event (FR-08).",
+      "properties": {
+        "event_id": {
+          "description": "ID of the linked Event.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "link_keys": {
+          "description": "Keys that linked the event. Empty only for the event that started the incident.",
+          "items": {
+            "$ref": "#/$defs/LinkKey"
+          },
+          "title": "Link Keys",
+          "type": "array"
+        },
+        "linked_at": {
+          "description": "When the event was linked, UTC.",
+          "format": "date-time",
+          "title": "Linked At",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/EventRole",
+          "description": "flagged, or context: an unflagged or unlabelled event that shares an entity in the window (OD-02). A context event is never treated as malicious."
+        }
+      },
+      "required": [
+        "event_id",
+        "role",
+        "link_keys",
+        "linked_at"
+      ],
+      "title": "IncidentEventLink",
+      "type": "object"
+    },
+    "IncidentSplit": {
+      "additionalProperties": false,
+      "description": "This incident is one part of a group that correlation split (contracts 1.2, additive).",
+      "properties": {
+        "cap": {
+          "description": "The size cap in force: most linked events per incident.",
+          "minimum": 1,
+          "title": "Cap",
+          "type": "integer"
+        },
+        "gap_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Length of the time gap the group was cut at, just before this part; null for part 1.",
+          "title": "Gap Seconds"
+        },
+        "group_id": {
+          "description": "ID the whole group would have had; the same for every part (it is the ID of part 1).",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "part": {
+          "description": "Which part this is, 1 = earliest, in time order.",
+          "minimum": 1,
+          "title": "Part",
+          "type": "integer"
+        },
+        "parts": {
+          "description": "How many parts the group was split into.",
+          "minimum": 2,
+          "title": "Parts",
+          "type": "integer"
+        },
+        "reason": {
+          "$ref": "#/$defs/SplitReason",
+          "description": "Why the group was split."
+        }
+      },
+      "required": [
+        "reason",
+        "cap",
+        "group_id",
+        "part",
+        "parts"
+      ],
+      "title": "IncidentSplit",
+      "type": "object"
+    },
+    "IncidentStatus": {
+      "description": "Lifecycle state (FR-31, TD-11). new replaces the former name Detected.",
+      "enum": [
+        "new",
+        "under_analysis",
+        "awaiting_human_decision",
+        "response_in_progress",
+        "escalated",
+        "resolved",
+        "closed"
+      ],
+      "title": "IncidentStatus",
+      "type": "string"
+    },
+    "IncidentSummary": {
+      "additionalProperties": false,
+      "description": "GET /incidents/{incident_id}, and one item of GET /incidents.",
+      "properties": {
+        "entities": {
+          "$ref": "#/$defs/IncidentEntities"
+        },
+        "incident": {
+          "$ref": "#/$defs/Incident"
+        },
+        "recommended_scenario_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScenarioId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "C5's catalogue recommendation once the analysis is recorded; else null."
+        }
+      },
+      "required": [
+        "incident",
+        "entities",
+        "recommended_scenario_id"
+      ],
+      "title": "IncidentSummary",
+      "type": "object"
+    },
+    "LinkKey": {
+      "description": "The entity key that linked an event to the incident (NFR-SF-05).",
+      "enum": [
+        "host",
+        "ip_pair",
+        "user"
+      ],
+      "title": "LinkKey",
+      "type": "string"
+    },
+    "RiskAssessment": {
+      "additionalProperties": false,
+      "description": "Deterministic risk score computed by C3 code, never by the LLM (OD-04, OD-05, FR-18).",
+      "properties": {
+        "computed_at": {
+          "description": "When the score was computed, UTC.",
+          "format": "date-time",
+          "title": "Computed At",
+          "type": "string"
+        },
+        "config_version": {
+          "description": "Version of the weights and thresholds file used.",
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "factors": {
+          "description": "Per-factor breakdown (FR-19).",
+          "items": {
+            "$ref": "#/$defs/RiskFactor"
+          },
+          "minItems": 1,
+          "title": "Factors",
+          "type": "array"
+        },
+        "flags": {
+          "description": "Assumptions the score made (contracts 1.1).",
+          "items": {
+            "$ref": "#/$defs/RiskFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "impact": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Asset impact I, 0 to 1 (contracts 1.1).",
+          "title": "Impact"
+        },
+        "level": {
+          "$ref": "#/$defs/RiskLevel",
+          "description": "Level from the configurable thresholds (FR-20); enforced by C3's scoring code, not by this contract."
+        },
+        "likelihood": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Combined evidence strength L, 0 to 1 (contracts 1.1).",
+          "title": "Likelihood"
+        },
+        "score": {
+          "description": "Risk score as a percentage (FR-18).",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "top_contributors": {
+          "description": "The strongest evidence groups, strongest first (contracts 1.1).",
+          "items": {
+            "$ref": "#/$defs/RiskContributor"
+          },
+          "maxItems": 3,
+          "title": "Top Contributors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level",
+        "factors",
+        "config_version",
+        "computed_at"
+      ],
+      "title": "RiskAssessment",
+      "type": "object"
+    },
+    "RiskContributor": {
+      "additionalProperties": false,
+      "description": "One evidence group behind the score: its strongest event (contracts 1.1).",
+      "properties": {
+        "entity": {
+          "description": "Source-side entity of the group, or none.",
+          "minLength": 1,
+          "title": "Entity",
+          "type": "string"
+        },
+        "event_id": {
+          "description": "ID of the group's strongest flagged event.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Plain-language reason for the strength.",
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "strength": {
+          "description": "Strength of the group's strongest event, 0 to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Strength",
+          "type": "number"
+        },
+        "technique": {
+          "description": "Attack type of the group; unknown when missing.",
+          "minLength": 1,
+          "title": "Technique",
+          "type": "string"
+        }
+      },
+      "required": [
+        "technique",
+        "entity",
+        "strength",
+        "event_id",
+        "reason"
+      ],
+      "title": "RiskContributor",
+      "type": "object"
+    },
+    "RiskFactor": {
+      "additionalProperties": false,
+      "description": "One factor of the deterministic risk score.",
+      "properties": {
+        "contribution": {
+          "description": "Points this factor adds to the score.",
+          "title": "Contribution",
+          "type": "number"
+        },
+        "name": {
+          "description": "Factor name from the risk configuration.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-language reason for the factor's value (contracts 1.1, additive).",
+          "title": "Reason"
+        },
+        "value": {
+          "description": "Normalized factor value, 0 to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        },
+        "weight": {
+          "description": "Weight of the factor in the configuration.",
+          "minimum": 0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "weight",
+        "contribution"
+      ],
+      "title": "RiskFactor",
+      "type": "object"
+    },
+    "RiskFlag": {
+      "description": "Something the score had to assume because the data does not say (contracts 1.1).",
+      "enum": [
+        "asset_unknown",
+        "outcome_unknown",
+        "severity_default"
+      ],
+      "title": "RiskFlag",
+      "type": "string"
+    },
+    "RiskLevel": {
+      "description": "Risk level derived from the score by C3's configurable thresholds (FR-20).",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    },
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    },
+    "SplitReason": {
+      "description": "Why correlation cut one group of related events into several incidents (contracts 1.2).",
+      "enum": [
+        "size_cap"
+      ],
+      "title": "SplitReason",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /incidents: newest first event first.",
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/IncidentSummary"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "title": "IncidentList",
+  "type": "object"
+}

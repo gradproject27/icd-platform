@@ -1,0 +1,199 @@
+{
+  "items": [
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-b0bd5242c53d4f80ae95006dc27490c8",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "status_changed",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "cause": "incident created by correlation",
+        "new_status": "new",
+        "transition_id": "T01",
+        "previous_status": null
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-44d1fa28469242e7a894c235d240a298",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "status_changed",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "cause": "analysis started",
+        "new_status": "under_analysis",
+        "transition_id": "T02",
+        "previous_status": "new"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-67bd7c69bcb24cc6b0380e413e861559",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "status_changed",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "cause": "freeze started",
+        "freeze": true,
+        "reasons": "",
+        "confidence": 0.9,
+        "new_status": "awaiting_human_decision",
+        "risk_level": "high",
+        "transition_id": "T03",
+        "previous_status": "under_analysis",
+        "recommended_scenario_id": "S2"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-bcc322c35bc04cba8fd69c5544545207",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "action.simulated",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": true,
+      "details": {
+        "host": "web-01",
+        "label": "SIMULATED",
+        "action": "isolate",
+        "window_id": "win-5c69f3e8ccb14a8fa2657490c81b9129"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-5fed8ff679524f62915130c782063d6c",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "response_window.opened",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "window_id": "win-5c69f3e8ccb14a8fa2657490c81b9129",
+        "started_at": "2026-11-17T09:00:00.000Z",
+        "deadline_at": "2026-11-17T09:01:00.000Z",
+        "recommended_scenario_id": "S2"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-1d5ffe3fb18b41cc92570354436ba794",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "notification.sent",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "reason": "freeze_started",
+        "recipients": "soc_analyst,soc_manager"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-bc540225f7b44e40b761da519add8ef3",
+      "occurred_at": "2026-11-17T09:00:12.500000Z",
+      "event_type": "decision.recorded",
+      "actor": "analyst-dev",
+      "actor_role": "soc_analyst",
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "comment": "Confirmed scan and backdoor on web-01.",
+        "decision": "approve",
+        "window_id": "win-5c69f3e8ccb14a8fa2657490c81b9129",
+        "scenario_id": "S2"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-bb41d3de0a32491d83f1dde629ff1bac",
+      "occurred_at": "2026-11-17T09:00:12.500000Z",
+      "event_type": "status_changed",
+      "actor": "analyst-dev",
+      "actor_role": "soc_analyst",
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "cause": "analyst decision: approve",
+        "new_status": "response_in_progress",
+        "transition_id": "T06",
+        "previous_status": "awaiting_human_decision"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-5663672c3e2c421e9fce7372cc4a6550",
+      "occurred_at": "2026-11-17T09:00:12.500000Z",
+      "event_type": "action.simulated",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": true,
+      "details": {
+        "ip": "203.0.113.10",
+        "host": "web-01",
+        "label": "SIMULATED",
+        "account": null,
+        "trigger": "analyst_decision",
+        "action_id": "act-fb916e4183d342099dfd8fbc1adf6297",
+        "decided_by": "analyst-dev",
+        "scenario_id": "S2",
+        "failure_reason": null
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-7828502dceff44258b0f1759ba734f34",
+      "occurred_at": "2026-11-17T09:00:12.500000Z",
+      "event_type": "status_changed",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "cause": "simulated action succeeded",
+        "new_status": "resolved",
+        "transition_id": "T10",
+        "previous_status": "response_in_progress"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-530a59fda518427b93bd3fbb7d0e2967",
+      "occurred_at": "2026-11-17T09:00:12.500000Z",
+      "event_type": "decision.refused",
+      "actor": "analyst-dev",
+      "actor_role": "soc_analyst",
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "refused",
+      "simulated": false,
+      "details": {
+        "reason": "wrong_state",
+        "decision": "reject",
+        "window_id": null,
+        "scenario_id": null
+      }
+    }
+  ]
+}

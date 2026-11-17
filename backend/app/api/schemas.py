@@ -1,4 +1,5 @@
-"""Request and response shapes of the upload, job and analysis endpoints (C1, Week 2).
+"""Request and response shapes of the HTTP API: upload, job and analysis (C1, Week 2), and the
+incident, response-window and decision reads and writes the dashboard uses (Step 8, W3-D9).
 
 These are API shapes, not shared data contracts: they describe what the HTTP API sends and
 accepts, and they reuse the contracts (Event, AnalysisReport) where a response carries one.
@@ -11,7 +12,16 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, StringConstraints, model_validator
 
-from app.contracts import Event
+from app.contracts import (
+    AuditRecord,
+    Event,
+    EventRole,
+    Incident,
+    IncidentStatus,
+    LinkKey,
+    ResponseAction,
+    ScenarioId,
+)
 from app.contracts.common import Id, NonEmptyStr, UtcDatetime, _Contract
 
 Count = Annotated[int, Field(ge=0)]
@@ -78,6 +88,13 @@ class ErrorCode(StrEnum):
     INVALID_EVIDENCE = "invalid_evidence"
     NOT_FOUND = "not_found"
     REPORT_NOT_AVAILABLE = "report_not_available"
+    ORIGINAL_NOT_AVAILABLE = "original_not_available"
+    NOT_AUTHORIZED = "not_authorized"
+    NOT_AWAITING_DECISION = "not_awaiting_decision"
+    ALREADY_DECIDED = "already_decided"
+    WINDOW_EXPIRED = "window_expired"
+    WINDOW_MISMATCH = "window_mismatch"
+    WINDOW_OPEN = "window_open"
     # Job failures (state failed)
     NO_PARSER = "no_parser"
     PARSE_FAILED = "parse_failed"
@@ -272,4 +289,112 @@ class QuarantinePage(_Contract):
     items: list[QuarantinedRecord]
     next_after: int | None = Field(
         description="Pass as ?after= for the next page; null on the last page."
+    )
+
+
+# ---- Incidents, response windows and decisions (Step 8; the shapes C4 proposed in #22/#23,
+# adopted under W3-D9). Each incident read comes from C1's stored incidents (migration 0005)
+# with the status C5's response engine tracks; nothing here computes risk or decides.
+
+
+class IncidentEntities(_Contract):
+    """Distinct host, user and IP values of the incident's events, flagged and context."""
+
+    hosts: list[str] = Field(description="Sorted, unique.")
+    users: list[str] = Field(description="Sorted, unique.")
+    ips: list[str] = Field(description="Source and destination IPs, sorted, unique.")
+
+
+class IncidentSummary(_Contract):
+    """GET /incidents/{incident_id}, and one item of GET /incidents."""
+
+    incident: Incident
+    entities: IncidentEntities
+    recommended_scenario_id: ScenarioId | None = Field(
+        description="C5's catalogue recommendation once the analysis is recorded; else null."
+    )
+
+
+class IncidentList(_Contract):
+    """GET /incidents: newest first event first."""
+
+    items: list[IncidentSummary]
+
+
+class IncidentEventItem(_Contract):
+    """One linked event with the role and link keys from the incident."""
+
+    event: Event
+    role: EventRole
+    link_keys: list[LinkKey]
+
+
+class IncidentEventList(_Contract):
+    """GET /incidents/{incident_id}/events: the incident's events, oldest first."""
+
+    items: list[IncidentEventItem]
+
+
+class OriginalRecord(_Contract):
+    """GET /incidents/{incident_id}/events/{event_id}/original: the line the event came from."""
+
+    event_id: Id
+    record_ref: NonEmptyStr
+    source_file: NonEmptyStr
+    line: str = Field(description="The original line as uploaded, without its line break.")
+
+
+class AuditTrail(_Contract):
+    """GET /incidents/{incident_id}/audit: the incident's audit records in written order."""
+
+    items: list[AuditRecord]
+
+
+class ResponseWindowStatus(StrEnum):
+    OPEN = "open"
+    DECIDED = "decided"
+    EXPIRED = "expired"
+
+
+class ResponseWindow(_Contract):
+    """GET /response-windows/{incident_id}: the latest window, for the countdown (spec 7)."""
+
+    incident_id: Id
+    window_id: Id
+    status: ResponseWindowStatus
+    started_at: UtcDatetime
+    deadline_at: UtcDatetime
+    server_time: UtcDatetime = Field(description="The database clock when the server answered.")
+    recommended_scenario_id: ScenarioId | None
+
+
+class DecisionType(StrEnum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    SELECT = "select"
+    NO_ACTION = "no_action"
+
+
+class DecisionRequest(_Contract):
+    """POST /incidents/{incident_id}/decisions."""
+
+    decision: DecisionType
+    scenario_id: ScenarioId | None = None
+    window_id: Id | None = None
+    comment: Annotated[str, StringConstraints(max_length=2000)] | None = None
+
+
+class DecisionRecord(_Contract):
+    """201 from POST /incidents/{incident_id}/decisions, and GET /incidents/{id}/decision."""
+
+    incident_id: Id
+    window_id: Id | None
+    decision: DecisionType
+    scenario_id: ScenarioId | None
+    comment: str | None
+    decided_by: NonEmptyStr
+    decided_at: UtcDatetime
+    incident_status: IncidentStatus
+    action: ResponseAction | None = Field(
+        description="The simulated action of an approve or select; null for reject, no_action."
     )
