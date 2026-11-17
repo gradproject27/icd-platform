@@ -9,13 +9,15 @@ import { CountdownView } from "../components/Countdown";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime, formatRemaining } from "../countdown/clock";
 import { useResponseWindow, type ResponseWindowView } from "../hooks/useResponseWindow";
-import { entitiesText, formatListTime, riskText, STUB_BANNER } from "../incidents/format";
+import { IncidentHeader } from "../incidents/IncidentHeader";
+import { STUB_BANNER } from "../incidents/format";
 import { INCIDENT_STATUS_LABELS, SCENARIO_LABELS } from "../labels";
 
 // Pending decision (wireframes.md 4.6; response-workflow-spec.md sections 7 to 10). The server owns
 // the window and every rule: this page shows the countdown from the server's deadline_at, offers
 // the three options of spec section 8, asks for confirmation, and shows what the server answered.
-// The decision endpoints are proposed for C5 (src/api/proposed.ts). Every response is SIMULATED.
+// The decision endpoints call C5's response engine (backend/app/api/incidents.py). Every
+// response is SIMULATED.
 
 const SCENARIOS = Object.keys(SCENARIO_LABELS) as ScenarioId[];
 const COMMENT_MAX = 1_000;
@@ -32,7 +34,8 @@ const simulated = <span className="simulated-badge">[SIMULATED]</span>;
 
 const timeOfDay = (iso: string) => formatLocalDateTime(iso).slice(11);
 
-function decisionLabel(decision: DecisionType, freeze: boolean): string {
+function decisionLabel(decision: DecisionType | "no_action", freeze: boolean): string {
+  if (decision === "no_action") return "No response needed";
   if (decision === "approve") return "Approve recommended action (SIMULATED)";
   if (decision === "select") return "Select another scenario (SIMULATED)";
   return freeze ? "Reject and release simulated isolation (SIMULATED)" : "Reject the recommendation (SIMULATED)";
@@ -183,48 +186,6 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
         />
       )}
     </section>
-  );
-}
-
-/** The compact incident header (decision D10): the panel shows it itself while the detail page is a shell. */
-function IncidentHeader({ summary }: { summary: IncidentSummary }) {
-  const { incident } = summary;
-  const shownEntities = entitiesText(summary.entities);
-  return (
-    <dl className="incident-header" aria-label="Incident">
-      <div>
-        <dt>Incident</dt>
-        <dd>{incident.incident_id}</dd>
-      </div>
-      <div>
-        <dt>State</dt>
-        <dd>{INCIDENT_STATUS_LABELS[incident.status ?? "new"]}</dd>
-      </div>
-      <div>
-        <dt>Type</dt>
-        <dd>{incident.incident_type ?? "Not classified"}</dd>
-      </div>
-      <div>
-        <dt>Risk</dt>
-        <dd>{riskText(incident)}</dd>
-      </div>
-      <div>
-        <dt>First event</dt>
-        <dd>
-          <time dateTime={incident.first_event_at}>{formatListTime(incident.first_event_at)}</time>
-        </dd>
-      </div>
-      <div>
-        <dt>Last event</dt>
-        <dd>
-          <time dateTime={incident.last_event_at}>{formatListTime(incident.last_event_at)}</time>
-        </dd>
-      </div>
-      <div>
-        <dt>Entities</dt>
-        <dd title={shownEntities.title}>{shownEntities.text}</dd>
-      </div>
-    </dl>
   );
 }
 

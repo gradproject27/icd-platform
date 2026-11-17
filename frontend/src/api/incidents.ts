@@ -1,6 +1,7 @@
 import { request } from "./client";
 import { ApiError } from "./errors";
-import type { IncidentList, IncidentSummary } from "./proposed";
+import type { AnalysisReport } from "./contracts";
+import type { IncidentEventList, IncidentList, IncidentSummary, OriginalRecord } from "./proposed";
 
 /**
  * Header the dev-only stub server (dev/stub-server.mjs) sets on every incident answer. The real
@@ -25,7 +26,7 @@ async function withStubFlag<T>(path: string, signal?: AbortSignal): Promise<Answ
   return { data, stub };
 }
 
-/** GET /incidents (proposed for C3). */
+/** GET /incidents. */
 export async function listIncidents(signal?: AbortSignal): Promise<Answer<IncidentList>> {
   const answer = await withStubFlag<IncidentList>("/incidents", signal);
   if (!Array.isArray((answer.data as Partial<IncidentList> | null)?.items)) {
@@ -34,7 +35,37 @@ export async function listIncidents(signal?: AbortSignal): Promise<Answer<Incide
   return answer;
 }
 
-/** GET /incidents/{incident_id} (proposed for C3). */
+/** GET /incidents/{incident_id}. */
 export function getIncident(incidentId: string, signal?: AbortSignal): Promise<Answer<IncidentSummary>> {
   return withStubFlag<IncidentSummary>(`/incidents/${encodeURIComponent(incidentId)}`, signal);
+}
+
+/** GET /incidents/{incident_id}/events: the incident's events, oldest first. */
+export async function getIncidentEvents(incidentId: string, signal?: AbortSignal): Promise<IncidentEventList> {
+  const data = await request<IncidentEventList>(`/incidents/${encodeURIComponent(incidentId)}/events`, { signal });
+  if (!Array.isArray((data as Partial<IncidentEventList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected event list.");
+  }
+  return data;
+}
+
+/** GET /incidents/{incident_id}/events/{event_id}/original: the uploaded line (FR-05). */
+export function getOriginalRecord(incidentId: string, eventId: string, signal?: AbortSignal): Promise<OriginalRecord> {
+  return request<OriginalRecord>(
+    `/incidents/${encodeURIComponent(incidentId)}/events/${encodeURIComponent(eventId)}/original`,
+    { signal },
+  );
+}
+
+/**
+ * GET /incidents/{incident_id}/report: the stored AI report, or null when none is stored yet
+ * (404 report_not_available). Any other error is thrown.
+ */
+export async function getReport(incidentId: string, signal?: AbortSignal): Promise<AnalysisReport | null> {
+  try {
+    return await request<AnalysisReport>(`/incidents/${encodeURIComponent(incidentId)}/report`, { signal });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404 && error.code === "report_not_available") return null;
+    throw error;
+  }
 }
