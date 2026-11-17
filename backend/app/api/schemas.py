@@ -21,6 +21,7 @@ from app.contracts import (
     LinkKey,
     ResponseAction,
     ScenarioId,
+    UserRole,
 )
 from app.contracts.common import Id, NonEmptyStr, UtcDatetime, _Contract
 
@@ -89,6 +90,7 @@ class ErrorCode(StrEnum):
     NOT_FOUND = "not_found"
     REPORT_NOT_AVAILABLE = "report_not_available"
     ORIGINAL_NOT_AVAILABLE = "original_not_available"
+    NOT_AUTHENTICATED = "not_authenticated"
     NOT_AUTHORIZED = "not_authorized"
     NOT_AWAITING_DECISION = "not_awaiting_decision"
     ALREADY_DECIDED = "already_decided"
@@ -350,6 +352,12 @@ class AuditTrail(_Contract):
     items: list[AuditRecord]
 
 
+class NotificationList(_Contract):
+    """GET /notifications: notification.sent audit records of every incident, newest first."""
+
+    items: list[AuditRecord]
+
+
 class ResponseWindowStatus(StrEnum):
     OPEN = "open"
     DECIDED = "decided"
@@ -398,3 +406,10 @@ class DecisionRecord(_Contract):
     action: ResponseAction | None = Field(
         description="The simulated action of an approve or select; null for reject, no_action."
     )
+
+
+class CurrentUser(_Contract):
+    """GET /me: who the API acts as. The development identity until login exists (S8-D9)."""
+
+    user: NonEmptyStr
+    role: UserRole

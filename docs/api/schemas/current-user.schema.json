@@ -1,0 +1,33 @@
+{
+  "$defs": {
+    "UserRole": {
+      "description": "The four roles (D7.1).",
+      "enum": [
+        "soc_analyst",
+        "soc_manager",
+        "security_engineer",
+        "system_administrator"
+      ],
+      "title": "UserRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /me: who the API acts as. The development identity until login exists (S8-D9).",
+  "properties": {
+    "role": {
+      "$ref": "#/$defs/UserRole"
+    },
+    "user": {
+      "minLength": 1,
+      "title": "User",
+      "type": "string"
+    }
+  },
+  "required": [
+    "user",
+    "role"
+  ],
+  "title": "CurrentUser",
+  "type": "object"
+}

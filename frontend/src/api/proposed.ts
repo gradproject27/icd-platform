@@ -10,9 +10,12 @@
 //   GET  /incidents/{id}/audit                          AuditTrail
 //   GET  /incidents/{id}/decision                       DecisionRecord, or 404 when none
 //   POST /incidents/{id}/decisions                      DecisionRequest -> 201 DecisionRecord
+//   GET  /me                                            CurrentUser, or 401 not_authenticated (S8-D9)
+//   GET  /notifications?after=&limit=                   NotificationList (S8-D8)
 
 export type {
   AuditTrail,
+  CurrentUser,
   DecisionRecord,
   DecisionRequest,
   IncidentEntities,
@@ -20,8 +23,9 @@ export type {
   IncidentEventList,
   IncidentList,
   IncidentSummary,
+  NotificationList,
   OriginalRecord,
 } from "./c1";
 
-/** The analyst's three options on the panel (spec section 8). The API also takes no_action (T16). */
-export type DecisionType = "approve" | "reject" | "select";
+/** The analyst's three options (spec section 8), and "no response needed" (T16, S8-D10). */
+export type DecisionType = "approve" | "reject" | "select" | "no_action";

@@ -1,7 +1,7 @@
 import { request } from "./client";
 import { ApiError } from "./errors";
-import type { AnalysisReport } from "./contracts";
-import type { IncidentEventList, IncidentList, IncidentSummary, OriginalRecord } from "./proposed";
+import type { AnalysisReport, AuditRecord } from "./contracts";
+import type { AuditTrail, IncidentEventList, IncidentList, IncidentSummary, OriginalRecord } from "./proposed";
 
 /**
  * Header the dev-only stub server (dev/stub-server.mjs) sets on every incident answer. The real
@@ -68,4 +68,13 @@ export async function getReport(incidentId: string, signal?: AbortSignal): Promi
     if (error instanceof ApiError && error.status === 404 && error.code === "report_not_available") return null;
     throw error;
   }
+}
+
+/** GET /incidents/{incident_id}/audit: C5's audit records of the incident, in written order. */
+export async function getAuditTrail(incidentId: string, signal?: AbortSignal): Promise<AuditRecord[]> {
+  const data = await request<AuditTrail>(`/incidents/${encodeURIComponent(incidentId)}/audit`, { signal });
+  if (!Array.isArray((data as Partial<AuditTrail> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected audit trail.");
+  }
+  return data.items;
 }

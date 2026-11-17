@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.api.errors import ApiException
 from app.api.schemas import (
     AuditTrail,
+    CurrentUser,
     DecisionRecord,
     DecisionRequest,
     ErrorCode,
@@ -31,10 +32,19 @@ from app.api.schemas import (
     IncidentEventList,
     IncidentList,
     IncidentSummary,
+    NotificationList,
     OriginalRecord,
     ResponseWindow,
 )
-from app.contracts import AuditEventType, Event, Incident, IncidentStatus, ScenarioId, UserRole
+from app.contracts import (
+    AuditEventType,
+    AuditRecord,
+    Event,
+    Incident,
+    IncidentStatus,
+    ScenarioId,
+    UserRole,
+)
 from app.db import get_engine
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.ingest.lines import read_original
@@ -43,7 +53,7 @@ from app.response.clock import DatabaseClock
 from app.response.engine import DecisionRefused, RefusalReason, ResponseEngine, WindowView
 from app.response.engine import DecisionType as EngineDecision
 from app.response.lifecycle import TransitionRefused
-from app.response.models import IncidentLifecycleRow
+from app.response.models import AuditRow, IncidentLifecycleRow
 from app.settings import get_settings
 
 router = APIRouter()
@@ -267,6 +277,57 @@ def dev_identity() -> tuple[str, UserRole] | None:
     if not user or role not in {r.value for r in UserRole}:
         return None
     return user, UserRole(role)
+
+
+@router.get("/me", response_model=CurrentUser)
+def current_user() -> CurrentUser:
+    """Who the API acts as, so the dashboard can apply its role rules (S8-D9). The dashboard
+    only hides or explains with it; every permission that exists is checked on the server."""
+    identity = dev_identity()
+    if identity is None:
+        raise ApiException(
+            401,
+            ErrorCode.NOT_AUTHENTICATED,
+            "No signed-in user. Login comes with T2-15; for local development set "
+            "ICD_DEV_USER and ICD_DEV_ROLE.",
+        )
+    user, role = identity
+    return CurrentUser(user=user, role=role)
+
+
+# ---- notifications (S8-D8) -------------------------------------------------------------------
+
+
+@router.get("/notifications", response_model=NotificationList)
+def notifications(
+    after: Annotated[str | None, Query(max_length=128)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> NotificationList:
+    """C5's notification.sent audit records of every incident, newest first (spec T03, T09,
+    T11). A read of C5's audit table only. With `after`, only records written after that one;
+    an unknown `after` (for example after a database reset) is ignored."""
+    with Session(get_engine()) as session:
+        query = select(AuditRow).where(AuditRow.event_type == AuditEventType.NOTIFICATION_SENT)
+        if after is not None:
+            seen = session.scalar(select(AuditRow.seq).where(AuditRow.record_id == after))
+            if seen is not None:
+                query = query.where(AuditRow.seq > seen)
+        rows = session.scalars(query.order_by(AuditRow.seq.desc()).limit(limit))
+        items = [
+            AuditRecord(
+                record_id=row.record_id,
+                occurred_at=row.occurred_at,
+                event_type=row.event_type,
+                actor=row.actor,
+                actor_role=row.actor_role,
+                incident_id=row.incident_id,
+                result=row.result,
+                simulated=row.simulated,
+                details=row.details,
+            )
+            for row in rows
+        ]
+    return NotificationList(items=items)
 
 
 # How a refusal of C5's engine reads over HTTP. WRONG_STATE is split by whether a decision exists.

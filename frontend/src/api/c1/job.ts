@@ -17,6 +17,7 @@ export type ErrorCode =
   | "not_found"
   | "report_not_available"
   | "original_not_available"
+  | "not_authenticated"
   | "not_authorized"
   | "not_awaiting_decision"
   | "already_decided"

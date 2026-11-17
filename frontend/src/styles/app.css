@@ -80,6 +80,7 @@ input {
 
 .app-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1.5rem;
   padding: 0.75rem 1.5rem;
@@ -684,3 +685,126 @@ input {
     gap: 0.25rem;
   }
 }
+
+/* Notifications (S8-D8): the count is text; the panel and the toasts sit under the header. */
+
+.notifications {
+  position: relative;
+}
+
+.notifications__button {
+  white-space: nowrap;
+}
+
+.notifications__panel {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.notifications__list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.notifications__list li {
+  margin-bottom: 0.5rem;
+}
+
+.toasts {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.toast {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+/* Audit trail (S8-D11): details as key: value text, never raw JSON. */
+
+.audit-details {
+  margin: 0;
+}
+
+.audit-details div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.audit-details dt {
+  color: var(--muted);
+}
+
+.audit-details dt::after {
+  content: ":";
+}
+
+.audit-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Entity graph (S8-D14): solid = link key, dashed = only named. Roles are in the node text. */
+
+.graph {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.graph svg {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+
+.graph__edge {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.graph__edge--linked {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.graph__node rect {
+  fill: var(--bg);
+  stroke: var(--border);
+}
+
+.graph__node--flagged rect {
+  stroke: var(--bad);
+  stroke-width: 2;
+}
+
+.graph__node text {
+  fill: var(--text);
+  font-size: 13px;
+}
+

@@ -8,6 +8,7 @@ from app.api.export import SHAPES
 from app.api.schemas import (
     AnalysisOutcome,
     AuditTrail,
+    CurrentUser,
     DatasetList,
     DatasetSource,
     DecisionRecord,
@@ -20,6 +21,7 @@ from app.api.schemas import (
     IntakeCounts,
     Job,
     JobAccepted,
+    NotificationList,
     OriginalRecord,
     QuarantinePage,
     ResponseWindow,
@@ -50,6 +52,8 @@ EXAMPLE_SHAPES: dict[str, type[BaseModel]] = {
     "response-window": ResponseWindow,
     "decision-request": DecisionRequest,
     "decision-record": DecisionRecord,
+    "notification-list": NotificationList,
+    "current-user": CurrentUser,
 }
 
 EXAMPLES = sorted(path.stem for path in EXAMPLES_DIR.glob("*.json"))

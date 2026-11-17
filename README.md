@@ -130,7 +130,18 @@ The TypeScript types of the six contracts in `frontend/src/api/contracts/` are g
 - `/incidents`: every stored incident from `GET /incidents`, with its entities and the status C5's engine tracks.
 - `/incidents/:id`: the incident detail (wireframes 4.4): header, risk score, risk level and confidence in three separate boxes, C3's factor table with each factor's reason and the strongest evidence, and the related events as a timeline (oldest first, offset from the first event, FLAGGED or context, linked by which keys, host, IPs, user, label). "Show original record" reads the uploaded line the event came from.
 - `/incidents/:id/report`: the AI report panel (wireframes 4.5): summary, attack sequence, findings by category, cited event IDs (each a link to the event on the detail page), explanation (`risk_justification`), weaknesses, impact, mitigations (advice only, never buttons) and uncertainty, with risk score, risk level and confidence in separate boxes. No report is stored on the server yet, so it says "No AI report yet" until C1/AI1 store reports.
-- `/incidents/:id/decision`: the countdown on the real WebSocket and the server's `deadline_at`, and the decisions sent to C5's engine (`decided_by` is the development identity until login).
+- `/incidents/:id/decision`: the countdown on the real WebSocket and the server's `deadline_at`, and the decisions sent to C5's engine (`decided_by` is the development identity until login). Without an open window it also offers "No response needed" (`no_action`, comment required); on an escalated incident it offers approve, select and no response needed, never reject. Roles other than SOC Analyst see it read-only.
+
+**Step 8 views ([docs/c4-step8-views-decisions.md](docs/c4-step8-views-decisions.md), S8-D8 to S8-D16).** Every view reads the API; none has example data of its own. The role comes from `GET /me` (the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE` until login) and only hides or explains: the reads behind the views check no role yet.
+
+| View | Path | Reads | Who sees it |
+|---|---|---|---|
+| Notifications | header button, toasts | `GET /notifications` every 3 s (C5's `notification.sent` records); the "read up to" marker in `localStorage` | everyone, filtered to the recipient roles |
+| Review queue | `/review` | `GET /incidents`: Medium, High below 0.75 and Low incidents awaiting a decision with no timer, oldest first; Escalated as a fourth group | everyone; Escalated for SOC Analyst and SOC Manager |
+| Audit trail | `/incidents/:id/audit` | `GET /incidents/{id}/audit`, filters by event group, actor and result in the URL; `[SIMULATED]` on simulated actions | SOC Analyst and System Administrator |
+| Explanation | `/incidents/:id/explanation` | the incident, its events, its audit trail (C5's freeze-gate record) and the report: why this score, why these events, why a window or none | everyone |
+| Configuration | `/configuration` | `GET /incidents`: risk and correlation configuration versions in use; the fixed 60 s window and catalogue v0. No thresholds: the API does not serve them | Security Engineer and System Administrator |
+| Entity graph | `/incidents/:id/graph` | `GET /incidents/{id}/events`: events against the hosts, users and IPs they name, in plain SVG, with a table of every line | everyone |
 
 Real incidents stay `new` with no response window until C1/C5 register them with the response engine and the analysis runs, so a live countdown needs an incident taken through the engine (as the backend tests do).
 
