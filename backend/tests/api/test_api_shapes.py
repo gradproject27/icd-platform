@@ -7,14 +7,22 @@ from pydantic import BaseModel, ValidationError
 from app.api.export import SHAPES
 from app.api.schemas import (
     AnalysisOutcome,
+    AuditTrail,
     DatasetList,
     DatasetSource,
+    DecisionRecord,
+    DecisionRequest,
     ErrorResponse,
     EventPage,
+    IncidentEventList,
+    IncidentList,
+    IncidentSummary,
     IntakeCounts,
     Job,
     JobAccepted,
+    OriginalRecord,
     QuarantinePage,
+    ResponseWindow,
     Upload,
     UploadAccepted,
 )
@@ -34,6 +42,14 @@ EXAMPLE_SHAPES: dict[str, type[BaseModel]] = {
     "event-page": EventPage,
     "quarantine-page": QuarantinePage,
     "error-": ErrorResponse,
+    "incident-list": IncidentList,
+    "incident-summary": IncidentSummary,
+    "incident-event-list": IncidentEventList,
+    "original-record": OriginalRecord,
+    "audit-trail": AuditTrail,
+    "response-window": ResponseWindow,
+    "decision-request": DecisionRequest,
+    "decision-record": DecisionRecord,
 }
 
 EXAMPLES = sorted(path.stem for path in EXAMPLES_DIR.glob("*.json"))
@@ -149,3 +165,17 @@ def test_analysis_outcome_valid_iff_report():
     invalid = example("job-analysis-done-invalid-report")["analysis"]
     with pytest.raises(ValidationError, match="problems must be empty"):
         AnalysisOutcome.model_validate({**invalid, "problems": []})
+
+
+def test_incident_examples_tell_one_story():
+    summary = example("incident-summary")
+    incident_id = summary["incident"]["incident_id"]
+    listed = [item["incident"]["incident_id"] for item in example("incident-list")["items"]]
+    assert incident_id in listed
+    window = example("response-window")
+    record = example("decision-record")
+    assert window["incident_id"] == record["incident_id"] == incident_id
+    assert example("decision-request")["window_id"] == window["window_id"] == record["window_id"]
+    assert record["scenario_id"] == window["recommended_scenario_id"]
+    assert record["action"]["simulated"] is True
+    assert {r["incident_id"] for r in example("audit-trail")["items"]} == {incident_id}

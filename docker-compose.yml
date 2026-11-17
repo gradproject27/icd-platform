@@ -23,6 +23,9 @@ services:
       LLM_BACKEND: ${LLM_BACKEND:-mock}
       UPLOAD_DIR: /data/uploads
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-512}
+      # Development identity for analyst decisions until login exists (T2-15, decision S8-D4).
+      ICD_DEV_USER: ${ICD_DEV_USER:-}
+      ICD_DEV_ROLE: ${ICD_DEV_ROLE:-}
     volumes:
       - uploads:/data/uploads
     ports:

@@ -1,0 +1,82 @@
+{
+  "$defs": {
+    "ResponseWindowStatus": {
+      "enum": [
+        "open",
+        "decided",
+        "expired"
+      ],
+      "title": "ResponseWindowStatus",
+      "type": "string"
+    },
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /response-windows/{incident_id}: the latest window, for the countdown (spec 7).",
+  "properties": {
+    "deadline_at": {
+      "format": "date-time",
+      "title": "Deadline At",
+      "type": "string"
+    },
+    "incident_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "recommended_scenario_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScenarioId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "server_time": {
+      "description": "The database clock when the server answered.",
+      "format": "date-time",
+      "title": "Server Time",
+      "type": "string"
+    },
+    "started_at": {
+      "format": "date-time",
+      "title": "Started At",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ResponseWindowStatus"
+    },
+    "window_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Window Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "window_id",
+    "status",
+    "started_at",
+    "deadline_at",
+    "server_time",
+    "recommended_scenario_id"
+  ],
+  "title": "ResponseWindow",
+  "type": "object"
+}

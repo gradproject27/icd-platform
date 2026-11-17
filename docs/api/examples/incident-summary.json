@@ -1,0 +1,182 @@
+{
+  "incident": {
+    "schema_version": "1.0",
+    "incident_id": "inc-e8d1f72159481bee",
+    "status": "awaiting_human_decision",
+    "incident_type": "Backdoors",
+    "created_at": "2026-01-15T20:20:00Z",
+    "updated_at": "2026-01-15T20:20:00Z",
+    "first_event_at": "2026-01-15T09:00:00Z",
+    "last_event_at": "2026-01-15T10:10:00Z",
+    "events": [
+      {
+        "event_id": "fx-002",
+        "role": "flagged",
+        "link_keys": [],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-004",
+        "role": "flagged",
+        "link_keys": [
+          "host",
+          "ip_pair"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-007",
+        "role": "flagged",
+        "link_keys": [
+          "host",
+          "ip_pair"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-008",
+        "role": "flagged",
+        "link_keys": [
+          "host",
+          "ip_pair",
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-009",
+        "role": "flagged",
+        "link_keys": [
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-010",
+        "role": "flagged",
+        "link_keys": [
+          "host",
+          "ip_pair"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-012",
+        "role": "flagged",
+        "link_keys": [
+          "host",
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-013",
+        "role": "flagged",
+        "link_keys": [
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-003",
+        "role": "context",
+        "link_keys": [
+          "host"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-011",
+        "role": "context",
+        "link_keys": [
+          "host",
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      },
+      {
+        "event_id": "fx-014",
+        "role": "context",
+        "link_keys": [
+          "host",
+          "user"
+        ],
+        "linked_at": "2026-01-15T20:20:00Z"
+      }
+    ],
+    "risk": {
+      "score": 100,
+      "level": "high",
+      "factors": [
+        {
+          "name": "likelihood",
+          "value": 0.9975257505739245,
+          "weight": 1.0,
+          "contribution": 99.75257505739245,
+          "reason": "5 evidence groups from 8 flagged events, combined by noisy-OR; strongest: Backdoors from 10.10.1.21 (0.90)"
+        },
+        {
+          "name": "impact",
+          "value": 1.0,
+          "weight": 1.0,
+          "contribution": 0.0,
+          "reason": "highest asset db-01: FIPS 199 high (1.00)"
+        }
+      ],
+      "config_version": "risk-v0",
+      "computed_at": "2026-01-15T20:20:00Z",
+      "likelihood": 0.9975257505739245,
+      "impact": 1.0,
+      "flags": [
+        "outcome_unknown"
+      ],
+      "top_contributors": [
+        {
+          "technique": "Backdoors",
+          "entity": "10.10.1.21",
+          "strength": 0.9,
+          "event_id": "fx-008",
+          "reason": "severity 0.90 (kill-chain stage 3) x confidence 1.00 x outcome 1.00 (unknown) x decay 1.00"
+        },
+        {
+          "technique": "Backdoors",
+          "entity": "svc-db",
+          "strength": 0.9,
+          "event_id": "fx-012",
+          "reason": "severity 0.90 (kill-chain stage 3) x confidence 1.00 x outcome 1.00 (unknown) x decay 1.00"
+        },
+        {
+          "technique": "Exploits",
+          "entity": "10.10.1.21",
+          "strength": 0.441345028037162,
+          "event_id": "fx-010",
+          "reason": "severity 0.60 (kill-chain stage 2) x confidence 1.00 x outcome 1.00 (unknown) x decay 0.74"
+        }
+      ]
+    },
+    "analysis_status": "not_started",
+    "analysis_attempts": 0,
+    "latest_report_id": null,
+    "confidence": null,
+    "correlation_config_version": "correlation-v1",
+    "split": null
+  },
+  "entities": {
+    "hosts": [
+      "db-01",
+      "file-01",
+      "web-01"
+    ],
+    "users": [
+      "svc-db",
+      "www-data"
+    ],
+    "ips": [
+      "10.10.1.21",
+      "10.10.2.31",
+      "10.10.5.5",
+      "203.0.113.10"
+    ]
+  },
+  "recommended_scenario_id": "S2"
+}

@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "description": "GET /incidents/{incident_id}/events/{event_id}/original: the line the event came from.",
+  "properties": {
+    "event_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "line": {
+      "description": "The original line as uploaded, without its line break.",
+      "title": "Line",
+      "type": "string"
+    },
+    "record_ref": {
+      "minLength": 1,
+      "title": "Record Ref",
+      "type": "string"
+    },
+    "source_file": {
+      "minLength": 1,
+      "title": "Source File",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "record_ref",
+    "source_file",
+    "line"
+  ],
+  "title": "OriginalRecord",
+  "type": "object"
+}

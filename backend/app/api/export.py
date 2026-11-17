@@ -8,12 +8,20 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from app.api.schemas import (
+    AuditTrail,
     DatasetList,
+    DecisionRecord,
+    DecisionRequest,
     ErrorResponse,
     EventPage,
+    IncidentEventList,
+    IncidentList,
+    IncidentSummary,
     Job,
     JobAccepted,
+    OriginalRecord,
     QuarantinePage,
+    ResponseWindow,
     Upload,
     UploadAccepted,
 )
@@ -28,6 +36,14 @@ SHAPES: dict[str, type[BaseModel]] = {
     "event-page": EventPage,
     "quarantine-page": QuarantinePage,
     "error-response": ErrorResponse,
+    "incident-list": IncidentList,
+    "incident-summary": IncidentSummary,
+    "incident-event-list": IncidentEventList,
+    "original-record": OriginalRecord,
+    "audit-trail": AuditTrail,
+    "response-window": ResponseWindow,
+    "decision-request": DecisionRequest,
+    "decision-record": DecisionRecord,
 }
 
 # The repo root's docs/api/schemas/ folder: works from a repo checkout only.

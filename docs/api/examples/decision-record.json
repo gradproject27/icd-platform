@@ -1,0 +1,36 @@
+{
+  "incident_id": "inc-e8d1f72159481bee",
+  "window_id": "win-5c69f3e8ccb14a8fa2657490c81b9129",
+  "decision": "approve",
+  "scenario_id": "S2",
+  "comment": "Confirmed scan and backdoor on web-01.",
+  "decided_by": "analyst-dev",
+  "decided_at": "2026-11-17T09:00:12.500000Z",
+  "incident_status": "resolved",
+  "action": {
+    "schema_version": "1.0",
+    "action_id": "act-fb916e4183d342099dfd8fbc1adf6297",
+    "incident_id": "inc-e8d1f72159481bee",
+    "scenario_id": "S2",
+    "state": "simulated_succeeded",
+    "trigger": "analyst_decision",
+    "decided_by": "analyst-dev",
+    "window_id": "win-5c69f3e8ccb14a8fa2657490c81b9129",
+    "target": {
+      "host": "web-01",
+      "ip": "203.0.113.10",
+      "account": null
+    },
+    "parameters": {
+      "label": "SIMULATED",
+      "block_ip": "203.0.113.10",
+      "isolation": "kept"
+    },
+    "proposed_at": "2026-11-17T09:00:12.500000Z",
+    "decided_at": "2026-11-17T09:00:12.500000Z",
+    "executed_at": "2026-11-17T09:00:12.500000Z",
+    "failure_reason": null,
+    "comment": "Confirmed scan and backdoor on web-01.",
+    "simulated": true
+  }
+}

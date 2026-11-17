@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api import errors
+from app.api.incidents import router as incident_router
 from app.api.routes import router
 from app.api.schemas import ErrorCode
 from app.db import check_database
@@ -10,6 +11,7 @@ from app.settings import get_settings
 app = FastAPI(title="ICD API", version="0.2.0")
 errors.install(app)
 app.include_router(router)
+app.include_router(incident_router)
 
 # Multipart framing around the file; a request bigger than the limit plus this is refused
 # before its body is read.

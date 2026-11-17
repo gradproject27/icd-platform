@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "DecisionType": {
+      "enum": [
+        "approve",
+        "reject",
+        "select",
+        "no_action"
+      ],
+      "title": "DecisionType",
+      "type": "string"
+    },
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "POST /incidents/{incident_id}/decisions.",
+  "properties": {
+    "comment": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comment"
+    },
+    "decision": {
+      "$ref": "#/$defs/DecisionType"
+    },
+    "scenario_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScenarioId"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "window_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Window Id"
+    }
+  },
+  "required": [
+    "decision"
+  ],
+  "title": "DecisionRequest",
+  "type": "object"
+}
