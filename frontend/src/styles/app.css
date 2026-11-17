@@ -764,3 +764,47 @@ input {
   overflow-wrap: anywhere;
 }
 
+/* Entity graph (S8-D14): solid = link key, dashed = only named. Roles are in the node text. */
+
+.graph {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.graph svg {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+
+.graph__edge {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.graph__edge--linked {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.graph__node rect {
+  fill: var(--bg);
+  stroke: var(--border);
+}
+
+.graph__node--flagged rect {
+  stroke: var(--bad);
+  stroke-width: 2;
+}
+
+.graph__node text {
+  fill: var(--text);
+  font-size: 13px;
+}
+

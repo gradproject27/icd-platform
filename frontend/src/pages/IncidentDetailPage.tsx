@@ -80,6 +80,7 @@ function IncidentDetail({ incidentId }: { incidentId: string }) {
           <Link to={`/incidents/${encoded}/decision`}>Pending decision</Link>
         )}
         <Link to={`/incidents/${encoded}/explanation`}>Explanation</Link>
+        <Link to={`/incidents/${encoded}/graph`}>Entity graph</Link>
         <Link to={`/incidents/${encoded}/audit`}>Audit trail</Link>
       </nav>
 

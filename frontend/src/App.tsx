@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { AiReportPage } from "./pages/AiReportPage";
 import { AuditTrailPage } from "./pages/AuditTrailPage";
 import { ConfigurationPage } from "./pages/ConfigurationPage";
+import { EntityGraphPage } from "./pages/EntityGraphPage";
 import { ExplanationPage } from "./pages/ExplanationPage";
 import { IncidentDetailPage } from "./pages/IncidentDetailPage";
 import { IncidentListPage } from "./pages/IncidentListPage";
@@ -29,6 +30,7 @@ export function App() {
         <Route path="incidents/:incidentId/decision" element={<PendingDecisionPage />} />
         <Route path="incidents/:incidentId/audit" element={<AuditTrailPage />} />
         <Route path="incidents/:incidentId/explanation" element={<ExplanationPage />} />
+        <Route path="incidents/:incidentId/graph" element={<EntityGraphPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
