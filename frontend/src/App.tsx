@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { Layout } from "./components/Layout";
 import { AiReportPage } from "./pages/AiReportPage";
 import { AuditTrailPage } from "./pages/AuditTrailPage";
+import { ExplanationPage } from "./pages/ExplanationPage";
 import { IncidentDetailPage } from "./pages/IncidentDetailPage";
 import { IncidentListPage } from "./pages/IncidentListPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -25,6 +26,7 @@ export function App() {
         <Route path="incidents/:incidentId/report" element={<AiReportPage />} />
         <Route path="incidents/:incidentId/decision" element={<PendingDecisionPage />} />
         <Route path="incidents/:incidentId/audit" element={<AuditTrailPage />} />
+        <Route path="incidents/:incidentId/explanation" element={<ExplanationPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
