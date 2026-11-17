@@ -80,6 +80,7 @@ input {
 
 .app-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1.5rem;
   padding: 0.75rem 1.5rem;
@@ -533,3 +534,277 @@ input {
   font-weight: 700;
   margin-right: auto;
 }
+
+/* Incident detail and AI report (Step 8) */
+.muted {
+  color: var(--muted);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.metric__label {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.metric__value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.metric__note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.factor-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.factor-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.25rem;
+}
+
+.factor-table th,
+.factor-table td {
+  text-align: left;
+  padding: 0.25rem 0.75rem 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--border);
+}
+
+.timeline__item {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0.75rem 0.75rem;
+  position: relative;
+}
+
+.timeline__item::before {
+  content: "";
+  position: absolute;
+  left: -0.4rem;
+  top: 0.85rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--idle);
+}
+
+.timeline__item--flagged::before {
+  background: var(--bad);
+  border-color: var(--bad);
+}
+
+.timeline__item--highlighted {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.timeline__body p {
+  margin: 0 0 0.25rem;
+}
+
+.event-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0.25rem 0;
+}
+
+.event-fields dt {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.event-fields dd {
+  margin: 0;
+}
+
+.original-record {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 0.8125rem;
+}
+
+.report-section h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.evidence {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .timeline__item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+/* Notifications (S8-D8): the count is text; the panel and the toasts sit under the header. */
+
+.notifications {
+  position: relative;
+}
+
+.notifications__button {
+  white-space: nowrap;
+}
+
+.notifications__panel {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.notifications__list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.notifications__list li {
+  margin-bottom: 0.5rem;
+}
+
+.toasts {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.toast {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+/* Audit trail (S8-D11): details as key: value text, never raw JSON. */
+
+.audit-details {
+  margin: 0;
+}
+
+.audit-details div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.audit-details dt {
+  color: var(--muted);
+}
+
+.audit-details dt::after {
+  content: ":";
+}
+
+.audit-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Entity graph (S8-D14): solid = link key, dashed = only named. Roles are in the node text. */
+
+.graph {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.graph svg {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+
+.graph__edge {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.graph__edge--linked {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.graph__node rect {
+  fill: var(--bg);
+  stroke: var(--border);
+}
+
+.graph__node--flagged rect {
+  stroke: var(--bad);
+  stroke-width: 2;
+}
+
+.graph__node text {
+  fill: var(--text);
+  font-size: 13px;
+}
+

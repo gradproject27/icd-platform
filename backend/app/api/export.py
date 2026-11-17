@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.api.schemas import (
     AuditTrail,
+    CurrentUser,
     DatasetList,
     DecisionRecord,
     DecisionRequest,
@@ -19,6 +20,7 @@ from app.api.schemas import (
     IncidentSummary,
     Job,
     JobAccepted,
+    NotificationList,
     OriginalRecord,
     QuarantinePage,
     ResponseWindow,
@@ -44,6 +46,8 @@ SHAPES: dict[str, type[BaseModel]] = {
     "response-window": ResponseWindow,
     "decision-request": DecisionRequest,
     "decision-record": DecisionRecord,
+    "notification-list": NotificationList,
+    "current-user": CurrentUser,
 }
 
 # The repo root's docs/api/schemas/ folder: works from a repo checkout only.

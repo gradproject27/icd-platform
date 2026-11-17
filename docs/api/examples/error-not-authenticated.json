@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "not_authenticated",
+    "message": "No signed-in user. Login comes with T2-15; for local development set ICD_DEV_USER and ICD_DEV_ROLE."
+  }
+}

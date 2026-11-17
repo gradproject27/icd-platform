@@ -5,17 +5,22 @@ import { getDecision, submitDecision } from "../api/decisions";
 import { ApiError } from "../api/errors";
 import { getIncident } from "../api/incidents";
 import type { DecisionRecord, DecisionRequest, DecisionType, IncidentSummary } from "../api/proposed";
+import { DECIDERS } from "../auth/roles";
+import { useCurrentUser } from "../auth/useCurrentUser";
 import { CountdownView } from "../components/Countdown";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime, formatRemaining } from "../countdown/clock";
 import { useResponseWindow, type ResponseWindowView } from "../hooks/useResponseWindow";
-import { entitiesText, formatListTime, riskText, STUB_BANNER } from "../incidents/format";
+import { IncidentHeader } from "../incidents/IncidentHeader";
+import { STUB_BANNER } from "../incidents/format";
 import { INCIDENT_STATUS_LABELS, SCENARIO_LABELS } from "../labels";
 
 // Pending decision (wireframes.md 4.6; response-workflow-spec.md sections 7 to 10). The server owns
 // the window and every rule: this page shows the countdown from the server's deadline_at, offers
-// the three options of spec section 8, asks for confirmation, and shows what the server answered.
-// The decision endpoints are proposed for C5 (src/api/proposed.ts). Every response is SIMULATED.
+// the three options of spec section 8 and "no response needed" (T16, S8-D10), asks for
+// confirmation, and shows what the server answered. An escalated incident takes approve, select
+// and no_action, never reject (T12, T16). The decision endpoints call C5's response engine
+// (backend/app/api/incidents.py). Every response is SIMULATED.
 
 const SCENARIOS = Object.keys(SCENARIO_LABELS) as ScenarioId[];
 const COMMENT_MAX = 1_000;
@@ -33,6 +38,7 @@ const simulated = <span className="simulated-badge">[SIMULATED]</span>;
 const timeOfDay = (iso: string) => formatLocalDateTime(iso).slice(11);
 
 function decisionLabel(decision: DecisionType, freeze: boolean): string {
+  if (decision === "no_action") return "No response needed";
   if (decision === "approve") return "Approve recommended action (SIMULATED)";
   if (decision === "select") return "Select another scenario (SIMULATED)";
   return freeze ? "Reject and release simulated isolation (SIMULATED)" : "Reject the recommendation (SIMULATED)";
@@ -57,6 +63,7 @@ export function PendingDecisionPage() {
 
 function DecisionPanel({ incidentId }: { incidentId: string }) {
   const view = useResponseWindow(incidentId);
+  const current = useCurrentUser();
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -158,6 +165,9 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
   }
 
   const { summary, stub, decision } = load;
+  // Only a role the API names hides the options; the server checks the role on every submit.
+  const canDecide = current.kind !== "known" || DECIDERS.includes(current.role);
+  const escalated = summary.incident.status === "escalated";
 
   return (
     <section>
@@ -172,59 +182,17 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
 
       <CountdownView view={view} />
 
-      {decision ? (
-        <DecisionRecorded decision={decision} />
-      ) : (
+      {decision && <DecisionRecorded decision={decision} />}
+      {(!decision || escalated) && (
         <DecisionChoice
           incidentId={incidentId}
           summary={summary}
           view={view}
+          canDecide={canDecide}
           onDecided={setDecision}
         />
       )}
     </section>
-  );
-}
-
-/** The compact incident header (decision D10): the panel shows it itself while the detail page is a shell. */
-function IncidentHeader({ summary }: { summary: IncidentSummary }) {
-  const { incident } = summary;
-  const shownEntities = entitiesText(summary.entities);
-  return (
-    <dl className="incident-header" aria-label="Incident">
-      <div>
-        <dt>Incident</dt>
-        <dd>{incident.incident_id}</dd>
-      </div>
-      <div>
-        <dt>State</dt>
-        <dd>{INCIDENT_STATUS_LABELS[incident.status ?? "new"]}</dd>
-      </div>
-      <div>
-        <dt>Type</dt>
-        <dd>{incident.incident_type ?? "Not classified"}</dd>
-      </div>
-      <div>
-        <dt>Risk</dt>
-        <dd>{riskText(incident)}</dd>
-      </div>
-      <div>
-        <dt>First event</dt>
-        <dd>
-          <time dateTime={incident.first_event_at}>{formatListTime(incident.first_event_at)}</time>
-        </dd>
-      </div>
-      <div>
-        <dt>Last event</dt>
-        <dd>
-          <time dateTime={incident.last_event_at}>{formatListTime(incident.last_event_at)}</time>
-        </dd>
-      </div>
-      <div>
-        <dt>Entities</dt>
-        <dd title={shownEntities.title}>{shownEntities.text}</dd>
-      </div>
-    </dl>
   );
 }
 
@@ -268,10 +236,11 @@ interface DecisionChoiceProps {
   incidentId: string;
   summary: IncidentSummary;
   view: ResponseWindowView;
+  canDecide: boolean;
   onDecided: (decision: DecisionRecord) => void;
 }
 
-function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoiceProps) {
+function DecisionChoice({ incidentId, summary, view, canDecide, onDecided }: DecisionChoiceProps) {
   const [choice, setChoice] = useState<DecisionType | null>(null);
   const [otherScenario, setOtherScenario] = useState<ScenarioId | null>(null);
   const [comment, setComment] = useState("");
@@ -282,6 +251,8 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
   const [expiredByServer, setExpiredByServer] = useState(false);
 
   const status = summary.incident.status ?? "new";
+  // An escalated incident's window is already over (T09, T11); its state does not close the options.
+  const escalated = status === "escalated";
   const freeze = view.state === "open";
   const openWindow = view.window;
   const recommended: ScenarioId | null = freeze
@@ -296,14 +267,14 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
     );
   }
   if (view.state === "loading") return null;
-  if (view.state === "expired" || expiredByServer) {
+  if (expiredByServer || (!escalated && view.state === "expired")) {
     return <p className="note">The options are closed: the response window has expired.</p>;
   }
-  if (view.state === "decided") return <p className="note">A decision has been recorded. Loading it…</p>;
+  if (!escalated && view.state === "decided") return <p className="note">A decision has been recorded. Loading it…</p>;
   if (view.state === "error") {
     return <p className="note">The options are shown once the response window can be read.</p>;
   }
-  if (status !== "awaiting_human_decision") {
+  if (status !== "awaiting_human_decision" && !escalated) {
     return (
       <p className="note">
         This incident is not awaiting a decision (status: {INCIDENT_STATUS_LABELS[status]}).
@@ -313,8 +284,9 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
 
   const scenario: ScenarioId | null =
     choice === "approve" ? recommended : choice === "select" ? otherScenario : null;
-  const ready = choice === "reject" || (choice !== null && scenario !== null);
   const trimmedComment = comment.trim();
+  const ready =
+    choice === "reject" || (choice === "no_action" && trimmedComment !== "") || (choice !== null && scenario !== null);
 
   const body = (): DecisionRequest => ({
     decision: choice ?? "reject",
@@ -333,12 +305,18 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
         const recorded = await getDecision(incidentId).catch(() => null);
         if (recorded) onDecided(recorded);
         else setRefusal("Your decision was not recorded: a decision already exists for this incident.");
+      } else if (error instanceof ApiError && error.kind === "http" && error.status === 409 && error.code === "window_open") {
+        setSubmitError("Your decision was not recorded: a response window is open. Decide within the window.");
+      } else if (error instanceof ApiError && error.kind === "http" && error.status === 409 && error.code === "not_awaiting_decision") {
+        setRefusal("Your decision was not recorded: the incident is no longer awaiting a decision.");
       } else if (error instanceof ApiError && error.kind === "http" && error.status === 409) {
         const at = openWindow ? ` at ${timeOfDay(openWindow.deadline_at)}` : "";
         setRefusal(`Your decision was not recorded: the window expired${at}. The system path applies.`);
         setExpiredByServer(true);
       } else if (error instanceof ApiError && error.kind === "http" && error.status === 403) {
         setSubmitError("You are not allowed to make response decisions. Nothing was executed.");
+      } else if (error instanceof ApiError && error.kind === "http" && error.status === 422) {
+        setSubmitError(`Your decision was not recorded. ${error.message}`);
       } else {
         const reason = error instanceof ApiError ? error.message : "Unexpected error.";
         setSubmitError(`Could not submit the decision. ${reason}`);
@@ -371,13 +349,15 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
         )}
       </section>
 
-      {submitError && (
+      {!canDecide && <p className="note">Only a SOC Analyst can decide.</p>}
+
+      {canDecide && submitError && (
         <p className="decision-refusal" role="alert">
           {submitError}
         </p>
       )}
 
-      {step === "choose" ? (
+      {!canDecide ? null : step === "choose" ? (
         <form className="decision-form" onSubmit={onReview}>
           <fieldset>
             <legend>Your decision</legend>
@@ -395,16 +375,18 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
                 : "Approve recommended action (SIMULATED)"}
               {!recommended && <span className="option__reason"> No recommended scenario</span>}
             </label>
-            <label className="option">
-              <input
-                type="radio"
-                name="decision"
-                value="reject"
-                checked={choice === "reject"}
-                onChange={() => setChoice("reject")}
-              />
-              {decisionLabel("reject", freeze)}
-            </label>
+            {!escalated && (
+              <label className="option">
+                <input
+                  type="radio"
+                  name="decision"
+                  value="reject"
+                  checked={choice === "reject"}
+                  onChange={() => setChoice("reject")}
+                />
+                {decisionLabel("reject", freeze)}
+              </label>
+            )}
             <label className="option">
               <input
                 type="radio"
@@ -432,14 +414,28 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
                 </label>
               ))}
             </fieldset>
+            {!freeze && (
+              <label className="option">
+                <input
+                  type="radio"
+                  name="decision"
+                  value="no_action"
+                  checked={choice === "no_action"}
+                  onChange={() => setChoice("no_action")}
+                />
+                {decisionLabel("no_action", freeze)}
+                <span className="option__reason"> Nothing is executed. A comment is required.</span>
+              </label>
+            )}
           </fieldset>
 
           <label className="field">
-            Comment (optional)
+            {choice === "no_action" ? "Comment (required for No response needed)" : "Comment (optional)"}
             <textarea
               value={comment}
               maxLength={COMMENT_MAX}
               rows={3}
+              required={choice === "no_action"}
               onChange={(event) => setComment(event.target.value)}
             />
           </label>
@@ -464,7 +460,11 @@ function DecisionChoice({ incidentId, summary, view, onDecided }: DecisionChoice
             )}
           </p>
           <p>Comment: {trimmedComment === "" ? "(none)" : trimmedComment}</p>
-          <p>No real system is changed. The action is simulated and audited.</p>
+          <p>
+            {choice === "no_action"
+              ? "Nothing is executed. The decision is recorded and audited."
+              : "No real system is changed. The action is simulated and audited."}
+          </p>
           <div className="confirm__actions">
             {freeze && view.remainingMs !== null && (
               <span className="confirm__time">{formatRemaining(view.remainingMs)} left</span>

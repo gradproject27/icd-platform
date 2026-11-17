@@ -20,6 +20,8 @@ Paths as the API sees them; the dashboard calls them under `/api` (same origin, 
 | `GET /incidents/{id}/decision` | `DecisionRecord` of the latest recorded decision; 404 `not_found` when none | C5 audit trail and actions |
 | `POST /incidents/{id}/decisions` | body `DecisionRequest` `{decision, scenario_id, window_id, comment}` → **201** `DecisionRecord` | C5 `decide` |
 | `WS /ws/response-windows?incident_id=` | `response_window.opened`, `.decided`, `.expired` (fields of spec section 7) | C5 `window_of`, read every 0.5 s |
+| `GET /me` | `CurrentUser`: `{user, role}` the API acts as; 401 `not_authenticated` without the development identity (S8-D9) | `ICD_DEV_USER`, `ICD_DEV_ROLE` |
+| `GET /notifications?after=&limit=` | `NotificationList`: `{items: AuditRecord[]}`, C5's `notification.sent` records of every incident, newest first, `limit` 1 to 100 (default 50); with `after` (a `record_id`), only records written after it; an unknown `after` is ignored (S8-D8) | C5 `audit_records`, read only |
 
 **Entities** are the distinct `host`, `user`, `src_ip` and `dst_ip` values of all the incident's events, flagged and context (as C4's stub did; C3 may restrict them to flagged events).
 
@@ -51,3 +53,11 @@ Every refusal is also in the audit trail as `decision.refused`.
 - **AI reports are not stored** (no table, no endpoint): C1/AI1.
 - **UNSW-NB15 flows have no host** (C2-D8) and documentation-range IPs, so C5's target rule finds no target and they never freeze.
 - **Login** (C5, T2-15) replaces the development identity.
+- **No read checks a role.** The dashboard hides the views a role may not see (A3), but `GET /incidents`, `/audit`, `/notifications` and the others answer everybody. Server-side role checks on reads come with login: C5 (T2-15).
+- **SOC Analyst audit review of "own incidents only"** (A3, OD-24 proposal) needs a real user to compare with: login, C5 (T2-15). Until then the analyst sees every incident's trail.
+- **The System Administrator cannot view incidents until OD-24** (A3). Neither the server nor the incident pages enforce this yet: C5 with OD-24.
+- **No global audit list** (`GET /audit` with paging and filters): C5. The dashboard shows one incident's trail.
+- **No configuration read** (`GET /config/risk`: thresholds, weights and other values of `risk.toml` and `correlation.toml`): C3. The configuration view shows only the versions the incidents carry.
+- **No 30-second reminder** (`response_window.reminder`, OD-19, proposed): C5's engine writes none, so neither the countdown nor the notifications show one.
+- **The notification "read" marker is per browser** (`localStorage`), not per user, until login can store it on the server: C5 (T2-15).
+- **Factor labels are C4 text** (`frontend/src/labels.ts`): C3's configuration has none (wireframes question 6). If C3 adds labels, the dashboard reads them instead.
