@@ -13,6 +13,7 @@ export function Layout() {
           <NavLink to="/upload">Upload</NavLink>
           <NavLink to="/incidents">Incidents</NavLink>
           <NavLink to="/review">Review</NavLink>
+          <NavLink to="/configuration">Configuration</NavLink>
         </nav>
         <NotificationCenter current={current} />
         <HealthIndicator />
