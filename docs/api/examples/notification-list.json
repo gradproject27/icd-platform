@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "schema_version": "1.0",
+      "record_id": "aud-1d5ffe3fb18b41cc92570354436ba794",
+      "occurred_at": "2026-11-17T09:00:00Z",
+      "event_type": "notification.sent",
+      "actor": "system",
+      "actor_role": null,
+      "incident_id": "inc-e8d1f72159481bee",
+      "result": "success",
+      "simulated": false,
+      "details": {
+        "reason": "freeze_started",
+        "recipients": "soc_analyst,soc_manager"
+      }
+    }
+  ]
+}

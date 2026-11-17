@@ -302,6 +302,32 @@ def test_bad_decision_bodies_are_422(client, response, analyst):
         assert error_code(answer) == "validation_error"
 
 
+# ---- notifications (S8-D8) ---------------------------------------------------------------------
+
+
+def test_notifications_are_c5s_notification_records(client, response):
+    assert client.get("/notifications").json() == {"items": []}
+    freeze(response)
+    items = client.get("/notifications").json()["items"]
+    assert len(items) == 1
+    sent = items[0]
+    assert sent["event_type"] == "notification.sent"
+    assert sent["incident_id"] == A.incident_id
+    assert sent["details"] == {"reason": "freeze_started", "recipients": "soc_analyst,soc_manager"}
+    trail = client.get(f"/incidents/{A.incident_id}/audit").json()["items"]
+    assert sent in trail
+
+
+def test_notifications_after_a_record_and_limit(client, response):
+    freeze(response)
+    seen = client.get("/notifications").json()["items"][0]["record_id"]
+    assert client.get("/notifications", params={"after": seen}).json() == {"items": []}
+    # An unknown marker, for example from before a database reset, is ignored.
+    assert len(client.get("/notifications", params={"after": "aud-gone"}).json()["items"]) == 1
+    assert client.get("/notifications", params={"limit": 0}).status_code == 422
+    assert client.get("/notifications", params={"limit": 101}).status_code == 422
+
+
 # ---- WebSocket -------------------------------------------------------------------------------
 
 

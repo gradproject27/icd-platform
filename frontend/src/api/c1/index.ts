@@ -8,6 +8,9 @@ export type {
   UserRole,
 } from "./audit-trail";
 export type {
+  CurrentUser,
+} from "./current-user";
+export type {
   Dataset,
   DatasetList,
   DatasetSource,
@@ -69,6 +72,9 @@ export type {
 export type {
   JobAccepted,
 } from "./job-accepted";
+export type {
+  NotificationList,
+} from "./notification-list";
 export type {
   OriginalRecord,
 } from "./original-record";
