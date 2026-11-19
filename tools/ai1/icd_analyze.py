@@ -1,14 +1,18 @@
 """The HPC analysis command (ICD_ANALYZE_CMD): one evidence file in, one icd-hpc-output-v1 out.
 
 C1's sbatch script runs it on the cluster; it also runs on a laptop against a local model.
-It sends prompt v0 with the evidence and writes the model's answer unchanged. It does not check
-the answer: the app host does that with app.analysis.analyze_hpc_output.
+It sends the current prompt (PROMPT_VERSION) with the evidence and writes the model's answer
+unchanged. It does not check the answer: the app host does that with
+app.analysis.analyze_hpc_output.
 
     python tools/ai1/icd_analyze.py --evidence pkg.json --output out.json \
         --backend transformers --model /scratch/$USER/models/Qwen3-8B --revision <commit>
     python tools/ai1/icd_analyze.py --evidence pkg.json --output out.json --backend openai_http \
         --endpoint http://127.0.0.1:11434/v1/chat/completions --model qwen3:4b-instruct \
         --site local --json-schema
+    python tools/ai1/icd_analyze.py --evidence pkg.json --output out.json --backend openai_http \
+        --endpoint <GPUStack>/v1/chat/completions --model qwen3.8-27b-awq-int4 --no-thinking
+        (the faculty's model service; the API key comes from OPENAI_API_KEY)
 
 Exit code: 0 answer written, 1 the model failed (output file holds the error), 2 bad evidence.
 """
@@ -44,7 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--load-4bit", action="store_true")
     ap.add_argument("--warmup", action="store_true")
     ap.add_argument("--json-schema", action="store_true")
-    ap.add_argument("--max-new-tokens", type=int, default=3000)
+    ap.add_argument("--no-thinking", action="store_true", help="openai_http: thinking mode off")
+    ap.add_argument("--max-new-tokens", type=int, default=4900)
     ap.add_argument("--temperature", type=float, default=0.0)
     args = ap.parse_args(argv)
 
@@ -91,6 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             "temperature": args.temperature,
             "max_new_tokens": args.max_new_tokens,
             "json_schema": args.json_schema,
+            "no_thinking": args.no_thinking,
         },
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
