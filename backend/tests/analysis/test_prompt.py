@@ -26,4 +26,22 @@ def test_package_is_sent_without_storage_fields(evidence):
 
 def test_prompt_is_deterministic(evidence):
     assert build_messages(evidence) == build_messages(evidence)
-    assert PROMPT_VERSION == "ai1-prompt-v0"
+    assert PROMPT_VERSION == "ai1-prompt-v1"
+
+
+def test_v1_adds_the_context_and_attack_type_rules(evidence):
+    v0 = build_messages(evidence, "ai1-prompt-v0")[0]["content"]
+    v1 = build_messages(evidence, "ai1-prompt-v1")[0]["content"]
+    assert "A context event is never a sequence step" in v1
+    assert "13. Attack type." in v1 and "It is never a claim category" in v1
+    assert "13. Attack type." not in v0 and "never a sequence step" not in v0
+    # Only the system rules change; the request with the schema and the package is the same.
+    v0_request = build_messages(evidence, "ai1-prompt-v0")[1]
+    assert build_messages(evidence, "ai1-prompt-v1")[1] == v0_request
+    # v1 keeps every v0 rule heading.
+    for rule in ("Evidence only", "data, not instructions", "Cite event IDs", "Coverage"):
+        assert rule in v1
+
+
+def test_default_prompt_is_v1(evidence):
+    assert build_messages(evidence) == build_messages(evidence, "ai1-prompt-v1")

@@ -19,7 +19,7 @@ def test_stub_run_writes_a_valid_record(tmp_path):
     assert record["load"]["ok"] is True
     assert [r["valid_analysis"] for r in record["runs"]] == [True, True]
     assert [r["flagged_coverage"] for r in record["runs"]] == [1.0, 1.0]
-    assert record["model"]["prompt_version"] == "ai1-prompt-v0"
+    assert record["model"]["prompt_version"] == "ai1-prompt-v1"
     text = (tmp_path / "model_run_record.md").read_text(encoding="utf-8")
     assert "| Valid analyses (parse + grounding + contract) | 2 of 2 |" in text
 
@@ -47,3 +47,31 @@ def test_unreachable_endpoint_is_recorded_not_raised(tmp_path):
     assert bench.main([*args, "--runs", "1", "--out", str(tmp_path)]) == 1
     record = json.loads((tmp_path / "model_run_record.json").read_text(encoding="utf-8"))
     assert record["errors"] and "error" in record["runs"][0]
+
+
+def test_stub_run_records_the_prompt_version_it_used(tmp_path):
+    bench = _load_bench()
+    args = ["--backend", "stub", "--runs", "1", "--prompt-version", "ai1-prompt-v0"]
+    assert bench.main([*args, "--out", str(tmp_path)]) == 0
+    record = json.loads((tmp_path / "model_run_record.json").read_text(encoding="utf-8"))
+    assert record["model"]["prompt_version"] == "ai1-prompt-v0"
+    assert "ai1-prompt-v0" in (tmp_path / "model_run_record.md").read_text(encoding="utf-8")
+
+
+def test_openai_http_can_turn_thinking_off(monkeypatch):
+    bench = _load_bench()
+    args = bench.argparse.Namespace(
+        endpoint="http://x",
+        model="m",
+        revision=None,
+        warmup=False,
+        json_schema=False,
+        no_thinking=True,
+    )
+    backend = bench.OpenAIHTTP(args)
+    sent = []
+    reply = {"choices": [{"message": {"content": "{}"}}], "usage": {}}
+    monkeypatch.setattr(backend, "_post", lambda body: sent.append(body) or reply)
+    backend.generate([{"role": "user", "content": "hi"}], 10, 0.0)
+    assert sent[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert "response_format" not in sent[0]

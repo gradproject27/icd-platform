@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.analysis import ReportMeta, run_analysis  # noqa: E402
+from app.analysis import PROMPT_VERSION, ReportMeta, run_analysis  # noqa: E402
 from app.analysis.metrics import ExpectedIncident, score_run, summarize  # noqa: E402
 from app.contracts import EvidencePackage  # noqa: E402
 
@@ -107,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
             generated_at=datetime.fromtimestamp(path.stat().st_mtime, UTC),
             generated_by="mock" if model.get("backend") in (None, "stub") else args.site,
             model_id=model.get("name"),
+            prompt_version=model.get("prompt_version", PROMPT_VERSION),
         )
         result = run_analysis(path.read_text("utf-8"), evidence, meta)
         scores.append(score_run(name, run, result, evidence, expected[name]))

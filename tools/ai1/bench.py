@@ -52,6 +52,7 @@ from app.analysis import (  # noqa: E402
     build_messages,
     run_analysis,
 )
+from app.analysis.prompt import PROMPT_FILES  # noqa: E402
 from app.contracts import EvidencePackage  # noqa: E402
 
 try:
@@ -173,6 +174,7 @@ class OpenAIHTTP:
         self.revision = args.revision or "server-side: record it by hand"
         self.key = os.environ.get("OPENAI_API_KEY", "none")
         self.warmup, self.json_schema = args.warmup, args.json_schema
+        self.no_thinking = getattr(args, "no_thinking", False)
 
     def load(self):
         # Without --warmup the server loads the model inside the first run; note it by hand.
@@ -188,6 +190,8 @@ class OpenAIHTTP:
 
     def generate(self, messages, max_new_tokens, temperature):
         body = {"messages": messages, "max_tokens": max_new_tokens, "temperature": temperature}
+        if self.no_thinking:  # Qwen3-style chat templates (vLLM, SGLang): answer without thinking
+            body["chat_template_kwargs"] = {"enable_thinking": False}
         if self.json_schema:
             body["response_format"] = {
                 "type": "json_schema",
@@ -249,7 +253,7 @@ def run_one(backend, args, path: Path, run: int, out: Path) -> dict:
     evidence = EvidencePackage.model_validate_json(path.read_text(encoding="utf-8"))
     record: dict = {"package": path.name, "run": run}
     start = time.perf_counter()
-    messages = build_messages(evidence)
+    messages = build_messages(evidence, args.prompt_version)
     if isinstance(backend, Stub):
         text, usage = backend.generate(messages, args.max_new_tokens, args.temperature, path)
     else:
@@ -264,6 +268,7 @@ def run_one(backend, args, path: Path, run: int, out: Path) -> dict:
         generated_at=datetime.now(UTC),
         generated_by="mock" if args.backend == "stub" else args.site,
         model_id=backend.model_name,
+        prompt_version=args.prompt_version,
     )
     result = run_analysis(text, evidence, meta)
     record["valid_analysis"] = result.valid
@@ -323,6 +328,7 @@ def render_md(rec: dict) -> str:
         f"- Licence: {m['licence_note']}",
         f"- Prompt: {m['prompt_version']} | temperature: {m['temperature']}"
         f" | output constrained to the JSON Schema: {'yes' if m.get('json_schema') else 'no'}",
+        f" | thinking: {'off' if m.get('no_thinking') else 'model default'}",
         "",
         "| Question | Answer |",
         "| --- | --- |",
@@ -374,11 +380,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--quantization", default=None, help="as served, for example Q4_K_M")
     ap.add_argument("--warmup", action="store_true", help="openai_http: time the model load")
     ap.add_argument("--json-schema", action="store_true", help="openai_http: constrain output")
+    ap.add_argument("--no-thinking", action="store_true", help="openai_http: thinking mode off")
     ap.add_argument("--server-process", default=None, help="sample this server's RAM")
     ap.add_argument("--packages", nargs="+", type=Path, default=[SAMPLE_PACKAGE])
     ap.add_argument("--runs", type=int, default=3, help="runs per package (plan: at least 3)")
     ap.add_argument("--max-new-tokens", type=int, default=3000)
     ap.add_argument("--temperature", type=float, default=0.0)
+    ap.add_argument("--prompt-version", choices=sorted(PROMPT_FILES), default=PROMPT_VERSION)
     ap.add_argument("--licence-note", default="NOT CHECKED: read the model card first")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args(argv)
@@ -393,10 +401,11 @@ def main(argv: list[str] | None = None) -> int:
             "backend": args.backend,
             "quantization": args.quantization or ("4-bit" if args.load_4bit else "none"),
             "licence_note": args.licence_note,
-            "prompt_version": PROMPT_VERSION,
+            "prompt_version": args.prompt_version,
             "temperature": args.temperature,
             "warmup": args.warmup,
             "json_schema": args.json_schema,
+            "no_thinking": args.no_thinking,
             "server_process": args.server_process,
         },
         "load": {},
