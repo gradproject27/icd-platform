@@ -13,7 +13,7 @@ Week 1 is done. This is what is on `main`:
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
-| AI1 | Analysis layer for real LLM output: LLM output v0, prompt v0, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). Local run of the five incidents (14 Nov 2026, `docs/ai1-runs/` runs 6 and 7): Qwen3-4B-Instruct 15 of 15 valid with nothing invented, llama3.2 3B 12 of 15, no wrong freeze decision from either; 27 real reports. The HPC run and the model pin wait for compute resources (no HPC access) |
+| AI1 | Analysis layer for real LLM output: LLM output v0, prompts v0 and v1, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). Local run of the five incidents (14 Nov 2026, `docs/ai1-runs/` runs 6 and 7): Qwen3-4B-Instruct 15 of 15 valid with nothing invented, llama3.2 3B 12 of 15, no wrong freeze decision from either; 27 real reports. Faculty cluster (19 Nov 2026, `docs/ai1-runs/` runs 8 to 10): HPC checks done on the CSIT Compute Pool; its 27B model service gave 36 of 36 valid analyses with every metric met (46 s median, so 30 s is met only for one-event incidents); prompt v1 (context events and attack names) is now the default. The model's source and licence are asked of the cluster admin |
 
 Week 2 is in progress. C4 so far: the upload page on C1's real upload and job API (#20), the incident list (#22) and the pending decision panel (#23), the last two on a dev-only stub server until C3's and C5's endpoints exist (see [Frontend](#frontend)).
 
@@ -70,13 +70,13 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **733 passed, 63 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **796 passed**.
+Expected result without a database: **738 passed, 63 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **801 passed**.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
-- the AI1 analysis layer: a good sample output becomes a valid report, 15 broken outputs each fail for the intended check (including a different risk score or level), confidence, mapping, prompt v0 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
+- the AI1 analysis layer: a good sample output becomes a valid report, 15 broken outputs each fail for the intended check (including a different risk score or level), confidence, mapping, prompts v0 and v1 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server, the prompt version and thinking setting); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;
@@ -246,7 +246,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
 | [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
 | [docs/ai1-report-schema.md](docs/ai1-report-schema.md) | AI1 | Week 2 | AI report schema v1: evidence file, HPC output file and runner for C1, report and Incident fields for C5, evaluation metrics E1 to E11, the five test incidents |
-| [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records of the seven local runs (`llama3.2:3b`, Qwen3-4B-Instruct), failures included, with the raw answers and what each run showed; runs 6 and 7 are the Week 2 evaluation of the five test incidents (metrics, reports) |
+| [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records, failures included, with the raw answers and what each run showed: seven local runs (`llama3.2:3b`, Qwen3-4B-Instruct; runs 6 and 7 are the Week 2 evaluation), the 27B model on the faculty cluster with prompts v0 and v1 (runs 8 and 9), and Qwen3-4B with prompt v1 (run 10) |
 | [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
 | [docs/api-upload-jobs.md](docs/api-upload-jobs.md) | C1 | Week 2 | Upload, job status and analysis API: endpoints, request and response examples for every state, error codes, parser interface for C2 |
@@ -303,7 +303,7 @@ icd-platform/
 │   │   ├── jobs/         Postgres job queue and the ingest job
 │   │   ├── worker/       the worker process: python -m app.worker
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
-│   │   ├── analysis/     AI1: LLM output v0, prompt v0, grounding check, confidence, mapper
+│   │   ├── analysis/     AI1: LLM output v0, prompts v0 and v1, grounding check, confidence, mapper
 │   │   ├── response/     C5: lifecycle table, freeze check, catalogue (response.toml), simulated executor, engine, expiry loop
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
 │   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps)

@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c1-fuzzers-low-3",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "evidence_package_id": "pkg-inc-852bbfaea14e44fb-5df5428cd297",
+  "generated_at": "2026-11-19T00:31:44.177203Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Two flagged events show malformed requests sent from ip-01 to host-01 (dst_ip ip-02) between 13:00:00Z and 13:05:00Z, consistent with a fuzzing activity. A context event shows user-01 logging on to host-01 at 13:14:30Z.",
+  "attack_type": "fuzzing",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "At 13:00:00Z, malformed requests were sent from ip-01 to host-01 (dst_ip ip-02).",
+      "cited_event_ids": [
+        "fx-021"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "At 13:05:00Z, additional malformed requests were sent from ip-01 to host-01 (dst_ip ip-02).",
+      "cited_event_ids": [
+        "fx-022"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "At 13:14:30Z, user-01 logged on to host-01.",
+      "cited_event_ids": [
+        "fx-023"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Malformed requests were observed from ip-01 to host-01, indicating potential fuzzing activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source IP ip-01 to determine if it is a known fuzzer or a malicious actor. Why: The events show malformed requests from ip-01, which could be part of a fuzzing campaign or an attack. Less disruptive option: Monitor ip-01 for further activity without blocking it immediately.",
+    "Review the logs for host-01 to check for any signs of exploitation or system compromise following the fuzzing activity. Why: Fuzzing can sometimes lead to vulnerabilities being exploited, so it is important to check for any subsequent suspicious activity. Less disruptive option: Perform a non-intrusive scan of host-01 to check for vulnerabilities."
+  ],
+  "risk_justification": "The risk score of 24 (low) is justified by the limited scope of the incident, which involves only two flagged events of malformed requests and one context event of a login. There is no evidence of successful exploitation or significant impact.",
+  "uncertainty": "It is not known whether the fuzzing activity led to any successful exploitation or system compromise. (would be settled by: System logs, vulnerability scan results, or incident response reports for host-01.) It is not known whether user-01's login is related to the fuzzing activity or is a separate event. (would be settled by: Correlation of user-01's login with the fuzzing events, such as timing or source IP.) Limitations: The analysis is based solely on the provided evidence package and does not include external threat intelligence or system logs. The context event (fx-023) is not flagged and may not be directly related to the fuzzing activity.",
+  "confidence": 0.8667,
+  "model_self_rating": 0.8
+}

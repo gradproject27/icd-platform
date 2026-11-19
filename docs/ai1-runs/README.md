@@ -1,10 +1,10 @@
-# AI1 model runs: local fallback (option C), 26 Oct and 14 Nov 2026
+# AI1 model runs: local fallback and faculty cluster, 26 Oct to 19 Nov 2026
 
 Owner: AI1. Every real model run so far, failures included, in the order they happened. Design and checks: [ai1-analysis-design.md](../ai1-analysis-design.md), sections 5, 7 and 8.
 
 **What was run.** Prompt v0 on the synthetic, masked sample package `tools/ai1/samples/evidence-inc-ai1-0001.json` (incident `inc-ai1-0001`, 11 flagged and 2 context events, one with the prompt-injection canary `CANARY-7F3A`), 3 runs per model, temperature 0, through `tools/ai1/bench.py --backend openai_http` against [Ollama](https://ollama.com/) 0.40.11.
 
-**Where.** A team laptop, not the HPC: Windows 10, 12 CPUs, 33.7 GB RAM, NVIDIA Quadro P2000 with 4 GB. These runs test the prompt, the checks and the harness. They are not the HPC run of section 5; that one is still to fill.
+**Where.** A team laptop, not the HPC: Windows 10, 12 CPUs, 33.7 GB RAM, NVIDIA Quadro P2000 with 4 GB. These runs test the prompt, the checks and the harness. Runs 8 and 9 are the HPC run of section 5, on the faculty cluster (last section).
 
 **What is in each folder.** `model_run_record.md` and `.json` from `bench.py`, and the raw model answer of every run (`output_*.txt`). The answers describe the synthetic sample only; there is no dataset record in this folder.
 
@@ -75,9 +75,45 @@ Inference time by incident (median of 3; prompt 3,400 to 4,900 tokens):
 **What this shows.**
 - **The checks work on real answers.** Every failure above is a real model fault, caught by the intended check (G2, U1, E6, E8), and no answer from either model led to a wrong freeze decision (E9 1.0).
 - **Qwen is the better analyst, llama the faster.** Qwen is valid and grounded but too slow on this GPU (95 s median); llama is within 30 s on small incidents but invents or misattributes users and often leaves the attack type empty.
-- **For the next prompt version:** an explicit rule that `attack_type.category` is an attack name, never a claim category, and a stronger rule 6 (a context event alone may only support a `hypothesis`). Not changed yet: prompt v0 is what these records measure.
-- Human scoring of the key facts (ai1-report-schema.md section 6) is still to do for the 27 valid reports.
+- **For the next prompt version:** an explicit rule that `attack_type.category` is an attack name, never a claim category, and a stronger rule 6 (a context event alone may only support a `hypothesis`). This became prompt v1 (runs 8 to 10).
+- A draft key-fact scoring of these 27 reports is in its own pull request for the team to review (`key-fact-scoring-draft.md`, branch `feature/ai1-key-fact-scoring`).
+
+## Faculty cluster and prompt v1, 19 Nov 2026
+
+**Where.** Runs 8 and 9 used the E-JUST CSIT Compute Pool's model service (GPUStack, vLLM 0.33.0 over 2 × Quadro RTX 5000) with its model `qwen3.8-27b-awq-int4`, reached through an SSH tunnel over the cluster's login node. `bench.py` ran on the team laptop and sent the requests, so **the host, GPU and memory figures in records 8 and 9 are the laptop's, not the server's.** Run 10 is the laptop again (Ollama), with the settings of run 6 and only the prompt changed.
+
+**What was run.** The Week 1 sample (`inc-ai1-0001`, with the canary) in runs 8 and 9, and the five Week 2 test incidents in all three, 3 runs each, temperature 0, then `tools/ai1/evaluate.py`.
+
+| # | Folder | Model | Prompt | Valid | E4 grounding | E6 context-only | E8 attack type | E11 mean confidence | Inference median / max (5 incidents) | Within 30 s | Tokens/s |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 8 | [08-csit-qwen27b-awq-v0](08-csit-qwen27b-awq-v0/evaluation.md) | `qwen3.8-27b-awq-int4`, thinking off, 4,900 output tokens | v0 | **18 of 18** | 0.978 | 0 | 1.0 | 0.539 | 51 s / 139 s | 6 of 15 | 29.9 |
+| 9 | [09-csit-qwen27b-awq-v1](09-csit-qwen27b-awq-v1/evaluation.md) | same | **v1** | **18 of 18** | **1.0** | 0 | 1.0 | 0.56 | 46 s / 123 s | 6 of 15 | 31.3 |
+| 10 | [10-week2-qwen3-4b-instruct-10k-v1](10-week2-qwen3-4b-instruct-10k-v1/evaluation.md) | `qwen3-4b-instruct-10k` (as run 6) | **v1** | 15 of 15 | 0.969 | 0.2 | **1.0** (was 0.6) | 0.708 | 109 s / 235 s | 3 of 15 | 14.7 |
+
+Median time per incident (output tokens of run 1):
+
+| Run | Sample (13 events) | A (8 + 3 events) | C1 | C2 | E | F |
+|---|---|---|---|---|---|---|
+| 8 (27B, v0) | 128 s (3,793) | 129 s (3,896) | 51 s (1,609) | 65 s (2,050) | 17 s (505) | 15 s (441) |
+| 9 (27B, v1) | 113 s (3,345) | 113 s (3,387) | 46 s (1,427) | 51 s (1,603) | 16 s (496) | 14 s (443) |
+| 10 (4B, v1) | – | 234 s (2,495) | 109 s (1,634) | 111 s (1,688) | 55 s (821) | 28 s (401) |
+
+**Two failed attempts before run 8, kept out of the folders (no answer was produced):**
+- With `--json-schema`, all 18 requests returned HTTP 400: the server's structured-output backend is fixed to `xgrammar`, and our output schema needs `guidance`. Only the cluster admin can change that, so the cluster runs use no schema mode; the checks still validate every answer.
+- With thinking on (the model's default), a short test spent all 400 tokens thinking, and one analysis took 5 to 10 minutes. The run was stopped. `bench.py --no-thinking` now turns thinking off per request, as section 4 of the design note planned for timing runs.
+
+**8 and 9. 27B on the cluster: 36 of 36 valid, every metric met.** Nothing invented, the canary never quoted, attack names in every run (`backdoor_installation`, `fuzzing`, `DoS` / `dos_flood`), the same attack type in all 3 runs of every package. It is the only model that gets the reverse-shell direction in A right (back to `ip-01`) and states the availability impact in C2. E and F are answered with `insufficient_evidence` (accepted), which is why the mean confidence is lower: such an answer has confidence 0.0 by design. In run 8 it still lists the C2 context logon as a neutral first step; with v1 it leaves it out, and its answers are 11 to 22 % shorter.
+
+**10. Qwen3-4B with v1: the attack-type fault is gone, the context fault is halved.** The attack type is now `Backdoors`, `Fuzzers`, `DoS` or null (E8 1.0). In C1 the logon finding is now a `hypothesis`, but the logon is still the third sequence step, against the new rule 6 (E6 counts findings only, so it does not show). In C2 it still puts the logon first and calls it a possible precursor of the floods (one `likely_interpretation` per run, E6 0.2). It also still sends the reverse shell in A back to `ip-02`. Its run 1 answer for A has no sequence; coverage is still 1.0 through the findings.
+
+**What this shows.**
+- **The cluster model is good enough for the platform.** Every analysis was valid and every metric met; prompt v1 is now the default.
+- **30 s per incident is met only for the one-event incidents.** The time follows the answer length at about 30 tokens per second, so a multi-step incident takes about 2 minutes. Reports should be made in batch and stored before the analyst opens them, or answers kept under about 900 tokens.
+- **Small models need more than a prompt rule** for context events: Qwen3-4B still ties the C2 logon to the attack. With the 27B model the rule is not needed.
 
 ## Not done yet
 
-The HPC probe, the model pin (Qwen3-8B revision and licence check on the model card) and the HPC run (section 5): frozen until high-compute resources are provided (team decision, 14 Nov 2026). Licence lines in these records come from `ollama show` and are not yet verified on the model cards.
+- **The model's source and licence:** the repository, revision and licence of `qwen3.8-27b-awq-int4`, asked of the cluster admin. A student key cannot see them in GPUStack.
+- **Policy answers from the admin:** masked synthetic data on the service, usage limits, access from the campus network.
+- **Batch fallback (option A) not run:** a Slurm job would need its own vLLM install and weights in `/pool` (jobs have no internet).
+- Licence lines in records 1 to 7 and 10 come from `ollama show` and are not yet verified on the model cards.

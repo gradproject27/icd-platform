@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c2-dos-medium-1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-19T00:32:50.976406Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "Two request flood events were flagged against host-01 from ip-01 to ip-02, occurring while user-01 was logged on. A context event shows user-01 logging on to host-02 shortly before the first flood.",
+  "attack_type": "DoS",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "user-01 logged on to host-02.",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A request flood was detected against host-01 from ip-01 to ip-02 while user-01 was logged on.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "A second request flood was detected against host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Two distinct request flood events were flagged against host-01 within a 6-minute window.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ]
+    },
+    {
+      "statement": "The floods originated from ip-01 and targeted ip-02 on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "host-01 was subjected to two request floods, which may have caused service degradation or unavailability.",
+  "recommendations": [
+    "Investigate the source IP ip-01 to determine if it is a known malicious actor or a compromised internal host. Why: Both flood events originate from ip-01, making it the primary source of the DoS activity. Less disruptive option: Temporarily rate-limit traffic from ip-01 to host-01 to mitigate the flood while investigation continues.",
+    "Review the activity of user-01 on host-02 and host-01 to determine if the user is involved in the attack or if their credentials were compromised. Why: user-01 is logged on during the flood events and has a recent login on host-02, which may indicate lateral movement or credential misuse. Less disruptive option: Temporarily disable user-01's account or force a password reset to prevent further potential misuse."
+  ],
+  "risk_justification": "The risk score of 57 (medium) is justified by the repeated DoS activity against host-01, which could impact service availability, and the involvement of a user account that may indicate insider threat or credential compromise.",
+  "uncertainty": "It is unclear whether user-01 is the attacker, a victim of credential compromise, or an innocent user whose session was coincidental. (would be settled by: Detailed authentication logs, session correlation data, and user behavior analytics for user-01 on both host-01 and host-02.) The exact nature of the service on host-01 that was targeted by the flood is not specified. (would be settled by: Network flow data or application logs from host-01 to identify the specific service or port targeted.) Whether the flood caused actual service disruption or data loss is not confirmed. (would be settled by: System performance metrics, application error logs, or user reports of service unavailability during the incident window.) Limitations: The analysis is based on a limited set of events (3 total) and may not capture the full scope of the incident. The context event (fx-024) is unflagged and may not be directly related to the DoS attack, but its inclusion suggests a potential link that requires further investigation. No information is provided about the duration of the floods, the volume of requests, or the specific impact on host-01's services.",
+  "confidence": 1.0,
+  "model_self_rating": 0.8
+}

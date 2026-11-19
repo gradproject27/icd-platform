@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c2-dos-medium-3",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-19T00:38:07.942970Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A denial-of-service attack was detected on host-01 from ip-01 to ip-02, with two flagged events occurring between 13:24:00Z and 13:30:00Z.",
+  "attack_type": "DoS",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "At 13:16:00Z, user-01 logged into host-02.",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "At 13:24:00Z, a denial-of-service flood began targeting host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "At 13:30:00Z, a second denial-of-service flood occurred targeting host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A denial-of-service flood occurred at host-01 from ip-01 to ip-02 during the period 13:24:00Z to 13:30:00Z.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "statement": "A second denial-of-service flood occurred at host-01 from ip-01 to ip-02 at 13:30:00Z.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    },
+    {
+      "statement": "The remote login event at host-02 at 13:16:00Z may have been part of a broader access pattern that preceded the DoS attacks on host-01.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the remote login event at host-02 to determine if it was part of a legitimate user session or an initial access point for the attack. Why: The login event occurred just before the first DoS flood and may indicate a user session that enabled subsequent attack activity. Less disruptive option: Review the login event in isolation without expanding to other systems or user sessions to avoid disrupting normal operations.",
+    "Verify the source of ip-01 and confirm whether it is a known legitimate or compromised endpoint. Why: Both DoS flood events originate from the same source IP, suggesting a consistent attacker or compromised device. Less disruptive option: Initiate a temporary block of ip-01 only for the host-01 service, rather than blocking the entire IP address to avoid disrupting legitimate traffic."
+  ],
+  "risk_justification": null,
+  "uncertainty": "It is unclear whether the remote login to host-02 at 13:16:00Z was a legitimate user action or a precursor to the attack on host-01. (would be settled by: The logs do not show whether user-01 was actively using host-01 or host-02 during the time of the attacks, or whether the login to host-02 was legitimate or part of an attack sequence.) The severity and impact of the DoS attack on host-01 cannot be fully assessed without metrics on request volume or service degradation. (would be settled by: There are no logs showing the volume of requests, the nature of the traffic, or the response of the host-01 service during the floods.) Limitations: The remote login event at host-02 is not labeled as suspicious and does not directly connect to the DoS attacks on host-01, so its role in the incident is speculative. No logs show the source of ip-01 or the nature of the traffic beyond the flood events, so the origin of the attack is not fully established. The events do not include any logs about system performance, response times, or mitigation actions taken during the incident.",
+  "confidence": 0.875,
+  "model_self_rating": null
+}
