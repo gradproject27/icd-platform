@@ -17,7 +17,13 @@ from app.contracts.incident import (
     RiskFlag,
     SplitReason,
 )
-from app.contracts.report import AnalysisReport, Finding, FindingCategory, SequenceStep
+from app.contracts.report import (
+    AnalysisReport,
+    Finding,
+    FindingCategory,
+    GroundingCounts,
+    SequenceStep,
+)
 from app.contracts.response import (
     ActionState,
     ActionTarget,
@@ -42,6 +48,7 @@ __all__ = [
     "EvidenceEvent",
     "EvidencePackage",
     "Finding",
+    "GroundingCounts",
     "FindingCategory",
     "Incident",
     "IncidentContext",

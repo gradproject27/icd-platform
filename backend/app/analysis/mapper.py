@@ -9,7 +9,13 @@ from datetime import datetime
 from typing import Literal
 
 from app.analysis.output import LlmOutput, Recommendation
-from app.contracts import AnalysisReport, EvidencePackage, Finding, SequenceStep
+from app.contracts import (
+    AnalysisReport,
+    EvidencePackage,
+    Finding,
+    GroundingCounts,
+    SequenceStep,
+)
 
 
 def _recommendation_text(rec: Recommendation) -> str:
@@ -37,6 +43,7 @@ def to_report(
     model_id: str | None,
     prompt_version: str | None,
     confidence: float,
+    grounding: GroundingCounts | None = None,
 ) -> AnalysisReport:
     """Build the contract report. The backend fills the metadata and the computed confidence."""
     return AnalysisReport(
@@ -66,4 +73,5 @@ def to_report(
         uncertainty=_uncertainty_text(output),
         confidence=confidence,
         model_self_rating=output.self_rating,
+        grounding=grounding,
     )

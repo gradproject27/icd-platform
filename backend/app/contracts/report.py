@@ -44,6 +44,34 @@ class Finding(_Contract):
         return self
 
 
+class GroundingCounts(_Contract):
+    """How many claims of the report the grounding check could tie to the evidence (R2, 1.3).
+
+    A claim is one statement of the model's answer: the summary, the attack type, each sequence
+    step, finding and weakness, the impact and the risk justification. Factual claims are the
+    evidence_supported and likely_interpretation ones; a hypothesis is never counted as
+    supported or unsupported. A factual claim is supported when every host, IP and user it
+    names is in the events it cites, and unsupported otherwise (AI1 check U1).
+    """
+
+    claims: int = Field(ge=0, description="All claims, hypotheses included.")
+    factual_claims: int = Field(ge=0, description="evidence_supported + likely_interpretation.")
+    grounded_factual_claims: int = Field(
+        ge=0, description="Factual claims whose cited events carry every entity they name."
+    )
+    unsupported: int = Field(
+        ge=0, description="Factual claims that name an entity their cited events do not carry."
+    )
+
+    @model_validator(mode="after")
+    def _counts_add_up(self) -> Self:
+        if self.grounded_factual_claims + self.unsupported != self.factual_claims:
+            raise ValueError("grounded_factual_claims + unsupported must equal factual_claims")
+        if self.factual_claims > self.claims:
+            raise ValueError("factual_claims must not exceed claims")
+        return self
+
+
 class AnalysisReport(_Contract):
     """The AI's structured result for one incident. null in a section means not determined."""
 
@@ -92,6 +120,11 @@ class AnalysisReport(_Contract):
     model_self_rating: Fraction | None = Field(
         default=None,
         description="The model's own rating. Stored, never used for the 0.75 gate (OD-16).",
+    )
+    grounding: GroundingCounts | None = Field(
+        default=None,
+        description="Supported and unsupported claim counts behind the confidence (R2, 1.3). "
+        "null = not recorded (the mock, reports from before 1.3).",
     )
 
     @model_validator(mode="after")

@@ -1,0 +1,109 @@
+{
+ "output_version": "ai1-output-0.1",
+ "incident_id": "inc-c2ccfd615157a34a",
+ "analysis_status": "complete",
+ "summary": {
+  "text": "A network scan was detected on host-01 at 2026-01-15T15:15:01Z.",
+  "category": "evidence_supported",
+  "cited_event_ids": [
+   "fx-031"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "attack_type": {
+  "category": "reconnaissance",
+  "claim": {
+   "text": "The event is explicitly labeled as a network_scan with attack_type Reconnaissance, indicating an attempt to discover network resources.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-031"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ },
+ "sequence": [
+  {
+   "text": "A network scan was observed on host-01.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-031"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "findings": [
+  {
+   "text": "A network scan event was flagged on host-01.",
+   "category": "evidence_supported",
+    "cited_event_ids": [
+    "fx-031"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "weaknesses": null,
+ "impact": null,
+ "recommendations": [
+  {
+   "action": "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious.",
+   "rationale": "The event fx-031 indicates a network scan, which is a common reconnaissance technique. Identifying the source helps determine the threat level.",
+   "cited_event_ids": [
+    "fx-031"
+   ],
+   "reversible_alternative": null
+  }
+ ],
+ "risk_justification": {
+  "text": "The risk score is 26 (low) because the incident consists of a single reconnaissance event (network scan) without evidence of successful exploitation, data exfiltration, or lateral movement.",
+  "category": "likely_interpretation",
+  "cited_event_ids": [
+   "fx-031"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "uncertainties": [
+  {
+   "statement": "The source IP address of the scan is not provided in the event.",
+   "missing_evidence": "Network flow logs or firewall logs that record the source IP of the scan."
+  },
+  {
+   "statement": "It is unknown if the scan was successful or if any services were discovered.",
+   "missing_evidence": "Host-based logs or vulnerability scan results from host-01."
+  }
+ ],
+ "limitations": [
+  "The analysis is based on a single event with limited detail (no source IP, no user, no specific ports or services scanned).",
+  "No context events are available to correlate this scan with other activity."
+ ],
+ "self_rating": 0.6
+}

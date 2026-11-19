@@ -26,7 +26,7 @@ def test_good_output_gives_a_valid_report(evidence, good_output):
     assert AnalysisReport.model_validate_json(report.model_dump_json()) == report
     assert report.incident_id == evidence.incident_id
     assert report.evidence_package_id == evidence.package_id
-    assert report.prompt_version == "ai1-prompt-v0"
+    assert report.prompt_version == "ai1-prompt-v2"
     assert report.confidence >= 0.75
 
 
@@ -108,6 +108,38 @@ BROKEN = [
     ("model adds its own risk score field", _model_scores_risk, "P2"),
     ("no uncertainties", _missing_uncertainties, "P2"),
 ]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "The package holds only two low-level events with no technical details.",
+        "A low-level overview of the logs shows nothing more.",
+    ],
+)
+def test_level_as_an_adjective_is_not_a_risk_level(evidence, good_output, text):
+    # Run 12, g05: "two high-level events" was read as stating the level "high" (false G5).
+    output = copy.deepcopy(good_output)
+    output["limitations"].append(text)
+    result = _run(output, evidence)
+    assert result.valid, result.problems()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "This is a low level of risk.",
+        "It is a low-level threat.",
+        "This is a low-risk level incident.",
+        "The risk level is low.",
+        "A medium score fits the events.",
+    ],
+)
+def test_a_stated_level_that_differs_still_fails_g5(evidence, good_output, text):
+    output = copy.deepcopy(good_output)
+    output["risk_justification"]["text"] = text
+    result = _run(output, evidence)
+    assert {p.check for p in result.problems()} == {"G5"}, result.problems()
 
 
 @pytest.mark.parametrize(("name", "mutate", "check"), BROKEN, ids=[b[0] for b in BROKEN])

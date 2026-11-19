@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-de3343c633ac458bafea2175c0d33916",
+  "incident_id": "inc-4ae151291ae09c7d",
+  "evidence_package_id": "pkg-inc-4ae151291ae09c7d-ddd00c39edb1",
+  "generated_at": "2026-11-19T05:04:58.830848Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "A network scan was detected on host-01 at 2026-01-15T20:00:00Z, classified as reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was performed on host-01.",
+      "cited_event_ids": [
+        "fx-042"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan event was flagged on host-01, suggesting reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-042"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is malicious or a legitimate internal scan. Why: The event fx-042 indicates a network scan, which is a common precursor to attacks. Identifying the source helps assess the threat level. Less disruptive option: Review firewall logs and network traffic captures for host-01 around the timestamp 2026-01-15T20:00:00Z to identify the scanning source without blocking traffic."
+  ],
+  "risk_justification": "The risk score of 30 (low) is consistent with a single reconnaissance event without evidence of exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP of the scan on host-01.) It is unclear if the scan was part of a larger attack campaign or an isolated event. (would be settled by: Correlated events from other hosts or time periods to check for patterns of reconnaissance activity.) Limitations: The analysis is based on a single event with no source IP or user context, limiting the ability to determine the attacker's identity or intent. No context events are available to provide additional background on host-01's recent activity.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

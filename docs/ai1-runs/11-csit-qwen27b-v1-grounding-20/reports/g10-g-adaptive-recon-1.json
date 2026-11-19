@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-4312d268e0c041b79d0de08aafb223aa",
+  "incident_id": "inc-882bf102f899227e",
+  "evidence_package_id": "pkg-inc-882bf102f899227e-79cfe3fe8779",
+  "generated_at": "2026-11-19T04:44:05.658346Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A single network scan was detected on host-01 at 2026-01-15T19:00:00Z, classified as reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was observed on host-01.",
+      "cited_event_ids": [
+        "fx-040"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Network scanning activity was flagged on host-01, which is a common precursor to more intrusive attacks.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-040"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious. Why: The event fx-040 indicates a network scan, which could be part of reconnaissance for a future attack. Identifying the source helps assess the threat level. Less disruptive option: Monitor host-01 for further suspicious activity without immediate intervention."
+  ],
+  "risk_justification": "The risk score of 29 (low) is consistent with a single reconnaissance event without evidence of successful exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP of the scan.) It is unclear whether the scan was initiated by an internal or external actor. (would be settled by: Geolocation data or internal/external network segmentation logs.) Limitations: The analysis is based on a single event, which may not provide a complete picture of the incident. No context events are available to correlate with the flagged event.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.8,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

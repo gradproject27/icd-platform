@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-d2a7b1c2a35944c8ac5f1e992ab3987f",
+  "incident_id": "inc-f098d2c9dd0f8313",
+  "evidence_package_id": "pkg-inc-f098d2c9dd0f8313-273a7e17b26b",
+  "generated_at": "2026-11-19T05:01:37.348961Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "A network scan was detected on host-01.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was observed on host-01.",
+      "cited_event_ids": [
+        "fx-030"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan was detected on host-01, which is a common precursor to further attacks.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-030"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is malicious or a legitimate internal scan. Why: The event fx-030 indicates a network scan on host-01, which could be reconnaissance for a future attack. Less disruptive option: Monitor host-01 for further suspicious activity without immediate blocking to avoid disrupting legitimate traffic."
+  ],
+  "risk_justification": "The risk score is low (26) because only a single reconnaissance event was detected, with no evidence of successful exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP of the scan.) It is unclear whether the scan was initiated by an external attacker or an internal authorized scanner. (would be settled by: Asset inventory or authorized scanner logs to cross-reference the source of the scan.) Limitations: The analysis is based on a single event with limited details (no source IP, no user, no specific ports or protocols scanned). No context events are available to correlate this scan with other activities.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

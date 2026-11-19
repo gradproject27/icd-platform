@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-a-multistep-high-2",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-a4c4446ebbc7",
+  "generated_at": "2026-11-19T00:27:00.896898Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "An external actor (ip-01) performed reconnaissance and exploitation against host-01, establishing a reverse shell. The actor then pivoted to host-02 and host-03, using privileged account user-02 to install new services on both hosts, indicating a backdoor installation campaign.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "External IP ip-01 initiated a port scan against host-01.",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "External IP ip-01 performed a service version probe on host-01.",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "An exploit request was sent to host-01 from ip-01, associated with user-01.",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "A reverse shell was established from host-01 back to the external address ip-01.",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "User-01, originating from host-01, performed a remote login to host-02.",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "Privileged account user-02 was used from host-01 on host-02.",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "A new service was installed on host-02 by user-02.",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "A new service was installed on host-03 by user-02.",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Reconnaissance activity (port scan and service probe) was conducted by ip-01 against host-01 prior to exploitation.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "A reverse shell was established on host-01, providing remote command execution capability to the attacker.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "Lateral movement occurred from host-01 to host-02 using user-01, followed by the use of privileged account user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "Persistence was established by installing new services on host-02 and host-03 using the privileged account user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": [
+    "The application on host-01 was vulnerable to the exploit used in fx-007.",
+    "Lateral movement from host-01 to host-02 was possible, suggesting insufficient network segmentation or credential hygiene."
+  ],
+  "impact": "Hosts host-01, host-02, and host-03 were compromised. Host-01 was used as a pivot point, and backdoors (new services) were installed on host-02 and host-03, granting the attacker persistent access to these systems.",
+  "recommendations": [
+    "Isolate host-01, host-02, and host-03 from the network to prevent further lateral movement and data exfiltration. Why: These hosts are confirmed compromised with active backdoors and reverse shells (fx-008, fx-012, fx-013). Less disruptive option: Apply strict firewall rules to block outbound connections from these hosts to ip-01 and restrict inbound traffic to only necessary management ports, while monitoring for further activity.",
+    "Disable or reset the credentials for user-01 and user-02, as they were used in the attack chain. Why: User-01 was used for the initial exploit and lateral movement (fx-007, fx-009), and user-02 was used for privilege escalation and backdoor installation (fx-010, fx-012, fx-013). Less disruptive option: Temporarily lock the accounts and force password resets after verifying the legitimacy of the user's current sessions.",
+    "Investigate and remove the newly installed services on host-02 and host-03. Why: Events fx-012 and fx-013 indicate the installation of new services by user-02, which are likely backdoors. Less disruptive option: Quarantine the service binaries and disable the services before removal to allow for forensic analysis.",
+    "Block external IP ip-01 at the perimeter firewall. Why: ip-01 is the source of the initial reconnaissance and exploitation (fx-002, fx-004, fx-007) and the destination of the reverse shell (fx-008). Less disruptive option: Log and alert on all traffic from ip-01 without blocking, to monitor for any other compromised hosts communicating with this IP."
+  ],
+  "risk_justification": "The risk score of 100 (high) is justified by the successful compromise of multiple hosts, the establishment of persistent backdoors, and the use of privileged accounts for lateral movement, indicating a high likelihood of significant data breach or system disruption.",
+  "uncertainty": "The specific vulnerability exploited on host-01 is not identified in the events. (would be settled by: Web application logs, vulnerability scan results, or exploit details from the IDS/IPS.) It is unclear if user-01 and user-02 are legitimate users whose credentials were stolen or if they are attacker-controlled accounts. (would be settled by: Authentication logs, user activity history, and identity verification records.) The purpose of the file access on host-03 by user-02 (fx-014) is unknown, as it is unlabelled. (would be settled by: File access logs with context, data classification labels, or DLP alerts.) Limitations: The analysis is based solely on the provided event package and does not include forensic disk images, memory dumps, or detailed network packet captures. The events do not provide information on the data exfiltrated or the specific commands executed via the reverse shell. The relationship between user-01 and user-02 (e.g., whether user-01 compromised user-02's credentials) is inferred but not explicitly confirmed by the events.",
+  "confidence": 0.8296,
+  "model_self_rating": 0.9
+}

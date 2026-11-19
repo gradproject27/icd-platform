@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-79906b6500d84dababd26a2017058147",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-19T05:00:32.237600Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "Two request flood events were recorded against host-01 from ip-01 to ip-02, occurring while user-01 was logged on.",
+  "attack_type": "dos_flood",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A request flood was initiated against host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A second request flood was recorded against host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Two distinct dos_flood events occurred against host-01 within a 6-minute window.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "host-01 was the target of the request floods, indicating it was the system under attack.",
+  "recommendations": [
+    "Investigate the source IP ip-01 to determine if it is an internal or external address and check for other activity from this IP. Why: ip-01 is the source of both dos_flood events against host-01 (fx-025, fx-026).",
+    "Review the logs for host-01 during the time window 13:24:00Z to 13:30:00Z to assess the impact on services and check for any successful exploitation or data access. Why: The dos_flood events (fx-025, fx-026) targeted host-01, and the impact on its services is not detailed in the current events."
+  ],
+  "risk_justification": "The risk score of 57 (medium) is consistent with a DoS attack that has been detected and is limited to two flood events, without evidence of data exfiltration or lateral movement.",
+  "uncertainty": "It is not known whether user-01 is the attacker or a legitimate user whose session was coincident with the attack. (would be settled by: Authentication logs, user activity logs, and correlation with other events involving user-01.) The specific impact of the DoS flood on host-01's services (e.g., downtime, error rates) is not detailed. (would be settled by: System performance metrics, application logs, and service availability logs for host-01 during the incident window.) The relationship between the context event fx-024 (user-01 logging on to host-02) and the DoS events is unclear. (would be settled by: Network flow logs and host-02 activity logs to determine if host-02 was involved in the attack or if the login is unrelated.) Limitations: The evidence package contains only three events, two of which are the DoS floods. There is no data on the attack's origin, tools used, or post-attack activity. The context event fx-024 is not flagged and may be unrelated to the DoS attack, limiting the ability to draw a complete timeline of the incident.",
+  "confidence": 1.0,
+  "model_self_rating": 0.7,
+  "grounding": {
+    "claims": 7,
+    "factual_claims": 7,
+    "grounded_factual_claims": 7,
+    "unsupported": 0
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-a-multistep-high-1",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-a4c4446ebbc7",
+  "generated_at": "2026-11-19T00:19:04.611247Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A backdoor was established on host-01 and propagated to host-02 and host-03 via exploitation, lateral movement, privilege escalation, and service installation.",
+  "attack_type": "Backdoors",
+  "sequence": null,
+  "findings": [
+    {
+      "statement": "A network scan was performed on host-01 from ip-01 at 09:00:00Z, indicating initial reconnaissance.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "statement": "A service version probe was conducted on host-01 from ip-01 at 09:04:00Z, suggesting further reconnaissance to identify vulnerable services.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "An exploit request was made against host-01 as user-01 at 09:10:00Z, indicating a successful exploitation attempt.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "statement": "A reverse shell was established from host-01 back to ip-02 at 09:18:00Z, indicating the presence of a backdoor.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "A remote login was performed from ip-02 to host-02 as user-01 at 09:30:00Z, indicating lateral movement.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "statement": "A privileged account (user-02) was used on host-02 from host-01 at 09:42:00Z, indicating escalation of privileges.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "A new service was installed on host-02 by user-02 at 09:55:00Z, indicating the deployment of a backdoor service.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "statement": "A new service was installed on host-03 by user-02 at 10:08:00Z, indicating further backdoor deployment across systems.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    },
+    {
+      "statement": "The sequence of events shows a progression from reconnaissance to exploitation, lateral movement, privilege escalation, and backdoor installation across multiple hosts.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008",
+        "fx-009",
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "Multiple hosts (host-01, host-02, host-03) were compromised and have backdoor services installed, indicating a broad attack surface and potential data exfiltration or system control.",
+  "recommendations": [
+    "Investigate the specific vulnerability exploited on host-01 during the exploit request (event fx-007) to determine the attack vector. Why: The exploit request against host-01 indicates a successful attack, and identifying the vulnerability will help understand the attack method and potential exposure points. Less disruptive option: Review the application logs on host-01 for known vulnerabilities and compare with the service version probe (fx-004) to assess exposure.",
+    "Verify whether user-01 and user-02 are legitimate accounts or have been compromised by checking authentication logs and access patterns. Why: The use of user-01 and user-02 in privileged actions and remote logins suggests possible account compromise or misuse. Less disruptive option: Temporarily disable user-01 and user-02 access to test for service disruption and assess impact on operations.",
+    "Search for the installed service on host-02 and host-03 to determine its purpose and whether it is known malware or a legitimate tool. Why: The installation of new services on multiple hosts indicates potential backdoor deployment, and identifying the service is critical for mitigation. Less disruptive option: Isolate host-02 and host-03 and perform a forensic analysis to determine if the service is malicious."
+  ],
+  "risk_justification": "The incident involves multiple flagged events, including exploitation, lateral movement, privilege escalation, and backdoor installation across three hosts, which aligns with a high-risk backdoor attack.",
+  "uncertainty": "We do not know which vulnerability was exploited on host-01 during the exploit request. (would be settled by: The specific vulnerability exploited in the web exploit (fx-007) is not logged or identified in the events.) We do not know if user-01 and user-02 are legitimate or have been compromised. (would be settled by: Authentication logs for user-01 and user-02 are not present to confirm whether these accounts are legitimate or compromised.) We do not know what service was installed or whether it is malicious. (would be settled by: The content or configuration of the installed service on host-02 and host-03 is not logged.) Limitations: The events do not include logs from the application layer or file system to confirm the specific vulnerability exploited or the content of the installed backdoor service. The role of user-01 and user-02 is not fully clarified\u2014whether they are legitimate or compromised accounts is not evident from the logs. The context events (fx-003, fx-011, fx-014) are not labeled and do not provide evidence of malicious activity, though they may be relevant to normal operations or user behavior.",
+  "confidence": 0.9333,
+  "model_self_rating": 0.95
+}

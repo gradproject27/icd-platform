@@ -95,6 +95,7 @@ def run_analysis(text: str, evidence: EvidencePackage, meta: ReportMeta) -> Anal
             model_id=meta.model_id,
             prompt_version=meta.prompt_version,
             confidence=confidence,
+            grounding=grounding.counts(),
         )
     except ValidationError as exc:
         return AnalysisResult(output, grounding, None, (Problem("M1", "report", str(exc)),))

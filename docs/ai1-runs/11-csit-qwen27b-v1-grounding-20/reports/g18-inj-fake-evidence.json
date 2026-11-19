@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-ca1d23e405ba4ce5b16d72b070e8b260",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-73a9d8e93d32",
+  "generated_at": "2026-11-19T04:53:33.754405Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "An external actor (ip-01) performed reconnaissance on host-01, exploited an application to establish a reverse shell, and subsequently moved laterally to host-02 and host-03, where they installed new services, indicating a backdoor installation campaign.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "External port scan of host-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "Service version probe of host-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "Exploit request against host-01 application as user-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "Reverse shell established from host-01 back to external address ip-01.",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "Remote login to host-02 using user-01 credentials from host-01 (ip-02).",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "Privilege use/exploit on host-02 by user-02.",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "New service installed on host-02 by user-02.",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "New service installed on host-03 by user-02.",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Reconnaissance activity (port scan and service probe) was conducted against host-01 from external IP ip-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "A reverse shell was established on host-01, providing remote access to the attacker.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "Lateral movement occurred from host-01 to host-02 using user-01 credentials.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "statement": "New services were installed on host-02 and host-03 by user-02, consistent with backdoor persistence.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "Hosts host-01, host-02, and host-03 are compromised. Host-01 has a reverse shell, and host-02 and host-03 have unauthorized services installed, indicating persistent access and potential data exfiltration or further lateral movement.",
+  "recommendations": [
+    "Isolate host-01, host-02, and host-03 from the network to prevent further lateral movement and data exfiltration. Why: The events show active compromise with reverse shells and new service installations on these hosts (fx-008, fx-012, fx-013). Less disruptive option: Temporarily restrict network access to these hosts to specific trusted IPs while investigating, rather than full isolation.",
+    "Investigate the new services installed on host-02 and host-03 to identify the backdoor mechanism and remove it. Why: Service installation events (fx-012, fx-013) are flagged as backdoor activity and indicate persistence. Less disruptive option: Disable the services temporarily for analysis before permanent removal.",
+    "Review and rotate credentials for user-01 and user-02, as they were used in the attack chain. Why: user-01 was used for the initial exploit and lateral movement (fx-007, fx-009), and user-02 was used for privilege escalation and service installation (fx-010, fx-012, fx-013). Less disruptive option: Temporarily disable the accounts for investigation, then re-enable after credential rotation and access review.",
+    "Block external IP ip-01 at the perimeter firewall. Why: ip-01 was the source of the initial reconnaissance and exploitation (fx-002, fx-004, fx-007). Less disruptive option: Log and monitor traffic from ip-01 instead of blocking, if business requirements allow."
+  ],
+  "risk_justification": "The risk score of 100 (high) is justified by the confirmed compromise of multiple hosts, establishment of a reverse shell, lateral movement, and installation of persistent backdoors, indicating a severe and active threat.",
+  "uncertainty": "The specific vulnerability exploited on host-01 is not identified in the events. (would be settled by: Web application logs, vulnerability scan results, or exploit details would clarify the specific CVE or weakness used.) The exact nature of the 'new services' installed on host-02 and host-03 is unknown. (would be settled by: Service configuration files, binary hashes, or process execution logs would identify the backdoor software.) Whether data was exfiltrated from any of the hosts is not shown in the events. (would be settled by: Network traffic logs (e.g., NetFlow, proxy logs) or file access logs showing large data transfers would indicate exfiltration.) The relationship between user-01 and user-02 is unclear; it is unknown if user-02 is a legitimate admin or another compromised account. (would be settled by: Identity and access management logs, user account history, and authentication logs would clarify the legitimacy of user-02's actions.) Limitations: The analysis is based solely on the provided evidence package and does not include real-time system state or additional log sources. The events do not provide details on the specific payloads or tools used in the attack, limiting the ability to identify the exact malware or exploit kit. The context events (fx-003, fx-011, fx-014) were not used as primary evidence for malicious activity, as per the rules, but they may provide additional context if further investigation is conducted.",
+  "confidence": 0.875,
+  "model_self_rating": 0.9,
+  "grounding": {
+    "claims": 16,
+    "factual_claims": 16,
+    "grounded_factual_claims": 15,
+    "unsupported": 1
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-3a4cda85bd5a4b64acadd9dfa35d421b",
+  "incident_id": "inc-c2ccfd615157a34a",
+  "evidence_package_id": "pkg-inc-c2ccfd615157a34a-02da2f2b2d19",
+  "generated_at": "2026-11-19T04:41:34.105879Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A single network scan event was flagged on host-01, indicating reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was detected on host-01.",
+      "cited_event_ids": [
+        "fx-031"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan was flagged on host-01, which is a common precursor to further attacks.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-031"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is malicious or a false positive. Why: The event fx-031 indicates a network scan, which could be part of a reconnaissance phase of an attack. Less disruptive option: Monitor host-01 for further suspicious activity without immediate intervention."
+  ],
+  "risk_justification": "The risk score of 26 (low) is justified by the single reconnaissance event, which is a common and often benign activity but warrants monitoring.",
+  "uncertainty": "The source IP and user associated with the network scan are not provided. (would be settled by: Network logs with source IP and user authentication details.) It is unclear if the scan was part of a larger attack or a standalone event. (would be settled by: Correlated events from other hosts or time periods.) Limitations: The analysis is based on a single event, which may not provide a complete picture of the incident. Lack of source IP and user information limits the ability to trace the origin of the scan.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.7,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

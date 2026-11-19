@@ -1,0 +1,109 @@
+{
+ "output_version": "ai1-output-0.1",
+ "incident_id": "inc-4ae151291ae09c7d",
+ "analysis_status": "complete",
+ "summary": {
+  "text": "A network scan was detected on host-01 at 2026-01-15T20:00:00Z, classified as reconnaissance activity.",
+  "category": "evidence_supported",
+  "cited_event_ids": [
+   "fx-042"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "attack_type": {
+  "category": "reconnaissance",
+  "claim": {
+   "text": "The event is explicitly labeled as a network_scan with attack_type Reconnaissance, indicating an attempt to gather information about the host.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-042"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ },
+ "sequence": [
+  {
+   "text": "A network scan was performed on host-01.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-042"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "findings": [
+  {
+   "text": "A network scan event was flagged on host-01, suggesting reconnaissance activity.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-042"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "weaknesses": null,
+ "impact": null,
+ "recommendations": [
+  {
+   "action": "Investigate the source of the network scan on host-01 to determine if it is malicious or a legitimate internal scan.",
+   "rationale": "The event fx-042 indicates a network scan, which is a common precursor to attacks. Identifying the source helps assess the threat level.",
+   "cited_event_ids": [
+    "fx-042"
+   ],
+   "reversible_alternative": "Review firewall logs and network traffic captures for host-01 around the timestamp 2026-01-15T20:00:00Z to identify the scanning source without blocking traffic."
+  }
+ ],
+ "risk_justification": {
+  "text": "The risk score of 30 (low) is consistent with a single reconnaissance event without evidence of exploitation or data exfiltration.",
+  "category": "likely_interpretation",
+  "cited_event_ids": [
+    "fx-042"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  },
+ "uncertainties": [
+  {
+   "statement": "The source IP address of the scan is not provided in the event.",
+   "missing_evidence": "Network flow logs or firewall logs that record the source IP of the scan on host-01."
+  },
+  {
+   "statement": "It is unclear if the scan was part of a larger attack campaign or an isolated event.",
+   "missing_evidence": "Correlated events from other hosts or time periods to check for patterns of reconnaissance activity."
+  }
+ ],
+ "limitations": [
+  "The analysis is based on a single event with no source IP or user context, limiting the ability to determine the attacker's identity or intent.",
+  "No context events are available to provide additional background on host-01's recent activity."
+ ],
+ "self_rating": 0.6
+}

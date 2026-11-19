@@ -144,7 +144,7 @@ def test_runner_writes_an_output_file_the_app_host_accepts(tmp_path):
     args = ["--evidence", str(evidence), "--output", str(out), "--backend", "stub"]
     assert _tool("icd_analyze").main([*args, "--site", "local"]) == 0
     output = HpcOutput.model_validate_json(out.read_text(encoding="utf-8"))
-    assert output.generated_by == "local" and output.prompt_version == "ai1-prompt-v0"
+    assert output.generated_by == "local" and output.prompt_version == "ai1-prompt-v2"
     assert analyze_hpc_output(output, _package("c2-dos-medium"), "rep-c2").valid
 
 
@@ -246,3 +246,13 @@ def test_evaluate_scores_a_stub_run(tmp_path):
     assert all(m["passed"] in (True, None) for m in data["metrics"])
     assert len(list((tmp_path / "reports").glob("*.json"))) == 5
     assert "| E1 | Valid analyses | 1.0 |" in (tmp_path / "evaluation.md").read_text("utf-8")
+
+
+def test_runner_records_its_settings_for_the_model_service(tmp_path):
+    out = tmp_path / "out.json"
+    evidence = AI1 / "packages" / "c1-fuzzers-low.json"
+    args = ["--evidence", str(evidence), "--output", str(out), "--backend", "stub", "--no-thinking"]
+    assert _tool("icd_analyze").main(args) == 0
+    output = HpcOutput.model_validate_json(out.read_text(encoding="utf-8"))
+    assert output.settings["no_thinking"] is True
+    assert output.settings["max_new_tokens"] == 4900

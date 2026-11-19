@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "package_id": "pkg-inc-639e41803da5d007-f8ac5d38a9cc",
+  "incident_id": "inc-639e41803da5d007",
+  "created_at": "2026-01-15T23:00:00Z",
+  "incident": {
+    "incident_type": "Backdoors",
+    "risk_score": 96,
+    "risk_level": "high",
+    "first_event_at": "2026-01-15T19:00:00Z",
+    "last_event_at": "2026-01-15T19:20:00Z",
+    "flagged_event_count": 2,
+    "context_event_count": 0,
+    "host_count": 1
+  },
+  "events": [
+    {
+      "event_id": "fx-038",
+      "timestamp": "2026-01-15T19:00:00Z",
+      "event_type": "web_exploit",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Exploits",
+      "host": "host-01",
+      "src_ip": null,
+      "dst_ip": null,
+      "user": null,
+      "summary": "Exploit attempt against host-01",
+      "source": "fx-038"
+    },
+    {
+      "event_id": "fx-039",
+      "timestamp": "2026-01-15T19:20:00Z",
+      "event_type": "process_start",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Backdoors",
+      "host": "host-01",
+      "src_ip": null,
+      "dst_ip": null,
+      "user": null,
+      "summary": "Backdoor started on host-01, 20 minutes after the exploit",
+      "source": "fx-039"
+    }
+  ],
+  "total_event_count": 2,
+  "truncated": false,
+  "masked": true
+}

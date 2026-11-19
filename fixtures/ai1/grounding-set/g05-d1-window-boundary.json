@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "package_id": "pkg-inc-3d7d05c66ac3f0eb-362de992c987",
+  "incident_id": "inc-3d7d05c66ac3f0eb",
+  "created_at": "2026-01-15T23:00:00Z",
+  "incident": {
+    "incident_type": "Generic",
+    "risk_score": 64,
+    "risk_level": "medium",
+    "first_event_at": "2026-01-15T15:00:00Z",
+    "last_event_at": "2026-01-15T15:15:00Z",
+    "flagged_event_count": 2,
+    "context_event_count": 0,
+    "host_count": 1
+  },
+  "events": [
+    {
+      "event_id": "fx-028",
+      "timestamp": "2026-01-15T15:00:00Z",
+      "event_type": "network_scan",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Reconnaissance",
+      "host": "host-01",
+      "src_ip": null,
+      "dst_ip": null,
+      "user": null,
+      "summary": "Scan seen on host-01",
+      "source": "fx-028"
+    },
+    {
+      "event_id": "fx-029",
+      "timestamp": "2026-01-15T15:15:00Z",
+      "event_type": "unknown",
+      "role": "flagged",
+      "label_status": "flagged",
+      "attack_type": "Generic",
+      "host": "host-01",
+      "src_ip": null,
+      "dst_ip": null,
+      "user": null,
+      "summary": "Generic attack seen on host-01 exactly 15 minutes later",
+      "source": "fx-029"
+    }
+  ],
+  "total_event_count": 2,
+  "truncated": false,
+  "masked": true
+}

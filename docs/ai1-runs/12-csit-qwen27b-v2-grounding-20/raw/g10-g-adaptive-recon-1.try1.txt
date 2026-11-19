@@ -1,0 +1,109 @@
+{
+ "output_version": "ai1-output-0.1",
+ "incident_id": "inc-882bf102f899227e",
+ "analysis_status": "complete",
+ "summary": {
+  "text": "A network scan was detected on host-01.",
+  "category": "evidence_supported",
+  "cited_event_ids": [
+   "fx-040"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "attack_type": {
+  "category": "reconnaissance",
+  "claim": {
+   "text": "The event is explicitly labeled as a network scan and categorized as Reconnaissance.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-040"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ },
+ "sequence": [
+  {
+   "text": "A network scan was observed on host-01.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-040"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "findings": [
+  {
+   "text": "A network scan was detected on host-01, which is a common precursor to further attacks.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-040"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "weaknesses": null,
+ "impact": null,
+ "recommendations": [
+  {
+   "action": "Investigate the source of the network scan on host-01 to determine if it is malicious or a legitimate internal scan.",
+   "rationale": "The event fx-040 indicates a network scan on host-01, which could be reconnaissance for a future attack.",
+   "cited_event_ids": [
+    "fx-040"
+   ],
+   "reversible_alternative": "Monitor host-01 for further suspicious activity without immediate intervention."
+  }
+ ],
+ "risk_justification": {
+  "text": "The risk score is low (29) because only a single reconnaissance event was detected, with no evidence of exploitation or data exfiltration.",
+  "category": "likely_interpretation",
+  "cited_event_ids": [
+    "fx-040"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  },
+ "uncertainties": [
+  {
+   "statement": "The source IP address of the scan is not provided in the event.",
+   "missing_evidence": "Network flow logs or firewall logs that record the source IP of the scan."
+  },
+  {
+   "statement": "It is unclear whether the scan was initiated by an external attacker or an internal authorized scanner.",
+   "missing_evidence": "Asset inventory or authorized scanner logs to cross-reference the scan activity."
+  }
+ ],
+ "limitations": [
+  "The analysis is based on a single event, which limits the ability to determine the full scope of the incident.",
+  "No context events are available to provide additional information about the host or network environment."
+ ],
+ "self_rating": 0.8
+}

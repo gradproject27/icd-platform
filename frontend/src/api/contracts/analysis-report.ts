@@ -37,6 +37,10 @@ export interface AnalysisReport {
    */
   generated_by: "mock" | "hpc" | "local";
   /**
+   * Supported and unsupported claim counts behind the confidence (R2, 1.3). null = not recorded (the mock, reports from before 1.3).
+   */
+  grounding?: GroundingCounts | null;
+  /**
    * Possible impact; null = not determined.
    */
   impact?: string | null;
@@ -105,6 +109,36 @@ export interface Finding {
    * The finding.
    */
   statement: string;
+}
+/**
+ * How many claims of the report the grounding check could tie to the evidence (R2, 1.3).
+ *
+ * A claim is one statement of the model's answer: the summary, the attack type, each sequence
+ * step, finding and weakness, the impact and the risk justification. Factual claims are the
+ * evidence_supported and likely_interpretation ones; a hypothesis is never counted as
+ * supported or unsupported. A factual claim is supported when every host, IP and user it
+ * names is in the events it cites, and unsupported otherwise (AI1 check U1).
+ *
+ * This interface was referenced by `AnalysisReport`'s JSON-Schema
+ * via the `definition` "GroundingCounts".
+ */
+export interface GroundingCounts {
+  /**
+   * All claims, hypotheses included.
+   */
+  claims: number;
+  /**
+   * evidence_supported + likely_interpretation.
+   */
+  factual_claims: number;
+  /**
+   * Factual claims whose cited events carry every entity they name.
+   */
+  grounded_factual_claims: number;
+  /**
+   * Factual claims that name an entity their cited events do not carry.
+   */
+  unsupported: number;
 }
 /**
  * One step of the possible sequence of events.
