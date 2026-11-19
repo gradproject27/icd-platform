@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f-no-entities-1",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-19T00:36:06.690056Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "The incident contains a single flagged event (fx-005) with no host, IP, user, or specific event type details, making it impossible to determine the nature of the activity or its impact.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "The specific nature of the activity associated with event fx-005 is unknown because the event type is 'unknown' and no host, IP, or user context is provided. (would be settled by: Detailed event logs including event type, source/destination IPs, hostnames, user identifiers, and payload or command-line details.) It is unclear if this event is part of a larger attack chain or an isolated anomaly. (would be settled by: Correlated events from the same time window involving the same infrastructure or users.) Limitations: The evidence package contains only one event with minimal metadata (no host, IP, user, or specific event type). Without context or additional events, no meaningful security analysis, sequence reconstruction, or impact assessment can be performed.",
+  "confidence": 0.0,
+  "model_self_rating": 0.1
+}

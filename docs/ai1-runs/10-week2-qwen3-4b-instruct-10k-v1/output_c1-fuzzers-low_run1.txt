@@ -1,0 +1,198 @@
+{
+  "analysis_status": "complete",
+  "findings": [
+    {
+      "category": "evidence_supported",
+      "text": "Malformed requests were sent to host-01 from ip-01 to ip-02 during fuzzing activity.",
+      "cited_event_ids": [
+        "fx-021"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "Additional malformed requests were sent to host-01 from ip-01 to ip-02 during fuzzing activity.",
+      "cited_event_ids": [
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "likely_interpretation",
+      "text": "The repeated fuzzing attempts on host-01 may indicate an automated probing behavior, possibly part of a broader reconnaissance phase.",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "hypothesis",
+      "text": "The remote login event at 13:14:30 by user-01 on host-01 may be a legitimate user action or a post-exploitation activity, but there is no evidence linking it to the fuzzing activity.",
+      "cited_event_ids": [
+        "fx-023"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "incident_id": "inc-852bbfaea14e44fb",
+  "limitations": [
+    "The remote login event (fx-023) is not flagged and does not show a connection to the fuzzing activity; without additional logs or context, it cannot be determined whether it is legitimate or part of an attack.",
+    "No user or process-level details are available to assess whether the fuzzing or login activity was authorized or part of a larger attack chain."
+  ],
+  "output_version": "ai1-output-0.1",
+  "recommendations": [
+    {
+      "action": "Investigate the source of the fuzzing activity (ip-01) to determine if it is a known threat actor or compromised device.",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "rationale": "The repeated malformed requests to host-01 suggest automated probing, which may indicate a scanning or reconnaissance activity by an external entity.",
+      "reversible_alternative": "Review the logs for known legitimate fuzzing tools or internal testing activities to confirm if the activity is authorized."
+    },
+    {
+      "action": "Verify the legitimacy of the remote login by user-01 on host-01 at 13:14:30.",
+      "cited_event_ids": [
+        "fx-023"
+      ],
+      "rationale": "The login event occurs after the fuzzing activity and may represent a legitimate user action or a potential post-exploitation step; confirmation of user context is needed.",
+      "reversible_alternative": "Check user-01's access history and authentication logs to determine if the login was part of normal operations."
+    }
+  ],
+  "summary": {
+    "category": "evidence_supported",
+    "text": "Malformed requests were observed from ip-01 to host-01 and ip-02 during a short period, indicating fuzzing activity.",
+    "cited_event_ids": [
+      "fx-021"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02"
+      ],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "missing_evidence": "Authentication logs for user-01 prior to the remote login event (fx-023) to determine if the login was legitimate or suspicious.",
+      "statement": "It is unclear whether the remote login by user-01 on host-01 at 13:14:30 is a legitimate user action or part of an attack sequence."
+    },
+    {
+      "missing_evidence": "Logs showing the source of ip-01 to determine if it is a known internal or external device, or a known threat actor.",
+      "statement": "The origin of the fuzzing activity from ip-01 is unknown and may indicate a compromised or malicious endpoint."
+    }
+  ],
+  "attack_type": {
+    "category": "Fuzzers",
+    "claim": {
+      "category": "evidence_supported",
+      "text": "The events show repeated fuzzing attempts to host-01 from ip-01 to ip-02, which matches the defined attack type 'Fuzzers'.",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "category": "evidence_supported",
+      "text": "At 13:00:00, malformed requests were sent to host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-021"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "evidence_supported",
+      "text": "At 13:05:00, additional malformed requests were sent to host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": []
+      }
+    },
+    {
+      "category": "hypothesis",
+      "text": "At 13:14:30, user-01 logged into host-01, which may follow the fuzzing activity as a potential post-exploitation step or legitimate access.",
+      "cited_event_ids": [
+        "fx-023"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null
+  }

@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-a-multistep-high-1",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-a4c4446ebbc7",
+  "generated_at": "2026-11-19T00:44:34.629810Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "An external actor (ip-01) performed reconnaissance on host-01, exploited an application to establish a reverse shell, and subsequently moved laterally to host-02 and host-03, installing persistent services on both.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "External IP ip-01 initiated a port scan against host-01.",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "External IP ip-01 performed a service version probe on host-01.",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "An exploit request was sent to host-01 from ip-01, associated with user-01.",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "A reverse shell was established from host-01 back to the external address ip-01.",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "Lateral movement occurred as user-01 was used from host-01 to access host-02.",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "Privileged account user-02 was used on host-02, originating from host-01.",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "A new service was installed on host-02 by user-02.",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "A new service was installed on host-03 by user-02.",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Reconnaissance activity (port scan and service probe) was detected from external IP ip-01 against host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "A reverse shell was established on host-01, indicating active remote control by the attacker.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "Lateral movement was observed from host-01 to host-02 using user-01 and subsequently user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "Persistence was established via the installation of new services on host-02 and host-03 by user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "Hosts host-01, host-02, and host-03 are compromised. Host-01 has an active reverse shell, and host-02 and host-03 have unauthorized services installed, indicating persistent access.",
+  "recommendations": [
+    "Isolate host-01, host-02, and host-03 from the network to prevent further lateral movement and data exfiltration. Why: Events fx-008, fx-012, and fx-013 confirm active backdoors and persistence on these hosts. Less disruptive option: Temporarily restrict network access to only essential management interfaces while investigating, allowing for potential recovery without full isolation if false positive is confirmed.",
+    "Disable or reset credentials for user-01 and user-02, as they were used in the attack chain. Why: Events fx-007, fx-008, fx-009, fx-010, fx-012, and fx-013 show these accounts were leveraged for exploitation, lateral movement, and persistence. Less disruptive option: Temporarily lock the accounts and force password resets after verifying the scope of compromise.",
+    "Investigate and remove the newly installed services on host-02 and host-03. Why: Events fx-012 and fx-013 indicate unauthorized service installations which likely serve as backdoors. Less disruptive option: Quarantine the service binaries and disable the services before deletion to allow forensic analysis.",
+    "Block external IP ip-01 at the perimeter firewall. Why: Events fx-002, fx-004, and fx-007 show ip-01 initiated the reconnaissance and exploitation. Less disruptive option: Log and monitor traffic from ip-01 if blocking is not immediately feasible due to shared infrastructure concerns."
+  ],
+  "risk_justification": "The risk score of 100 (high) is justified by the confirmed compromise of multiple hosts (host-01, host-02, host-03), the establishment of persistent backdoors (reverse shell and services), and successful lateral movement using privileged accounts.",
+  "uncertainty": "The specific vulnerability exploited on host-01 is not identified in the events. (would be settled by: Web application logs or vulnerability scan results detailing the specific CVE or exploit mechanism used in fx-007.) It is unclear if user-01 and user-02 are legitimate users whose credentials were stolen or if they are attacker-controlled accounts. (would be settled by: Identity and access management logs showing the origin of the authentication for user-01 and user-02, and any prior anomalous login attempts.) The purpose of the file access on host-03 by user-02 (fx-014) is unknown, as it is unlabelled. (would be settled by: File system audit logs or data loss prevention (DLP) logs to determine if sensitive data was accessed or exfiltrated.) Limitations: The analysis is based solely on the provided event package and does not include full forensic disk images or memory dumps. The specific payloads or binaries used for the backdoors are not detailed in the events. The full scope of data exfiltration or other post-exploitation activities beyond the listed events is not visible.",
+  "confidence": 0.9333,
+  "model_self_rating": 0.9
+}

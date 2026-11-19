@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-c2-dos-medium-1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-2702f9ec52b8",
+  "generated_at": "2026-11-19T00:34:25.596472Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A denial-of-service attack was observed on host-01 from ip-01 to ip-02, occurring twice between 13:24:00Z and 13:30:00Z.",
+  "attack_type": "DoS",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "At 13:16:00Z, user-01 logged into host-02.",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "At 13:24:00Z, a denial-of-service flood occurred on host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "At 13:30:00Z, a second denial-of-service flood occurred on host-01 from ip-01 to ip-02.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A denial-of-service flood occurred on host-01 from ip-01 to ip-02 at 13:24:00Z.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "statement": "A second denial-of-service flood occurred on host-01 from ip-01 to ip-02 at 13:30:00Z.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    },
+    {
+      "statement": "The remote login event on host-02 at 13:16:00Z may have been a precursor to the DoS attacks on host-01, as user-01 was active on both systems.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-024"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate whether user-01 had legitimate access to both host-01 and host-02 and whether their activity on host-02 preceded the DoS attacks on host-01. Why: The remote login on host-02 at 13:16:00Z occurred before the first DoS attack on host-01 at 13:24:00Z, and user-01 was active on both systems, suggesting a possible correlation. Less disruptive option: Review user-01's access logs on both hosts without blocking their accounts or services.",
+    "Verify if ip-01 is a known legitimate or compromised endpoint by checking its historical access patterns and associated user activity. Why: Both DoS attacks originated from the same source IP (ip-01), which may indicate a compromised device or a botnet. Less disruptive option: Temporarily block ip-01 only for host-01 and monitor for changes in traffic patterns before applying broader restrictions."
+  ],
+  "risk_justification": null,
+  "uncertainty": "It is not known whether the DoS attacks actually caused service disruption or were merely high-volume requests. (would be settled by: Access logs or system performance metrics from host-01 during the attack period to confirm service degradation or outages.) It is not known whether user-01 had legitimate access rights to initiate or be involved in the DoS attacks. (would be settled by: A log entry showing whether user-01 was authenticated or authorized to perform actions on host-01 or host-02 at the time of the attacks.) It is not known whether the source of the DoS attacks is a compromised device or a known threat actor. (would be settled by: A log entry showing whether ip-01 is a known malicious IP or part of a botnet.) Limitations: The events do not show whether the DoS attacks were part of a larger attack chain or whether they were triggered by a specific vulnerability or exploit. The login event on host-02 is not linked to the DoS attacks on host-01 in any technical or temporal sequence, so the connection remains speculative. No logs from host-01 or host-02 show system performance, error rates, or service availability during the attack period, so the actual impact is not measurable.",
+  "confidence": 0.875,
+  "model_self_rating": null
+}

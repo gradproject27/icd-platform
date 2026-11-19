@@ -1,0 +1,232 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Two request flood events were flagged against host-01 from ip-01 to ip-02, occurring while user-01 was logged on. A context event shows user-01 logging on to host-02 shortly before the first flood.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026",
+      "fx-024"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "attack_type": {
+    "category": "DoS",
+    "claim": {
+      "text": "The incident is classified as a Denial of Service (DoS) attack, specifically a request flood, as indicated by the event types and labels in the flagged events.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "user-01 logged on to host-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-024"
+      ],
+      "entities": {
+        "hosts": [
+          "host-02"
+        ],
+        "ips": [],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "A request flood was detected against host-01 from ip-01 to ip-02 while user-01 was logged on.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "A second request flood was detected against host-01 from ip-01 to ip-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "Two distinct request flood events were flagged against host-01 within a 6-minute window.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    },
+    {
+      "text": "The floods originated from ip-01 and targeted ip-02 on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01",
+          "ip-02"
+        ],
+        "users": [
+          "user-01"
+        ]
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": {
+    "text": "host-01 was subjected to two request floods, which may have caused service degradation or unavailability.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "action": "Investigate the source IP ip-01 to determine if it is a known malicious actor or a compromised internal host.",
+      "rationale": "Both flood events originate from ip-01, making it the primary source of the DoS activity.",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ],
+      "reversible_alternative": "Temporarily rate-limit traffic from ip-01 to host-01 to mitigate the flood while investigation continues."
+    },
+    {
+      "action": "Review the activity of user-01 on host-02 and host-01 to determine if the user is involved in the attack or if their credentials were compromised.",
+      "rationale": "user-01 is logged on during the flood events and has a recent login on host-02, which may indicate lateral movement or credential misuse.",
+      "cited_event_ids": [
+        "fx-024",
+        "fx-025",
+        "fx-026"
+      ],
+      "reversible_alternative": "Temporarily disable user-01's account or force a password reset to prevent further potential misuse."
+    }
+  ],
+  "risk_justification": {
+    "text": "The risk score of 57 (medium) is justified by the repeated DoS activity against host-01, which could impact service availability, and the involvement of a user account that may indicate insider threat or credential compromise.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-025",
+      "fx-026",
+      "fx-024"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01",
+        "host-02"
+      ],
+      "ips": [
+        "ip-01",
+        "ip-02"
+      ],
+      "users": [
+        "user-01"
+      ]
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "It is unclear whether user-01 is the attacker, a victim of credential compromise, or an innocent user whose session was coincidental.",
+      "missing_evidence": "Detailed authentication logs, session correlation data, and user behavior analytics for user-01 on both host-01 and host-02."
+    },
+    {
+      "statement": "The exact nature of the service on host-01 that was targeted by the flood is not specified.",
+      "missing_evidence": "Network flow data or application logs from host-01 to identify the specific service or port targeted."
+    },
+    {
+      "statement": "Whether the flood caused actual service disruption or data loss is not confirmed.",
+      "missing_evidence": "System performance metrics, application error logs, or user reports of service unavailability during the incident window."
+    }
+  ],
+  "limitations": [
+    "The analysis is based on a limited set of events (3 total) and may not capture the full scope of the incident.",
+    "The context event (fx-024) is unflagged and may not be directly related to the DoS attack, but its inclusion suggests a potential link that requires further investigation.",
+    "No information is provided about the duration of the floods, the volume of requests, or the specific impact on host-01's services."
+  ],
+  "self_rating": 0.8
+}

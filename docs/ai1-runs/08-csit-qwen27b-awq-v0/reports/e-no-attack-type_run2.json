@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-e-no-attack-type-2",
+  "incident_id": "inc-109bc3e364d7973c",
+  "evidence_package_id": "pkg-inc-109bc3e364d7973c-cb2ccee68c8d",
+  "generated_at": "2026-11-19T00:35:34.900715Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v0",
+  "summary": "A single flagged event (fx-032) was recorded on host-01 involving a connection from ip-01 to ip-02, but the event type is unknown and no specific attack behavior is described.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "The specific nature of the activity in event fx-032 is unknown because the event_type is 'unknown' and the summary provides no details about the action taken. (would be settled by: Detailed log fields such as process names, file paths, network protocols, or specific application logs associated with the connection between ip-01 and ip-02 on host-01.) It is unclear whether the connection from ip-01 to ip-02 was initiated by a user or a service, as the user field is null. (would be settled by: Authentication logs or session logs that link the network activity to a specific user account or service account.) Limitations: The analysis is limited to a single event with an 'unknown' type, which prevents determination of attack type, sequence, or impact. No context events are available to correlate the flagged event with other activity on the host or network.",
+  "confidence": 0.0,
+  "model_self_rating": 0.1
+}

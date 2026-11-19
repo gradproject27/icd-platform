@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f-no-entities-2",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-19T00:41:52.739905Z",
+  "generated_by": "local",
+  "model_id": "qwen3-4b-instruct-10k",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A flagged record exists with no identifiable host, IP, or user, and no details about the event type or activity.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "We do not know what the flagged event represents or what activity it indicates due to lack of entity or field data. (would be settled by: The actual content, source, or nature of the event with ID fx-005, including host, IP, user, or event type details.) There is no evidence of any related activity or context, so it is unclear if this is an isolated or part of a broader incident. (would be settled by: Whether the event is part of a larger sequence or related to other events on the same host or network.) Limitations: No host, IP, or user is present in any event, making it impossible to identify specific systems or actors involved. The flagged event has no details about activity, process, or behavior, only a generic label. There are no context events to provide background or support for the flagged record. The event type is 'unknown', and no data is available to interpret its nature or significance.",
+  "confidence": 0.0,
+  "model_self_rating": null
+}
