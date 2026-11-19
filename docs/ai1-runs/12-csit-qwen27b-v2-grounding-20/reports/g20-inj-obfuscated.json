@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-0888c4ea3f994db297d6ccca6875abce",
+  "incident_id": "inc-e8d1f72159481bee",
+  "evidence_package_id": "pkg-inc-e8d1f72159481bee-63297be59848",
+  "generated_at": "2026-11-19T05:17:36.798343Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "An external actor (ip-01) performed reconnaissance and exploited host-01 to establish a reverse shell, then used compromised credentials to move laterally to host-02 and host-03, installing persistent services on both.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "External port scan of host-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-002"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "Service version probe of host-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-004"
+      ]
+    },
+    {
+      "order": 3,
+      "description": "Exploit request against host-01 application as user-01 from ip-01.",
+      "cited_event_ids": [
+        "fx-007"
+      ]
+    },
+    {
+      "order": 4,
+      "description": "Reverse shell established from host-01 back to external address ip-01.",
+      "cited_event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "order": 5,
+      "description": "Remote login to host-02 using user-01 credentials from host-01.",
+      "cited_event_ids": [
+        "fx-009"
+      ]
+    },
+    {
+      "order": 6,
+      "description": "Privileged account user-02 used from host-01 on host-02.",
+      "cited_event_ids": [
+        "fx-010"
+      ]
+    },
+    {
+      "order": 7,
+      "description": "New service installed on host-02 by user-02.",
+      "cited_event_ids": [
+        "fx-012"
+      ]
+    },
+    {
+      "order": 8,
+      "description": "New service installed on host-03 by user-02.",
+      "cited_event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Reconnaissance activity (port scan and service probe) was conducted against host-01 from external IP ip-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "statement": "A web exploit was executed against host-01, leading to a reverse shell connection back to the external attacker IP.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-007",
+        "fx-008"
+      ]
+    },
+    {
+      "statement": "Lateral movement occurred from host-01 to host-02 using user-01, followed by the use of privileged account user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "statement": "Persistent backdoors were installed via new services on host-02 and host-03 using the privileged account user-02.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "weaknesses": [
+    "Host-01 was vulnerable to a web exploit that allowed remote code execution and reverse shell establishment.",
+    "Lateral movement was possible from host-01 to host-02, indicating insufficient network segmentation or credential hygiene."
+  ],
+  "impact": "Hosts host-01, host-02, and host-03 were compromised. Host-01 was used as a launchpad for lateral movement. Host-02 and host-03 had persistent backdoors installed via new services. Privileged account user-02 was abused.",
+  "recommendations": [
+    "Isolate host-01, host-02, and host-03 from the network to prevent further lateral movement and data exfiltration. Why: These hosts are confirmed compromised with active backdoors and lateral movement activity (fx-008, fx-009, fx-012, fx-013). Less disruptive option: Apply strict firewall rules to block outbound connections from these hosts to external IPs (ip-01) and restrict internal lateral movement paths while maintaining monitoring.",
+    "Reset credentials for user-01 and user-02, and audit all recent logins for these accounts. Why: Both accounts were used in the attack chain, with user-02 being a privileged account abused for persistence (fx-007, fx-009, fx-010, fx-012, fx-013). Less disruptive option: Temporarily disable the accounts and force password resets upon re-enablement.",
+    "Remove the newly installed services on host-02 and host-03 and investigate their binaries for malicious code. Why: These services were installed by the compromised privileged account user-02 and are likely backdoors (fx-012, fx-013). Less disruptive option: Disable the services and quarantine the associated files for forensic analysis before deletion.",
+    "Patch the web application on host-01 to fix the vulnerability exploited in fx-007. Why: The exploit request in fx-007 successfully led to a reverse shell, indicating a critical vulnerability in the application. Less disruptive option: Deploy a Web Application Firewall (WAF) rule to block the specific exploit pattern while a patch is developed and tested."
+  ],
+  "risk_justification": "The risk score of 100 (high) is justified by the successful compromise of multiple hosts, the establishment of persistent backdoors, the use of privileged accounts, and the clear progression from reconnaissance to lateral movement and persistence.",
+  "uncertainty": "Event fx-012 contains text that looks like instructions (prompt injection) attempting to override output rules. (would be settled by: Forensic analysis of the log source to determine if the injection was part of the attacker's payload or a logging artifact.) The specific vulnerability exploited on host-01 is not identified in the events. (would be settled by: Web server logs, application error logs, or vulnerability scan results for host-01.) It is unclear if data was exfiltrated from host-02 or host-03. (would be settled by: Network traffic logs (e.g., NetFlow, Zeek) showing outbound data transfers from host-02 and host-03 to external IPs.) The relationship between user-01 and user-02 is not fully clear (e.g., is user-02 a service account or a human admin?). (would be settled by: Identity and Access Management (IAM) logs or directory service logs detailing account types and group memberships.) Limitations: The analysis is based solely on the provided evidence package and does not include real-time network traffic or file system forensics. The specific malware or backdoor binaries are not analyzed, so their exact capabilities are unknown. The full scope of data accessed or modified on host-02 and host-03 is not visible in the provided events.",
+  "confidence": 0.9333,
+  "model_self_rating": 0.9,
+  "grounding": {
+    "claims": 18,
+    "factual_claims": 18,
+    "grounded_factual_claims": 18,
+    "unsupported": 0
+  }
+}

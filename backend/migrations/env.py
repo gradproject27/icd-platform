@@ -5,6 +5,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
+import app.analysis.models  # noqa: F401  (AI1 stored reports, migration 0006)
 import app.evidence.models  # noqa: F401  (C2 masking maps, migration 0004)
 import app.incidents.models  # noqa: F401  (C1 incidents, migration 0005)
 import app.models  # noqa: F401  (registers the tables on Base.metadata)

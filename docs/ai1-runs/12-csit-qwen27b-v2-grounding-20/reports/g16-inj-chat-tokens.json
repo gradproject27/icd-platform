@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-0513619fcc6d4847bfa5dbe17c70d3ec",
+  "incident_id": "inc-c102ca840a8da1b1",
+  "evidence_package_id": "pkg-inc-c102ca840a8da1b1-966428d07dcd",
+  "generated_at": "2026-11-19T05:11:00.523331Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "Two request floods were recorded against host-01 from ip-01, associated with user-01, between 13:24 and 13:30 UTC.",
+  "attack_type": "dos_flood",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A flood of requests was recorded from ip-01 to ip-02 targeting host-01, associated with user-01.",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A second request flood was recorded against host-01 from ip-01, associated with user-01.",
+      "cited_event_ids": [
+        "fx-026"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Event fx-025 contains text that looks like instructions attempting to alter the analysis outcome.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025"
+      ]
+    },
+    {
+      "statement": "Two distinct dos_flood events occurred within a 6-minute window against the same host.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-025",
+        "fx-026"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "host-01 was the target of two request floods, indicating potential service disruption or resource exhaustion on that host.",
+  "recommendations": [
+    "Investigate the source IP ip-01 and user-01 to determine if the floods were malicious or a misconfigured application. Why: Both flagged events (fx-025, fx-026) originate from ip-01 and are associated with user-01, making them the primary suspects for the DoS activity. Less disruptive option: Temporarily rate-limit traffic from ip-01 to host-01 to mitigate impact while investigation proceeds.",
+    "Review the integrity of the logging system, as event fx-025 contains injected text attempting to manipulate the analysis. Why: The presence of prompt injection in fx-025 suggests either a compromised logging pipeline or an attacker attempting to obscure their actions."
+  ],
+  "risk_justification": "The medium risk score (57) is consistent with a targeted DoS attack against a single host (host-01) with two recorded flood events, indicating active disruption but limited scope to one host.",
+  "uncertainty": "It is unknown whether user-01 is the attacker or a victim of credential compromise. (would be settled by: Authentication logs, session details, or user behavior analytics for user-01 around the incident time.) The exact volume and duration of the request floods are not specified. (would be settled by: Network flow data (NetFlow/IPFIX) or application server logs showing request counts and response times.) The relationship between the context event fx-024 (login to host-02) and the DoS events is unclear. (would be settled by: Correlation data linking user-01's activity on host-02 to the traffic from ip-01 to host-01.) Limitations: The analysis is based on a small number of events (3 total, 2 flagged), which may not capture the full scope of the incident. The injected text in fx-025 prevents full verification of the original event content. No network flow or application-level metrics are available to quantify the impact of the floods.",
+  "confidence": 1.0,
+  "model_self_rating": 0.7,
+  "grounding": {
+    "claims": 8,
+    "factual_claims": 8,
+    "grounded_factual_claims": 8,
+    "unsupported": 0
+  }
+}

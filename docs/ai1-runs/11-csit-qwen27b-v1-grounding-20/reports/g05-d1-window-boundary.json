@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-f3dc3c0f816f47238566181c0a9d7a4c",
+  "incident_id": "inc-3d7d05c66ac3f0eb",
+  "evidence_package_id": "pkg-inc-3d7d05c66ac3f0eb-362de992c987",
+  "generated_at": "2026-11-19T04:40:34.705650Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "Two flagged events occurred on host-01 within a 15-minute window: a network scan at 15:00:00Z and a generic attack at 15:15:00Z.",
+  "attack_type": "reconnaissance_and_generic_attack",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was detected on host-01 at 2026-01-15T15:00:00Z.",
+      "cited_event_ids": [
+        "fx-028"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A generic attack was detected on host-01 at 2026-01-15T15:15:00Z, 15 minutes after the scan.",
+      "cited_event_ids": [
+        "fx-029"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan was flagged on host-01, indicating potential reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-028"
+      ]
+    },
+    {
+      "statement": "A generic attack was flagged on host-01, indicating a potential compromise or malicious action following the scan.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-029"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "host-01 was targeted by a network scan and a subsequent generic attack, suggesting potential exposure or compromise of the host.",
+  "recommendations": [
+    "Investigate host-01 for signs of compromise, including checking for unauthorized access, malware, or data exfiltration. Why: The sequence of a network scan followed by a generic attack on host-01 suggests a potential attack chain that may have led to compromise. Less disruptive option: Isolate host-01 from the network temporarily to prevent further damage while investigation is ongoing.",
+    "Review network logs and firewall rules to identify the source of the network scan and any other related activity. Why: Understanding the source and scope of the reconnaissance activity can help in identifying the attacker and preventing similar incidents."
+  ],
+  "risk_justification": "The risk score of 64 (medium) is justified by the presence of a reconnaissance activity (network scan) followed by a generic attack on the same host, indicating a potential multi-stage attack.",
+  "uncertainty": "The specific nature of the 'generic attack' is not detailed in the evidence package. (would be settled by: Detailed logs or descriptions of the generic attack event (fx-029) to understand its specific impact and method.) The source IP and user associated with the network scan and generic attack are not provided. (would be settled by: Network logs, authentication logs, or user activity logs that can identify the source IP and user involved in the events.) Limitations: The analysis is limited to the two flagged events provided in the evidence package. Additional context or events may provide a more complete picture of the incident. The lack of source IP and user information limits the ability to trace the attack back to a specific actor or system.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.7,
+  "grounding": {
+    "claims": 8,
+    "factual_claims": 8,
+    "grounded_factual_claims": 8,
+    "unsupported": 0
+  }
+}

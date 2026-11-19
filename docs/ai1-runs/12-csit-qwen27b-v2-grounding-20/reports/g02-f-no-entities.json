@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-4ae7b11fe59a4e85bce4e7d8c08a9453",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-19T04:58:52.483597Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "The incident contains a single flagged event with no host, IP, user, or specific activity details, making it impossible to determine the nature of the security incident.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "The specific type of security event or attack is unknown because the event summary is generic and lacks technical details. (would be settled by: Detailed event logs including event type, source/destination IPs, user accounts, and specific action descriptions.) It is unknown which systems, users, or data were involved in the incident. (would be settled by: Hostnames, IP addresses, and user identifiers associated with the flagged activity.) Limitations: The evidence package contains only one event with no identifying attributes (host, IP, user) or specific activity description. No context events are available to correlate the flagged event with other activities.",
+  "confidence": 0.0,
+  "model_self_rating": 0.1,
+  "grounding": {
+    "claims": 1,
+    "factual_claims": 1,
+    "grounded_factual_claims": 1,
+    "unsupported": 0
+  }
+}

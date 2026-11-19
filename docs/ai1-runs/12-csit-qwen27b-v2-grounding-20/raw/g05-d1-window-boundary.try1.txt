@@ -1,0 +1,100 @@
+{
+ "output_version": "ai1-output-0.1",
+ "incident_id": "inc-3d7d05c66ac3f0eb",
+ "analysis_status": "insufficient_evidence",
+ "summary": {
+  "text": "Two flagged events were recorded on host-01: a network scan at 15:00:00Z and a generic attack at 15:15:00Z. The events lack source/destination IPs, users, and specific technical details, making it impossible to determine the attack vector or impact.",
+  "category": "evidence_supported",
+  "cited_event_ids": [
+   "fx-028",
+   "fx-029"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "attack_type": null,
+ "sequence": null,
+ "findings": [
+  {
+   "text": "A network scan was detected on host-01 at 2026-01-15T15:00:00Z.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-028"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  },
+  {
+   "text": "A generic attack was detected on host-01 at 2026-01-15T15:15:00Z, 15 minutes after the scan.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-029"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "weaknesses": null,
+ "impact": null,
+ "recommendations": [
+  {
+   "action": "Investigate host-01 for signs of compromise, specifically looking for processes or network connections that correlate with the 15:00:00Z scan and 15:15:00Z attack.",
+   "rationale": "The events fx-028 and fx-029 indicate suspicious activity on host-01, but the lack of detail prevents automated mitigation. Manual investigation is required to determine if the host was compromised.",
+   "cited_event_ids": [
+    "fx-028",
+    "fx-029"
+   ],
+   "reversible_alternative": "Isolate host-01 from the network temporarily to prevent potential lateral movement while investigation proceeds."
+  }
+ ],
+ "risk_justification": {
+  "text": "The risk score of 64 (medium) is assigned due to the presence of two flagged events indicating reconnaissance and a subsequent generic attack on a single host, though the lack of specific details limits the precision of the risk assessment.",
+  "category": "likely_interpretation",
+  "cited_event_ids": [
+   "fx-028",
+   "fx-029"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "uncertainties": [
+  {
+   "statement": "The source IP address of the network scan and the generic attack is unknown.",
+   "missing_evidence": "Network flow logs or firewall logs with source/destination IP fields for host-01 during the incident window."
+  },
+  {
+   "statement": "The specific nature of the 'generic attack' in event fx-029 is unknown.",
+   "missing_evidence": "Detailed event payload, process creation logs, or application logs from host-01 at 15:15:00Z."
+  },
+  {
+   "statement": "It is unknown if the scan and the attack are related or if the attack was successful.",
+   "missing_evidence": "Correlation data between the scan and subsequent activity, and integrity checks or file access logs on host-01."
+  }
+ ],
+ "limitations": [
+  "The evidence package contains only two high-level events with no technical details (IPs, users, file paths, process names).",
+  "The event type for fx-029 is 'unknown', preventing specific classification of the attack technique.",
+  "No context events are provided to establish baseline behavior or confirm the scope of the incident."
+ ],
+ "self_rating": 0.3
+}

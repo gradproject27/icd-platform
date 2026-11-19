@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-e34862c1bccd4c99b545382e5f96f126",
+  "incident_id": "inc-80e5ee764d0493d0",
+  "evidence_package_id": "pkg-inc-80e5ee764d0493d0-d791696da7e4",
+  "generated_at": "2026-11-19T05:05:28.850168Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "A network scan was detected on host-01 at 2026-01-15T20:20:00Z, labeled as reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was performed on host-01.",
+      "cited_event_ids": [
+        "fx-043"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan event was flagged on host-01, indicating potential reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-043"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious. Why: The event fx-043 indicates a network scan, which is a common precursor to attacks. Determining the source helps assess the threat level. Less disruptive option: Monitor host-01 for further suspicious activity without immediate blocking to avoid disrupting legitimate traffic."
+  ],
+  "risk_justification": "The risk score of 30 (low) is consistent with a single reconnaissance event without evidence of exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP of the scan.) It is unclear if the scan was part of a larger attack campaign or an isolated event. (would be settled by: Historical scan logs for host-01 and correlation with other incidents.) Limitations: The analysis is based on a single event with limited details (no source IP, no user context). No context events were provided to correlate the scan with other activities.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-905af2d00b9a40739e42e653a93340d9",
+  "incident_id": "inc-43ea5e3e3693024c",
+  "evidence_package_id": "pkg-inc-43ea5e3e3693024c-98f2423c9959",
+  "generated_at": "2026-11-19T04:38:09.187487Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "The incident contains a single flagged event (fx-005) with no host, IP, user, or specific event type details, making it impossible to determine the nature, scope, or impact of the security incident.",
+  "attack_type": null,
+  "sequence": null,
+  "findings": [],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [],
+  "risk_justification": null,
+  "uncertainty": "The specific type of security event or attack is unknown because the event type is listed as 'unknown' and no descriptive details are provided. (would be settled by: Detailed event logs, raw payload data, or specific event type classifications for fx-005.) The affected systems, network locations, or users are unknown because the host, source IP, destination IP, and user fields are all null. (would be settled by: Network flow logs, host inventory data, or authentication logs that can correlate the event to specific assets or identities.) Limitations: The analysis is limited to the single provided event which lacks all contextual identifiers (host, IP, user). No context events were provided to help establish a timeline or correlate the flagged event with other activity.",
+  "confidence": 0.0,
+  "model_self_rating": 0.1,
+  "grounding": {
+    "claims": 1,
+    "factual_claims": 1,
+    "grounded_factual_claims": 1,
+    "unsupported": 0
+  }
+}

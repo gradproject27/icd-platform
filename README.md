@@ -13,18 +13,17 @@ Week 1 is done. This is what is on `main`:
 | C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
 | C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
 | C5 | The response workflow specification and the authentication approach and threat model |
-| AI1 | Analysis layer for real LLM output: LLM output v0, prompts v0 and v1, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). Local run of the five incidents (14 Nov 2026, `docs/ai1-runs/` runs 6 and 7): Qwen3-4B-Instruct 15 of 15 valid with nothing invented, llama3.2 3B 12 of 15, no wrong freeze decision from either; 27 real reports. Faculty cluster (19 Nov 2026, `docs/ai1-runs/` runs 8 to 10): HPC checks done on the CSIT Compute Pool; its 27B model service gave 36 of 36 valid analyses with every metric met (46 s median, so 30 s is met only for one-event incidents); prompt v1 (context events and attack names) is now the default. The model's source and licence are asked of the cluster admin |
+| AI1 | Analysis layer for real LLM output: LLM output v0, prompts v0 and v1, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). Local run of the five incidents (14 Nov 2026, `docs/ai1-runs/` runs 6 and 7): Qwen3-4B-Instruct 15 of 15 valid with nothing invented, llama3.2 3B 12 of 15, no wrong freeze decision from either; 27 real reports. Faculty cluster (19 Nov 2026, `docs/ai1-runs/` runs 8 to 10): HPC checks done on the CSIT Compute Pool; its 27B model service gave 36 of 36 valid analyses with every metric met (46 s median, so 30 s is met only for one-event incidents); prompt v1 (context events and attack names). The model's source and licence are asked of the cluster admin. Week 3 ([docs/ai1-week3-analysis.md](docs/ai1-week3-analysis.md)): prompt v2 (the five report parts, prompt-injection hardening) is the default; the analysis service with one schema retry, `stub` and `openai_http` backends and `analyze_incident` for C1's job; a failed analysis never freezes; grounding counts in every report (contracts 1.3, R2); a 20-incident grounding-validation set with 7 injection cases and its tool; the SHA-256 report cache and stored reports (`analysis_reports`, migration 0006); the runbook for C2 ([docs/ai1-runbook.md](docs/ai1-runbook.md)). Re-checking the 81 recorded real answers: the 27B model with prompt v1 had 138 of 138 factual claims supported |
 
 C4 so far: the upload page (#20), the incident list (#22) and the pending decision panel (#23), and in Step 8 the incident detail, the AI report panel, and all incident pages on the real API (see [Frontend](#frontend)).
 
 Not built yet:
 
 - dataset parsers beyond UNSW-NB15 (C2: Precinct6 and OTRF in Week 3);
-- the HPC and local LLM backends of analysis jobs (C1 next PR, AI1);
+- the analysis job that calls `app.analysis.store.analyze_incident` after each new incident (C1, Step 5); the backends exist (AI1);
 - the correlation engine and risk-score code (C3, Week 2);
-- real LLM backends (AI1); only `mock` exists;
 - the wiring that registers stored incidents with the response engine and runs their analysis, so real incidents stay `new` with no response window yet; the incident, window and decision endpoints and the WebSocket exist ([docs/api-incidents.md](docs/api-incidents.md));
-- AI report storage (C1, AI1); `GET /incidents/{id}/report` answers 404 `report_not_available`;
+- reading stored reports in the API: reports are stored (`analysis_reports`, AI1), but `GET /incidents/{id}/report` still answers 404 `report_not_available` until it calls `latest_report` (C4/C1);
 - the dashboard's login screen; it is still a shell (C5, T2-15);
 - authentication (C5, Week 3); until then decisions are made as the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE`.
 
@@ -71,13 +70,13 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **826 passed, 113 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **939 passed**.
+Expected result without a database: **874 passed, 120 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **994 passed**.
 
 The tests cover:
 
 - the health check, with the database reachable and unreachable;
 - the LLM mock: schema-valid output, citations limited to the input event IDs, deterministic output;
-- the AI1 analysis layer: a good sample output becomes a valid report, 15 broken outputs each fail for the intended check (including a different risk score or level), confidence, mapping, prompts v0 and v1 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server, the prompt version and thinking setting); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script;
+- the AI1 analysis layer: a good sample output becomes a valid report, 15 broken outputs each fail for the intended check (including a different risk score or level), confidence, mapping, prompts v0 to v2 and the benchmark harness (stub backend, flagged-event coverage, the request it sends to an OpenAI-compatible server, the prompt version and thinking setting); Week 2: the five test packages are current, every reference answer meets its expectations, the HPC output file and runner, the Incident fields C5 reads, the metrics and the evaluation script; Week 3: prompt v2 and its markup removal, the schema retry and failed analyses (none freezes), grounding counts, the 20-package grounding set, the report cache (memory, file and database), the model backends against a local test server, the runbook command and the re-check of recorded cluster answers;
 - every contract, with valid payloads and with invalid payloads that must be rejected;
 - schema drift: the committed JSON Schemas must match the models, and the examples must match the schemas;
 - the dataset label mapping (`contracts/label-mapping.json`): every value maps to a valid `EventLabel` status, and every source is in the licence register;
@@ -236,7 +235,7 @@ The response engine (C5, `backend/app/response/`) decides when an incident freez
 
 The schema is managed by [Alembic](https://alembic.sqlalchemy.org/) in `backend/migrations`. The URL always comes from `DATABASE_URL`; it is never written in `alembic.ini`. The `api` container runs `alembic upgrade head` before it starts uvicorn, so `docker compose up` always brings the schema up to date.
 
-Revision `0001` is the empty baseline, `0002` adds uploads, jobs, stored events and quarantined records (C1), and `0003` adds the response engine's tables: lifecycle state, status history, response windows, simulated actions and the append-only audit trail (C5), `0004` adds C2's masking maps, and `0005` adds stored incidents and their event links (C1, [docs/incident-storage.md](docs/incident-storage.md)).
+Revision `0001` is the empty baseline, `0002` adds uploads, jobs, stored events and quarantined records (C1), and `0003` adds the response engine's tables: lifecycle state, status history, response windows, simulated actions and the append-only audit trail (C5), `0004` adds C2's masking maps, `0005` adds stored incidents and their event links (C1, [docs/incident-storage.md](docs/incident-storage.md)), and `0006` adds the stored AI reports, which are also the report cache (AI1, [docs/ai1-week3-analysis.md](docs/ai1-week3-analysis.md) section 8).
 
 Add ORM models as subclasses of `app.db.Base`, then create a revision:
 
@@ -263,8 +262,10 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/wireframes.md](docs/wireframes.md) | C4 | T1-12 | Low-fidelity dashboard wireframes: every screen with its loading, empty and error states, the SIMULATED badge rule |
 | [docs/countdown-prototype.md](docs/countdown-prototype.md) | C4 | T1-11 | Server-driven countdown prototype: offset maths, test server, accuracy results, what the real backend must provide |
 | [docs/ai1-analysis-design.md](docs/ai1-analysis-design.md) | AI1 | T1-09 | AI analysis design: HPC feasibility, batch vs. service, model pinning and licence, run record, LLM output v0 mapping, answers to the T1-09 review questions, valid analysis and confidence, prompt v0, validation |
-| [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe and model benchmark: how to run them on the HPC and locally with Ollama |
+| [tools/ai1/README.md](tools/ai1/README.md) | AI1 | | HPC probe, model benchmark and the runbook command: how to run them on the cluster and locally with Ollama |
 | [docs/ai1-report-schema.md](docs/ai1-report-schema.md) | AI1 | Week 2 | AI report schema v1: evidence file, HPC output file and runner for C1, report and Incident fields for C5, evaluation metrics E1 to E11, the five test incidents |
+| [docs/ai1-week3-analysis.md](docs/ai1-week3-analysis.md) | AI1 | Week 3 | Report schema v2 (AnalysisReport 1.3 with grounding counts), prompt v2 and injection hardening, schema retry and failure handling, the 20-incident grounding validation, the report cache, evaluation and ablation design, decisions AI1-W3-D1 to D9 |
+| [docs/ai1-runbook.md](docs/ai1-runbook.md) | AI1, for C2 | Week 3 | How to run the AI analysis without AI1: backend, model, package, run, schema check, grounding review, dry-run record |
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records, failures included, with the raw answers and what each run showed: seven local runs (`llama3.2:3b`, Qwen3-4B-Instruct; runs 6 and 7 are the Week 2 evaluation), the 27B model on the faculty cluster with prompts v0 and v1 (runs 8 and 9), and Qwen3-4B with prompt v1 (run 10) |
 | [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |
@@ -323,10 +324,10 @@ icd-platform/
 │   │   ├── jobs/         Postgres job queue and the ingest job
 │   │   ├── worker/       the worker process: python -m app.worker
 │   │   ├── contracts/    the six shared Pydantic contracts v1 (owned by C3) and export.py
-│   │   ├── analysis/     AI1: LLM output v0, prompts v0 and v1, grounding check, confidence, mapper
+│   │   ├── analysis/     AI1: LLM output v0, prompts v0 to v2, grounding check, confidence, mapper, service, backends, cache, stored reports
 │   │   ├── response/     C5: lifecycle table, freeze check, catalogue (response.toml), simulated executor, engine, expiry loop
 │   │   └── llm/          LLMAnalyzer protocol (adapter.py) and MockAnalyzer (mock.py)
-│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps, 0005 incidents)
+│   ├── migrations/       Alembic environment and revisions (0001 baseline, 0002 uploads and jobs, 0003 response engine, 0004 masking maps, 0005 incidents, 0006 AI reports)
 │   ├── alembic.ini
 │   └── tests/            health, LLM mock, label mapping, contracts/, api/ (shapes), jobs/ (upload API and worker), analysis/ (AI1), response/ (C5), ingest/ (C2 parser)
 ├── frontend/             React + Vite + TypeScript dashboard (C4)

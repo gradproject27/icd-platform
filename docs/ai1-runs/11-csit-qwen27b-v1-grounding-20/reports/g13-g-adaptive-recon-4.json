@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-533c2ee4e6904cbab4bbe6a6980ef401",
+  "incident_id": "inc-80e5ee764d0493d0",
+  "evidence_package_id": "pkg-inc-80e5ee764d0493d0-d791696da7e4",
+  "generated_at": "2026-11-19T04:45:51.757971Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A single network scan was detected on host-01 at 2026-01-15T20:20:00Z, labeled as reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was performed on host-01.",
+      "cited_event_ids": [
+        "fx-043"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan targeting host-01 was flagged as suspicious reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-043"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious. Why: The event fx-043 indicates a network scan on host-01, which is a common precursor to attacks. Determining the source is critical for containment. Less disruptive option: Monitor host-01 for further suspicious activity without immediate blocking to avoid disrupting legitimate traffic."
+  ],
+  "risk_justification": "The risk score of 30 (low) is consistent with a single reconnaissance event without evidence of successful exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event data. (would be settled by: Network flow logs or firewall logs containing the source IP for the scan on host-01.) It is unclear if this scan was part of a larger campaign or a one-off event. (would be settled by: Historical scan logs for host-01 and other hosts to identify patterns or repeated attempts.) Limitations: The analysis is based on a single event with no source or destination IP information, limiting the ability to trace the attacker's origin. No context events are available to correlate this scan with other activities on the network.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

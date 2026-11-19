@@ -144,7 +144,7 @@ def test_runner_writes_an_output_file_the_app_host_accepts(tmp_path):
     args = ["--evidence", str(evidence), "--output", str(out), "--backend", "stub"]
     assert _tool("icd_analyze").main([*args, "--site", "local"]) == 0
     output = HpcOutput.model_validate_json(out.read_text(encoding="utf-8"))
-    assert output.generated_by == "local" and output.prompt_version == "ai1-prompt-v1"
+    assert output.generated_by == "local" and output.prompt_version == "ai1-prompt-v2"
     assert analyze_hpc_output(output, _package("c2-dos-medium"), "rep-c2").valid
 
 

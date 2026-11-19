@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-58f27cda68c84a7da10c767f80287ba1",
+  "incident_id": "inc-639e41803da5d007",
+  "evidence_package_id": "pkg-inc-639e41803da5d007-f8ac5d38a9cc",
+  "generated_at": "2026-11-19T05:03:28.019205Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "A web exploit was attempted against host-01, followed 20 minutes later by the start of a backdoor process on the same host.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A web exploit attempt was recorded against host-01.",
+      "cited_event_ids": [
+        "fx-038"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A backdoor process was started on host-01, 20 minutes after the exploit attempt.",
+      "cited_event_ids": [
+        "fx-039"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A web exploit attempt was detected on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-038"
+      ]
+    },
+    {
+      "statement": "A backdoor process was started on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-039"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "Host-01 was affected by a web exploit attempt and the subsequent installation of a backdoor process.",
+  "recommendations": [
+    "Isolate host-01 from the network to prevent further compromise or lateral movement. Why: The presence of a backdoor process (fx-039) following a web exploit (fx-038) indicates active compromise of host-01. Less disruptive option: Apply a strict firewall rule to block all outbound traffic from host-01 while maintaining monitoring, allowing for forensic analysis before full isolation.",
+    "Perform forensic analysis on host-01 to identify the specific backdoor binary, its persistence mechanisms, and any data exfiltration. Why: The backdoor process start (fx-039) requires detailed investigation to understand the scope of the compromise and remove the threat completely.",
+    "Review web server logs and application logs on host-01 to identify the specific vulnerability exploited in fx-038 and apply the corresponding patch. Why: The web exploit attempt (fx-038) suggests a vulnerability in the web application or server that needs to be remediated to prevent re-exploitation."
+  ],
+  "risk_justification": "The high risk score (96) is justified by the confirmed compromise of host-01, indicated by the successful installation of a backdoor process (fx-039) following a web exploit attempt (fx-038).",
+  "uncertainty": "The specific vulnerability exploited in the web exploit attempt is not identified in the events. (would be settled by: Web server access logs, application error logs, or vulnerability scanner results for host-01.) The source IP address of the attacker is not provided in the events. (would be settled by: Network flow logs or firewall logs for host-01 during the incident timeframe.) It is unknown if the backdoor process was successfully executed and established persistence, or if it was blocked by security controls. (would be settled by: Endpoint Detection and Response (EDR) logs, process execution logs, or system audit logs for host-01.) Limitations: The analysis is based solely on the two provided events and lacks detailed forensic data such as process hashes, file paths, or network connections. The events do not specify the user context or service account under which the backdoor process was started.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.8,
+  "grounding": {
+    "claims": 8,
+    "factual_claims": 8,
+    "grounded_factual_claims": 8,
+    "unsupported": 0
+  }
+}
