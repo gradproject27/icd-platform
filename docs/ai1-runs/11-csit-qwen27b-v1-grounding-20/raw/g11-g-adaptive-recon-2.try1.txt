@@ -1,0 +1,122 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-162acfe01c8d49fb",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "A single network scan event was flagged on host-01 at 2026-01-15T19:20:00Z, indicating reconnaissance activity.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-041"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [],
+      "users": []
+    }
+  },
+  "attack_type": {
+    "category": "reconnaissance",
+    "claim": {
+      "text": "The event is explicitly labeled as a network_scan with attack_type Reconnaissance, consistent with information gathering or scanning activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-041"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "A network scan was detected on host-01 at 2026-01-15T19:20:00Z.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-041"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "The event summary states the scan was seen 'again, 20 minutes later', implying a prior scan occurred, but no prior event is present in this package.",
+      "category": "likely_interpretation",
+      "cited_event_ids": [
+        "fx-041"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Review network traffic logs for host-01 around 2026-01-15T19:00:00Z to 2026-01-15T19:20:00Z to identify the source of the scan and any preceding activity.",
+      "rationale": "The event summary suggests a prior scan occurred 20 minutes earlier, but no such event is in the package. Correlating with broader network logs may reveal the full scope of reconnaissance.",
+      "cited_event_ids": [
+        "fx-041"
+      ],
+      "reversible_alternative": null
+    },
+    {
+      "action": "Verify whether host-01 is an internal asset or an external-facing system to assess the potential impact of the scan.",
+      "rationale": "The source and destination IPs are null, so the direction and scope of the scan are unknown. Determining the host's role helps prioritize response.",
+      "cited_event_ids": [
+        "fx-041"
+      ],
+      "reversible_alternative": null
+    }
+  ],
+  "risk_justification": {
+    "text": "The risk score of 29 (low) is consistent with a single reconnaissance event without evidence of exploitation, data exfiltration, or lateral movement.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-041"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The source IP, destination IP, and user associated with the scan are not provided in the event.",
+      "missing_evidence": "Network flow logs, firewall logs, or endpoint detection logs that include source/destination IPs and user context for host-01 at 2026-01-15T19:20:00Z."
+    },
+    {
+      "statement": "The event summary references a prior scan 20 minutes earlier, but no such event is included in the package.",
+      "missing_evidence": "Additional events from the same incident or adjacent time window that would confirm the prior scan and establish a pattern."
+    },
+    {
+      "statement": "It is unclear whether the scan was initiated from inside or outside the network.",
+      "missing_evidence": "Network topology data or firewall logs indicating the direction of traffic for host-01."
+    }
+  ],
+  "limitations": [
+    "Only one event is available, limiting the ability to determine the full scope, intent, or progression of the reconnaissance activity.",
+    "No source or destination IP addresses are provided, preventing identification of the scanning host or target scope.",
+    "No user context is available, so it is unknown whether the scan was performed by a specific account or service."
+  ],
+  "self_rating": 0.6
+}

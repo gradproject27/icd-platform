@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-47637f55543841a780b189c8fd3206dc",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "evidence_package_id": "pkg-inc-852bbfaea14e44fb-5df5428cd297",
+  "generated_at": "2026-11-19T04:38:54.774199Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "Two flagged events show malformed requests sent from ip-01 to host-01 (dst_ip ip-02) between 13:00:00Z and 13:05:00Z, consistent with a fuzzing activity.",
+  "attack_type": "fuzzing",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "At 13:00:00Z, malformed requests were sent from ip-01 to host-01 (dst_ip ip-02).",
+      "cited_event_ids": [
+        "fx-021"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "At 13:05:00Z, additional malformed requests were sent from ip-01 to host-01 (dst_ip ip-02).",
+      "cited_event_ids": [
+        "fx-022"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "Repeated malformed requests from an external source (ip-01) to host-01 indicate active fuzzing attempts.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Review the application logs on host-01 for any crashes, errors, or unexpected behavior during the time window of 13:00:00Z to 13:05:00Z. Why: Fuzzing aims to trigger crashes or vulnerabilities; checking logs will confirm if the malformed requests caused any instability.",
+    "Verify if ip-01 is a known internal security testing tool or an external threat source. Why: Determining the origin of the fuzzing traffic helps distinguish between authorized security testing and malicious activity."
+  ],
+  "risk_justification": "The risk score of 24 (low) is consistent with the limited scope of the incident, which involves only two flagged fuzzing events with no evidence of successful exploitation, data exfiltration, or system compromise.",
+  "uncertainty": "It is unknown whether the fuzzing attempts resulted in any system compromise, crash, or vulnerability exploitation. (would be settled by: Application logs, system crash dumps, or vulnerability scan results for host-01 during the incident window.) The relationship between the context event (user-01 login) and the fuzzing activity is unclear. (would be settled by: Correlation data linking user-01's session to the network traffic from ip-01, or additional context on why this login was included in the package.) Limitations: The analysis is based solely on the provided evidence package and does not include real-time system state or historical context. The context event (fx-023) is not used as evidence of malicious activity per the rules, but its potential relevance remains unverified.",
+  "confidence": 0.8667,
+  "model_self_rating": 0.85,
+  "grounding": {
+    "claims": 6,
+    "factual_claims": 6,
+    "grounded_factual_claims": 6,
+    "unsupported": 0
+  }
+}

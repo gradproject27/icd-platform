@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-b90d0e6c8685425e9021a8ccec5ac74e",
+  "incident_id": "inc-4ae151291ae09c7d",
+  "evidence_package_id": "pkg-inc-4ae151291ae09c7d-ddd00c39edb1",
+  "generated_at": "2026-11-19T04:45:20.196763Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A network scan was detected on host-01 at 2026-01-15T20:00:00Z, classified as reconnaissance activity.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was performed on host-01.",
+      "cited_event_ids": [
+        "fx-042"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan was detected on host-01, which is a common precursor to more intrusive attacks.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-042"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan to determine if it is from an internal authorized scanner or an external threat. Why: The event fx-042 indicates a network scan on host-01, but the source IP is null. Identifying the source is critical to assessing the threat level. Less disruptive option: Review firewall logs and network traffic captures for host-01 around the timestamp 2026-01-15T20:00:00Z to identify the scanning source without blocking traffic."
+  ],
+  "risk_justification": "The risk score of 30 (low) is consistent with a single reconnaissance event without evidence of successful exploitation or data exfiltration.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP for the scan on host-01 at 2026-01-15T20:00:00Z.) It is unclear if the scan was part of a larger campaign or a one-off event. (would be settled by: Historical scan data for host-01 and other hosts to identify patterns or repeated scanning activity.) Limitations: The analysis is based on a single event with limited details (no source IP, no user). The event summary mentions '40 minutes after its last flagged event', but no previous flagged events are included in the package, making it impossible to verify this context.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-5f4d3feab08c46aa9d0cd6a668a9a837",
+  "incident_id": "inc-c2ccfd615157a34a",
+  "evidence_package_id": "pkg-inc-c2ccfd615157a34a-02da2f2b2d19",
+  "generated_at": "2026-11-19T05:02:07.512826Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v2",
+  "summary": "A network scan was detected on host-01 at 2026-01-15T15:15:01Z.",
+  "attack_type": "reconnaissance",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A network scan was observed on host-01.",
+      "cited_event_ids": [
+        "fx-031"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A network scan event was flagged on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-031"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious. Why: The event fx-031 indicates a network scan, which is a common reconnaissance technique. Identifying the source helps determine the threat level."
+  ],
+  "risk_justification": "The risk score is 26 (low) because the incident consists of a single reconnaissance event (network scan) without evidence of successful exploitation, data exfiltration, or lateral movement.",
+  "uncertainty": "The source IP address of the scan is not provided in the event. (would be settled by: Network flow logs or firewall logs that record the source IP of the scan.) It is unknown if the scan was successful or if any services were discovered. (would be settled by: Host-based logs or vulnerability scan results from host-01.) Limitations: The analysis is based on a single event with limited detail (no source IP, no user, no specific ports or services scanned). No context events are available to correlate this scan with other activity.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.6,
+  "grounding": {
+    "claims": 5,
+    "factual_claims": 5,
+    "grounded_factual_claims": 5,
+    "unsupported": 0
+  }
+}

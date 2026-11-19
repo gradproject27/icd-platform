@@ -1,0 +1,109 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-c2ccfd615157a34a",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "A single network scan event was flagged on host-01, indicating reconnaissance activity.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-031"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [],
+      "users": []
+    }
+  },
+  "attack_type": {
+    "category": "reconnaissance",
+    "claim": {
+      "text": "The event is explicitly labeled as a network_scan with attack_type Reconnaissance, consistent with reconnaissance activity.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-031"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "A network scan was detected on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-031"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "A network scan was flagged on host-01, which is a common precursor to further attacks.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-031"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [],
+        "users": []
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Investigate the source of the network scan on host-01 to determine if it is malicious or a false positive.",
+      "rationale": "The event fx-031 indicates a network scan, which could be part of a reconnaissance phase of an attack.",
+      "cited_event_ids": [
+        "fx-031"
+      ],
+      "reversible_alternative": "Monitor host-01 for further suspicious activity without immediate intervention."
+    }
+  ],
+  "risk_justification": {
+    "text": "The risk score of 26 (low) is justified by the single reconnaissance event, which is a common and often benign activity but warrants monitoring.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-031"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "The source IP and user associated with the network scan are not provided.",
+      "missing_evidence": "Network logs with source IP and user authentication details."
+    },
+    {
+      "statement": "It is unclear if the scan was part of a larger attack or a standalone event.",
+      "missing_evidence": "Correlated events from other hosts or time periods."
+    }
+  ],
+  "limitations": [
+    "The analysis is based on a single event, which may not provide a complete picture of the incident.",
+    "Lack of source IP and user information limits the ability to trace the origin of the scan."
+  ],
+  "self_rating": 0.7
+}

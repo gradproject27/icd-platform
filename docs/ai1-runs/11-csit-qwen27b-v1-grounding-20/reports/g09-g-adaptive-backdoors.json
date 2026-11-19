@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "report_id": "rep-85ae944b84af4f1f85e229d3f9be683f",
+  "incident_id": "inc-639e41803da5d007",
+  "evidence_package_id": "pkg-inc-639e41803da5d007-f8ac5d38a9cc",
+  "generated_at": "2026-11-19T04:43:34.516494Z",
+  "generated_by": "hpc",
+  "model_id": "qwen3.8-27b-awq-int4",
+  "prompt_version": "ai1-prompt-v1",
+  "summary": "A web exploit attempt was recorded on host-01 at 19:00:00Z, followed 20 minutes later by the start of a backdoor process on the same host at 19:20:00Z.",
+  "attack_type": "backdoor_installation",
+  "sequence": [
+    {
+      "order": 1,
+      "description": "A web exploit attempt was detected on host-01.",
+      "cited_event_ids": [
+        "fx-038"
+      ]
+    },
+    {
+      "order": 2,
+      "description": "A backdoor process was started on host-01, 20 minutes after the exploit attempt.",
+      "cited_event_ids": [
+        "fx-039"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "statement": "A backdoor process was started on host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-039"
+      ]
+    },
+    {
+      "statement": "A web exploit attempt was made against host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-038"
+      ]
+    }
+  ],
+  "weaknesses": null,
+  "impact": "Host-01 is compromised with an active backdoor process.",
+  "recommendations": [
+    "Isolate host-01 from the network to prevent lateral movement or data exfiltration. Why: The start of a backdoor process (fx-039) indicates active compromise, and the preceding exploit (fx-038) suggests the attacker may have established a foothold. Less disruptive option: Apply a strict firewall rule to block outbound traffic from host-01 while maintaining internal connectivity for forensic analysis.",
+    "Perform forensic analysis on host-01 to identify the specific backdoor binary and any other malicious artifacts. Why: The process start event (fx-039) confirms the presence of a backdoor, but the specific file path or hash is not provided in the evidence package."
+  ],
+  "risk_justification": "The high risk score (96) is justified by the confirmed installation of a backdoor (fx-039) following a successful exploit attempt (fx-038), indicating a high likelihood of persistent unauthorized access.",
+  "uncertainty": "It is not confirmed whether the web exploit (fx-038) was successful in gaining initial access, as the event is labeled 'attempt'. (would be settled by: Web server access logs or application logs showing successful authentication or code execution resulting from the exploit.) The specific backdoor binary, its hash, and the user context under which it was executed are unknown. (would be settled by: Process creation logs with command-line arguments, file integrity monitoring logs, or endpoint detection and response (EDR) telemetry.) The source IP address of the attacker is not provided in the events. (would be settled by: Network flow logs or firewall logs associated with the exploit attempt.) Limitations: The analysis is based solely on the two provided events; no network traffic, file system, or user activity logs are available to corroborate the timeline or scope of the compromise. The causal link between the exploit and the backdoor is inferred from the temporal proximity and the incident type label, but direct evidence of the exploit leading to the backdoor execution is not present in the logs.",
+  "confidence": 0.7333,
+  "model_self_rating": 0.8,
+  "grounding": {
+    "claims": 8,
+    "factual_claims": 8,
+    "grounded_factual_claims": 8,
+    "unsupported": 0
+  }
+}

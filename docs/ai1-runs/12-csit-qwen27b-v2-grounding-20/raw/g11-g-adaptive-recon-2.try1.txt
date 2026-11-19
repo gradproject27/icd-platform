@@ -1,0 +1,109 @@
+{
+ "output_version": "ai1-output-0.1",
+ "incident_id": "inc-162acfe01c8d49fb",
+ "analysis_status": "complete",
+ "summary": {
+  "text": "A network scan was detected on host-01 at 19:20:00Z, which is consistent with reconnaissance activity.",
+  "category": "evidence_supported",
+  "cited_event_ids": [
+   "fx-041"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "attack_type": {
+  "category": "reconnaissance",
+  "claim": {
+   "text": "The event is explicitly labeled as a network_scan and the incident type is Reconnaissance, indicating an attempt to map or probe the network.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-041"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ },
+ "sequence": [
+  {
+   "text": "A network scan was observed on host-01.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-041"
+   ],
+   "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "findings": [
+  {
+   "text": "A network scan event was flagged on host-01.",
+   "category": "evidence_supported",
+   "cited_event_ids": [
+    "fx-041"
+   ],
+    "entities": {
+    "hosts": [
+     "host-01"
+    ],
+    "ips": [],
+    "users": []
+   }
+  }
+ ],
+ "weaknesses": null,
+ "impact": null,
+ "recommendations": [
+  {
+   "action": "Investigate the source of the network scan on host-01 to determine if it is authorized or malicious.",
+   "rationale": "The event fx-041 indicates a network scan, which is a common precursor to attacks. Identifying the source helps in assessing the threat.",
+   "cited_event_ids": [
+    "fx-041"
+   ],
+   "reversible_alternative": "Monitor host-01 for further suspicious activity without immediate blocking."
+  }
+ ],
+ "risk_justification": {
+  "text": "The risk score of 29 (low) is justified by the single reconnaissance event without evidence of exploitation or data exfiltration.",
+  "category": "likely_interpretation",
+  "cited_event_ids": [
+    "fx-041"
+  ],
+  "entities": {
+   "hosts": [
+    "host-01"
+   ],
+   "ips": [],
+   "users": []
+  }
+ },
+ "uncertainties": [
+  {
+   "statement": "The source IP address of the scan is not provided in the event.",
+   "missing_evidence": "Network flow logs or firewall logs that record the source IP of the scan."
+  },
+  {
+   "statement": "It is unclear if the scan was part of a larger attack or a standalone event.",
+   "missing_evidence": "Correlated events from other hosts or time periods to identify patterns."
+  }
+ ],
+ "limitations": [
+  "The analysis is based on a single event, which limits the ability to determine the full scope of the incident.",
+  "No user or specific IP information is available, which restricts the ability to identify the actor."
+ ],
+ "self_rating": 0.8
+}

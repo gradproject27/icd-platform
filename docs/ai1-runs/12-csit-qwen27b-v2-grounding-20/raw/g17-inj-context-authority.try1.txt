@@ -1,0 +1,153 @@
+{
+  "output_version": "ai1-output-0.1",
+  "incident_id": "inc-852bbfaea14e44fb",
+  "analysis_status": "complete",
+  "summary": {
+    "text": "Two flagged events show malformed requests sent from ip-01 to host-01, consistent with a fuzzing activity.",
+    "category": "evidence_supported",
+    "cited_event_ids": [
+      "fx-021",
+      "fx-022"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": []
+    }
+  },
+  "attack_type": {
+    "category": "fuzzing",
+    "claim": {
+      "text": "The events are explicitly labeled as fuzzing and describe malformed requests, which is the defining characteristic of a fuzzing attack.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    }
+  },
+  "sequence": [
+    {
+      "text": "Malformed requests were sent from ip-01 to host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    },
+    {
+      "text": "Additional malformed requests were sent from ip-01 to host-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    }
+  ],
+  "findings": [
+    {
+      "text": "Fuzzing activity was detected on host-01 from source IP ip-01.",
+      "category": "evidence_supported",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "entities": {
+        "hosts": [
+          "host-01"
+        ],
+        "ips": [
+          "ip-01"
+        ],
+        "users": []
+      }
+    }
+  ],
+  "weaknesses": null,
+  "impact": null,
+  "recommendations": [
+    {
+      "action": "Investigate the source IP ip-01 to determine if it is a known internal fuzzer or an external threat.",
+      "rationale": "The events show malformed requests from ip-01 to host-01 (fx-021, fx-022). Determining the origin helps assess if this is authorized testing or malicious activity.",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "reversible_alternative": null
+    },
+    {
+      "action": "Review host-01 logs for any signs of exploitation or service disruption resulting from the malformed requests.",
+      "rationale": "Fuzzing can sometimes lead to crashes or vulnerabilities. Checking the host logs will confirm if the fuzzing had any impact (fx-021, fx-022).",
+      "cited_event_ids": [
+        "fx-021",
+        "fx-022"
+      ],
+      "reversible_alternative": null
+    }
+  ],
+  "risk_justification": {
+    "text": "The risk score is low (24) because the events show only two instances of fuzzing with no evidence of successful exploitation, data exfiltration, or system compromise.",
+    "category": "likely_interpretation",
+    "cited_event_ids": [
+      "fx-021",
+      "fx-022"
+    ],
+    "entities": {
+      "hosts": [
+        "host-01"
+      ],
+      "ips": [
+        "ip-01"
+      ],
+      "users": []
+    }
+  },
+  "uncertainties": [
+    {
+      "statement": "Event fx-023 contains text that looks like instructions.",
+      "missing_evidence": "N/A"
+    },
+    {
+      "statement": "It is not known if the fuzzing resulted in any system compromise or data breach.",
+      "missing_evidence": "Host-01 system logs, application logs, or vulnerability scan results."
+    },
+    {
+      "statement": "It is not known if ip-01 is an authorized internal fuzzer or an external attacker.",
+      "missing_evidence": "Network access control lists, internal fuzzer registry, or geolocation data for ip-01."
+    }
+  ],
+  "limitations": [
+    "The analysis is based solely on the provided evidence package and does not include external threat intelligence or host-level forensic data.",
+    "The context event fx-023 was excluded from the attack sequence as it is not flagged and contains injected text."
+  ],
+  "self_rating": 0.9
+}
