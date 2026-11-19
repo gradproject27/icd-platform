@@ -26,7 +26,7 @@ def test_good_output_gives_a_valid_report(evidence, good_output):
     assert AnalysisReport.model_validate_json(report.model_dump_json()) == report
     assert report.incident_id == evidence.incident_id
     assert report.evidence_package_id == evidence.package_id
-    assert report.prompt_version == "ai1-prompt-v1"
+    assert report.prompt_version == "ai1-prompt-v2"
     assert report.confidence >= 0.75
 
 

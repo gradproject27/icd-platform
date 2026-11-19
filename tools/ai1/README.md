@@ -1,13 +1,14 @@
-# AI1 tools: HPC probe and model benchmark
+# AI1 tools: HPC probe, model benchmark and analysis runbook command
 
 Owner: AI1. Design and decisions: [docs/ai1-analysis-design.md](../../docs/ai1-analysis-design.md). The analysis code these tools call lives in `backend/app/analysis/`.
 
 | File | Purpose |
 |---|---|
 | `hpc_probe.sh` | Read-only HPC feasibility probe (10 checks). Run `bash tools/ai1/hpc_probe.sh login` on the login node, then `bash tools/ai1/hpc_probe.sh compute` inside a short compute job. It installs and downloads nothing. |
-| `bench.py` | Runs a prompt (v1 by default, `--prompt-version`) on evidence packages and writes `model_run_record.md` and `.json`. Backends: `stub`, `openai_http`, `transformers`. |
+| `run_analysis.py` | **Week 3 runbook command** ([docs/ai1-runbook.md](../../docs/ai1-runbook.md)): runs the analysis service on packages (or stored incidents with `--from-db`) with the cache, prompt v2 and the schema retry, and writes the grounding validation (`grounding-validation.md` / `.json`). Backends: `stub`, `openai_http`, `replay` (re-checks recorded answers). |
+| `bench.py` | Runs a prompt (v2 by default, `--prompt-version`) on evidence packages and writes `model_run_record.md` and `.json`. Backends: `stub`, `openai_http`, `transformers`. |
 | `icd_analyze.py` | The HPC analysis command (C1's `ICD_ANALYZE_CMD`): one evidence file in, one `icd-hpc-output-v1` file out ([docs/ai1-report-schema.md](../../docs/ai1-report-schema.md), section 4). |
-| `make_packages.py` | Rebuilds the five test packages in `fixtures/ai1/packages/` from C3's correlation fixture. |
+| `make_packages.py` | Rebuilds the five test packages in `fixtures/ai1/packages/` and the 20 grounding-validation packages in `fixtures/ai1/grounding-set/` from C3's correlation fixture. |
 | `evaluate.py` | Scores a `bench.py` run folder against `fixtures/ai1/expected.json`: metrics E1 to E11, one AnalysisReport per valid run in `reports/`. |
 | `run_bench.sbatch` | Slurm job for `bench.py` with the pinned weights (edit the `CHANGE_ME` lines). |
 | `requirements-bench.txt` | Packages for `bench.py` outside the api image. |
@@ -27,6 +28,16 @@ python tools/ai1/bench.py --backend stub --packages (Get-ChildItem fixtures/ai1/
 python tools/ai1/evaluate.py tools/ai1/runs/stub-5
 ```
 
+Week 3 grounding validation of the 20 incidents ([docs/ai1-week3-analysis.md](../../docs/ai1-week3-analysis.md), section 6), and a re-check of recorded answers:
+
+```powershell
+python tools/ai1/run_analysis.py --packages fixtures/ai1/grounding-set --out tools/ai1/runs/stub-20
+python tools/ai1/run_analysis.py --packages fixtures/ai1/packages tools/ai1/samples/evidence-inc-ai1-0001.json `
+    --backend replay --answers docs/ai1-runs/09-csit-qwen27b-awq-v1 --replay-run 1 --site hpc --out tools/ai1/runs/replay-09
+```
+
+The default cache folder is `tools/ai1/runs/cache`; a second run of the same packages with the same prompt and model is answered from it (`--force` re-analyses, `--no-cache` turns it off).
+
 Local run on the fallback path (option C in the design note) with [Ollama](https://ollama.com/). Make a copy of the model with an 8k context that runs fully on the GPU, otherwise the prompt (about 5,000 tokens) is cut and Ollama may split the model between CPU and GPU:
 
 ```powershell
@@ -44,7 +55,7 @@ python tools/ai1/bench.py --backend openai_http --endpoint http://127.0.0.1:1143
 | `--json-schema` | Sends the LLM output v0 JSON Schema as `response_format`, so the server constrains the answer to it. Without it, `llama3.2:3b` gave 0 of 3 valid analyses |
 | `--server-process` | Records the RAM of the model server's processes instead of `bench.py`'s own |
 | `--quantization` | Writes the quantization the server uses (for example `Q4_K_M`) into the record |
-| `--prompt-version` | The prompt to send: `ai1-prompt-v1` (default) or `ai1-prompt-v0`, to repeat the earlier runs |
+| `--prompt-version` | The prompt to send: `ai1-prompt-v2` (default), or `ai1-prompt-v1` / `ai1-prompt-v0` to repeat earlier runs |
 | `--no-thinking` | Turns the thinking mode of a Qwen3-style model off per request (`chat_template_kwargs`); needed on the faculty service, where thinking made one analysis take 5 to 10 minutes |
 
 Run on the faculty's model service (GPUStack on the CSIT Compute Pool, `docs/ai1-analysis-design.md` sections 2 to 5). It is reachable from the cluster's login node; from a laptop, open an SSH tunnel first and keep the API key in a file, never in the repo:

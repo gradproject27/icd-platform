@@ -1,0 +1,4 @@
+Your previous answer could not be used, for these reasons:
+{{problems}}
+
+Write the whole answer again as exactly one JSON object that validates against the output schema in the first request. Keep every rule. No Markdown, no code fences, no text before or after the JSON.

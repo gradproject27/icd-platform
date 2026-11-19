@@ -21,7 +21,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from app.analysis.output import Claim, LlmOutput
-from app.contracts import EvidenceEvent, EvidencePackage, FindingCategory
+from app.contracts import EvidenceEvent, EvidencePackage, FindingCategory, GroundingCounts
 
 IPV4 = re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b")
 MASKED_TOKEN = re.compile(r"\b(?:host|ip|user)-\d+\b")
@@ -63,6 +63,20 @@ class GroundingResult:
         if not self.factual_claims:
             return 0.0
         return self.grounded_factual_claims / self.factual_claims
+
+    @property
+    def unsupported(self) -> int:
+        """Factual claims that name an entity their cited events do not carry (U1)."""
+        return self.factual_claims - self.grounded_factual_claims
+
+    def counts(self) -> GroundingCounts:
+        """The counts stored in the report (R2)."""
+        return GroundingCounts(
+            claims=self.claims,
+            factual_claims=self.factual_claims,
+            grounded_factual_claims=self.grounded_factual_claims,
+            unsupported=self.unsupported,
+        )
 
 
 def find_canaries(evidence: EvidencePackage) -> list[str]:

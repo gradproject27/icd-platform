@@ -19,3 +19,18 @@ Status: **proposed** = written down, waiting for the team; **approved** = agreed
 | W3-D16 (C2 part) | 2 Nov 2026 | The Precinct6 and OTRF parsers move to Week 5. | as in the team plan | team plan |
 | C2-D12 | 16 Nov 2026 | `build_and_store_for_incident(engine, incident_id, now)` builds the masked package from a stored incident (C1's tables, migration 0005) and stores its map; `build_and_store_for_upload` does every incident of an upload. Same result as `build_package` in memory. | approved (C2) | [evidence-package.md](evidence-package.md) §4; PR #37 |
 | C2-D13 | 16 Nov 2026 | Duplicate-upload guard: `POST /uploads` refuses a file whose SHA-256 and `dataset_id` match an earlier upload whose ingest job has not failed, with 409 `duplicate_upload` and `Location: /uploads/{earlier ID}`. Nothing is stored. Chosen over "warn and accept" (C1's proposed default) because a second copy would create duplicate incidents. | approved (C2) | [api-upload-jobs.md](api-upload-jobs.md) §3 and §8 Q5 |
+
+## AI1: AI Analysis & Evaluation
+
+| ID | Date | Decision or measurement | Status | Evidence |
+|---|---|---|---|---|
+| AI1-W3-D1 | 19 Nov 2026 | Prompt v2 (the five report parts, injection hardening) is the app default; v0 and v1 stay for repeat runs. | proposed | [ai1-week3-analysis.md](ai1-week3-analysis.md) §3 |
+| AI1-W3-D2 | 19 Nov 2026 | One schema retry, only for P1, P2 and M1 (format); grounding failures G0 to G5 are never retried. | proposed | §5 |
+| AI1-W3-D3 | 19 Nov 2026 | A backend error (X1) is a failed attempt with no retry inside the service; the job queue retries a run that never answered. | proposed | §5 |
+| AI1-W3-D4 | 19 Nov 2026 | `AnalysisReport.grounding` (claims, factual, grounded, unsupported), contracts 1.3, additive; closes R2. | proposed (C3 to approve) | [contracts-v1.md](contracts-v1.md) §3.4 |
+| AI1-W3-D5 | 19 Nov 2026 | Cache key = SHA-256 of the masked package without `created_at`, the prompt version and the model pin; generation settings are not in the key. | proposed | §8 |
+| AI1-W3-D6 | 19 Nov 2026 | One table `analysis_reports` (migration 0006) is both the report storage and the cache; only valid reports are stored. | proposed (C1 to approve) | §8 |
+| AI1-W3-D7 | 19 Nov 2026 | Re-analysis with `force`; the newest report under a key is the one the cache returns. | proposed | §8 |
+| AI1-W3-D8 | 19 Nov 2026 | Backends are chosen with `ICD_ANALYSIS_BACKEND` and `ICD_LLM_*`; the cluster key is read from the environment only, never stored or logged. | proposed | `backend/app/analysis/backends.py` |
+| AI1-W3-D9 | 19 Nov 2026 | The 20-incident grounding set is synthetic (13 fixture incidents + 7 injection copies); real UNSW-NB15 incidents are validated with `--from-db`, counts only. | proposed | §6 |
+| Measurement | 19 Nov 2026 | Re-check of the 81 recorded real answers (runs 6 to 10): factual claims supported 0.982 (Qwen3-4B, v0), 0.898 (llama3.2 3B, v0), 0.962 (27B, v0), **1.000 (27B, v1)**, 0.972 (Qwen3-4B, v1); no answer followed the canary. | measured | §6 |

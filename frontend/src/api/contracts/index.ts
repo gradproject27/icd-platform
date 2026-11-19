@@ -4,6 +4,7 @@ export type {
   AnalysisReport,
   Finding,
   FindingCategory,
+  GroundingCounts,
   SequenceStep,
 } from "./analysis-report";
 export type {

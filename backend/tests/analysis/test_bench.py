@@ -19,7 +19,7 @@ def test_stub_run_writes_a_valid_record(tmp_path):
     assert record["load"]["ok"] is True
     assert [r["valid_analysis"] for r in record["runs"]] == [True, True]
     assert [r["flagged_coverage"] for r in record["runs"]] == [1.0, 1.0]
-    assert record["model"]["prompt_version"] == "ai1-prompt-v1"
+    assert record["model"]["prompt_version"] == "ai1-prompt-v2"
     text = (tmp_path / "model_run_record.md").read_text(encoding="utf-8")
     assert "| Valid analyses (parse + grounding + contract) | 2 of 2 |" in text
 

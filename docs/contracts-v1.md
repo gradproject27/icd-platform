@@ -251,6 +251,11 @@ In the tables below, **Required** means the key must be present. "default" means
 | `uncertainty` | string, min 1 | yes | n/a. The uncertainty and limitations section | FR-15 |
 | `confidence` | number 0 to 1 | yes | n/a. Computed by the analysis component from grounding and evidence completeness, **not by the model**. The mock sets `0.0` | OD-16 |
 | `model_self_rating` | number 0 to 1 | no | `null`. The model's own rating. Stored, **never used for the 0.75 gate** | OD-16 |
+| `grounding` | GroundingCounts | no (1.3) | `null` = not recorded (the mock, reports from before 1.3). The claim counts behind `confidence` | R2, AI1 Week 3 |
+
+**GroundingCounts** (1.3): `claims` (all claims of the answer, hypotheses included), `factual_claims` (`evidence_supported` + `likely_interpretation`), `grounded_factual_claims` (factual claims whose cited events carry every host, IP and user they name), `unsupported` (the other factual claims). `grounded_factual_claims + unsupported = factual_claims ≤ claims`. The grounding rate in the confidence formula is `grounded_factual_claims / factual_claims` ([ai1-week3-analysis.md](ai1-week3-analysis.md) section 6).
+
+**Contracts 1.3 (19 Nov 2026, additive, AI1).** `AnalysisReport.grounding` is optional with a `null` default, so every earlier report stays valid and `schema_version` stays `"1.0"`. It stores the grounding counts the check computed, which were thrown away before (gap R2 of the schema specification; gate M2 asks for unsupported claims to be counted).
 
 **SequenceStep**: `order` (integer ≥ 1), `description` (string, min 1), `cited_event_ids` (list of Id, min 1).
 

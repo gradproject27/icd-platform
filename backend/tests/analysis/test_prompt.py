@@ -1,6 +1,7 @@
 import json
 
 from app.analysis import PROMPT_VERSION, build_messages
+from app.analysis.prompt import fence_id
 
 
 def test_messages_hold_rules_schema_and_package(evidence):
@@ -14,10 +15,16 @@ def test_messages_hold_rules_schema_and_package(evidence):
     assert "{{" not in user["content"]
 
 
+def _sent_package(user: str, fence: str | None = None) -> dict:
+    opening = f'<evidence_package id="{fence}">' if fence else "<evidence_package>"
+    closing = f'</evidence_package id="{fence}">' if fence else "</evidence_package>"
+    start = user.rindex(opening) + len(opening)
+    return json.loads(user[start : user.rindex(closing)])
+
+
 def test_package_is_sent_without_storage_fields(evidence):
     user = build_messages(evidence)[1]["content"]
-    start = user.index("<evidence_package>") + len("<evidence_package>")
-    package = json.loads(user[start : user.index("</evidence_package>")])
+    package = _sent_package(user, fence_id(evidence))
     assert "package_id" not in package
     assert "masked" not in package
     assert package["incident"]["risk_score"] == 81
@@ -26,7 +33,7 @@ def test_package_is_sent_without_storage_fields(evidence):
 
 def test_prompt_is_deterministic(evidence):
     assert build_messages(evidence) == build_messages(evidence)
-    assert PROMPT_VERSION == "ai1-prompt-v1"
+    assert PROMPT_VERSION == "ai1-prompt-v2"
 
 
 def test_v1_adds_the_context_and_attack_type_rules(evidence):
@@ -43,5 +50,12 @@ def test_v1_adds_the_context_and_attack_type_rules(evidence):
         assert rule in v1
 
 
-def test_default_prompt_is_v1(evidence):
-    assert build_messages(evidence) == build_messages(evidence, "ai1-prompt-v1")
+def test_default_prompt_is_v2(evidence):
+    assert build_messages(evidence) == build_messages(evidence, "ai1-prompt-v2")
+
+
+def test_v0_and_v1_send_the_package_unchanged(evidence):
+    user = build_messages(evidence, "ai1-prompt-v1")[1]["content"]
+    assert _sent_package(user) == evidence.model_dump(
+        mode="json", exclude={"schema_version", "package_id", "masked"}
+    )
