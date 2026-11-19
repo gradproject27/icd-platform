@@ -70,7 +70,7 @@ cd backend
 pytest -q
 ```
 
-Expected result without a database: **867 passed, 120 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **987 passed**.
+Expected result without a database: **874 passed, 120 skipped**. The skipped tests need PostgreSQL (`/health` against a real database, the upload API and the worker); they need `DATABASE_URL` with the migrations applied (`alembic upgrade head`) and run in CI, where the result is **994 passed**.
 
 The tests cover:
 
