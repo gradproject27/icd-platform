@@ -17,5 +17,8 @@ export const AUDIT_REVIEWERS: readonly UserRole[] = ["soc_analyst", "system_admi
 /** The configuration view: the two configuring roles of A3 (D7.5, OD-24 proposal). */
 export const CONFIGURATION_VIEWERS: readonly UserRole[] = ["security_engineer", "system_administrator"];
 
+/** "Run analysis again" on a failed or never-run analysis (C4-D3). */
+export const ANALYSIS_RERUNNERS: readonly UserRole[] = ["security_engineer", "soc_analyst"];
+
 /** "SOC Analyst and System Administrator", for messages. */
 export const rolesText = (roles: readonly UserRole[]) => roles.map((role) => ROLE_LABELS[role]).join(" and ");

@@ -1,6 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { AnalysisReport, FindingCategory, GroundingCounts, Incident } from "../api/contracts";
-import { getShownReport } from "../api/incidents";
+import { ApiError } from "../api/errors";
+import { getShownReport, requestAnalysis } from "../api/incidents";
+import { getJob } from "../api/jobs";
+import { ANALYSIS_RERUNNERS } from "../auth/roles";
+import { useCurrentUser } from "../auth/useCurrentUser";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime } from "../countdown/clock";
 import { IncidentHeader } from "../incidents/IncidentHeader";
@@ -66,7 +71,14 @@ function ReportPanel({ incidentId }: { incidentId: string }) {
           to real values.
         </p>
       )}
-      {report ? <Report incidentId={incidentId} report={report} /> : <NoReport incident={summary.incident} />}
+      {report ? (
+        <Report incidentId={incidentId} report={report} />
+      ) : (
+        <>
+          <NoReport incident={summary.incident} />
+          <RunAgain incidentId={incidentId} incident={summary.incident} onFinished={retry} />
+        </>
+      )}
     </section>
   );
 }
@@ -104,6 +116,72 @@ export function Grounding({ grounding }: { grounding: GroundingCounts | null | u
     );
   }
   return <p className="note">{text}.</p>;
+}
+
+const JOB_POLL_MS = 1_000;
+
+/**
+ * "Run analysis again" (C4-D3): only when the analysis failed or never ran, and only for the roles
+ * in ANALYSIS_RERUNNERS. It queues C1's analysis job, follows the job once a second and reloads the
+ * page when it ends. The server queues at most one analysis per incident.
+ */
+function RunAgain({ incidentId, incident, onFinished }: { incidentId: string; incident: Incident; onFinished: () => void }) {
+  const current = useCurrentUser();
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!jobId) return;
+    const controller = new AbortController();
+    const timer = setInterval(() => {
+      getJob(jobId, controller.signal).then(
+        (job) => {
+          if (job.state === "done" || job.state === "failed") onFinished();
+        },
+        () => undefined,
+      );
+    }, JOB_POLL_MS);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [jobId, onFinished]);
+
+  const status = incident.analysis_status ?? "not_started";
+  if (status !== "failed" && status !== "not_started") return null;
+  if (current.kind !== "known" || !ANALYSIS_RERUNNERS.includes(current.role)) return null;
+
+  if (jobId) {
+    return (
+      <p className="note" role="status">
+        Analysis queued (job <code>{jobId}</code>). This page reloads when it ends…
+      </p>
+    );
+  }
+  const run = () => {
+    setSending(true);
+    setError(null);
+    requestAnalysis(incidentId).then(
+      (accepted) => setJobId(accepted.job_id),
+      (cause: unknown) => {
+        setSending(false);
+        setError(`The analysis was not queued. ${cause instanceof ApiError ? cause.message : "Unexpected error."}`);
+      },
+    );
+  };
+  return (
+    <div className="next-step">
+      <button type="button" onClick={run} disabled={sending}>
+        {sending ? "Queuing…" : "Run analysis again"}
+      </button>
+      {error && (
+        <p className="upload-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function Evidence({ incidentId, ids }: { incidentId: string; ids: string[] }) {

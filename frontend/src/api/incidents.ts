@@ -1,3 +1,4 @@
+import type { JobAccepted } from "./c1";
 import { request } from "./client";
 import { ApiError } from "./errors";
 import type { AnalysisReport, AuditRecord } from "./contracts";
@@ -99,4 +100,17 @@ export async function getAuditTrail(incidentId: string, signal?: AbortSignal): P
     throw new ApiError("parse", "The ICD API sent an unexpected audit trail.");
   }
   return data.items;
+}
+
+/**
+ * POST /incidents/{incident_id}/analysis: queue a re-run of the AI analysis (C1, 202 JobAccepted).
+ * An analysis already queued or running is returned instead of a second one.
+ */
+export function requestAnalysis(incidentId: string, signal?: AbortSignal): Promise<JobAccepted> {
+  return request<JobAccepted>(`/incidents/${encodeURIComponent(incidentId)}/analysis`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ force: false }),
+    signal,
+  });
 }

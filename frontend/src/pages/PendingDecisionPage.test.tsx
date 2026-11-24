@@ -69,6 +69,10 @@ interface Api {
   submit?: () => Response;
   /** The role GET /me answers with; without it /me is a 404 and the role is unknown. */
   me?: UserRole;
+  /** The incident status GET /incidents/{id} answers with, read on every call. */
+  status?: () => string;
+  /** GET /incidents/{id}/audit items, read on every call. */
+  audit?: () => unknown[];
 }
 
 function serve(incidentId: string, api: Api = {}) {
@@ -79,7 +83,9 @@ function serve(incidentId: string, api: Api = {}) {
       if (!summaries.has(incidentId)) {
         return jsonResponse({ error: { code: "not_found", message: `No incident with ID ${incidentId} exists.` } }, 404);
       }
-      return new Response(JSON.stringify(summaries.get(incidentId)), {
+      const summary = summaries.get(incidentId)!;
+      const shown = api.status ? { ...summary, incident: { ...summary.incident, status: api.status() } } : summary;
+      return new Response(JSON.stringify(shown), {
         status: 200,
         headers: { "Content-Type": "application/json", "X-ICD-Stub": "1" },
       });
@@ -93,6 +99,7 @@ function serve(incidentId: string, api: Api = {}) {
     if (path === `/api/response-windows/${incidentId}`) {
       return api.window ? jsonResponse(api.window) : jsonResponse({ detail: "no response window" }, 404);
     }
+    if (path === `/api/incidents/${incidentId}/audit` && api.audit) return jsonResponse({ items: api.audit() });
     if (path === "/api/me" && api.me) return jsonResponse({ user: "dev", role: api.me });
     if (path === `/api/incidents/${incidentId}/decisions` && init?.method === "POST") {
       return api.submit ? api.submit() : jsonResponse(record({ incident_id: incidentId }), 201);
@@ -592,5 +599,49 @@ describe("PendingDecisionPage", () => {
 
     expect(screen.getByRole("group", { name: "Your decision" })).toBeInTheDocument();
     expect(screen.queryByText("Only a SOC Analyst can decide.")).not.toBeInTheDocument();
+  });
+
+  it("path B: after the deadline, shows the scenario the system selected and its simulated result", async () => {
+    let status = "awaiting_human_decision";
+    let audit: unknown[] = [];
+    const rec = (record_id: string, event_type: string, details: Record<string, unknown>) => ({
+      schema_version: "1.0",
+      record_id,
+      occurred_at: iso(NOW + 60_500),
+      incident_id: "inc-stub-01",
+      actor: "system",
+      event_type,
+      result: "success",
+      simulated: event_type === "action.simulated",
+      details,
+    });
+    serve("inc-stub-01", { window: openWindow("inc-stub-01"), status: () => status, audit: () => audit });
+    renderPage("inc-stub-01");
+    await advance(0);
+    act(() => {
+      FakeWebSocket.latest().open();
+      FakeWebSocket.latest().emit({
+        type: "response_window.expired",
+        incident_id: "inc-stub-01",
+        window_id: "win-0001",
+        server_time: iso(NOW + 60_000),
+      });
+    });
+    await advance(0);
+    expect(screen.getByText(/Waiting for the system's selection/)).toBeInTheDocument();
+
+    status = "resolved";
+    audit = [
+      rec("aud-1", "scenario.selected", { scenario_id: "S2", window_id: "win-0001" }),
+      rec("aud-2", "action.simulated", { action_id: "act-9", scenario_id: "S2", trigger: "window_expiry", label: "SIMULATED" }),
+    ];
+    await advance(1_000);
+    const box = screen.getByRole("region", { name: "Selected by the system at the deadline" });
+    expect(box).toHaveTextContent("S2");
+    expect(box).toHaveTextContent("[SIMULATED]");
+    expect(box).toHaveTextContent("Status: Resolved");
+    expect(within(box).getByRole("status")).toHaveTextContent("Action act-9 (SIMULATED): simulated, succeeded");
+    expect(within(header()).getByText("Resolved")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Your decision" })).not.toBeInTheDocument();
   });
 });

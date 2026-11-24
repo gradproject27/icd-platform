@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
 import summary from "../../../docs/api/examples/incident-summary.json";
@@ -151,5 +151,56 @@ describe("AiReportPage", () => {
     expect(within(findings).getAllByText("Same line.", { exact: false })).toHaveLength(2);
     expect(within(section("Mitigations")).getAllByText("Patch.")).toHaveLength(2);
     expect(within(section("Weaknesses")).getAllByText("Gap.")).toHaveLength(2);
+  });
+
+  it("offers 'Run analysis again' on a failed analysis, queues it and shows the report when the job ends", async () => {
+    let stored: unknown = null;
+    let jobState = "queued";
+    const posted: string[] = [];
+    const fetchMock = mockFetch();
+    fetchMock.mockImplementation(async (url, init) => {
+      const path = String(url);
+      if (path === "/api/me") return jsonResponse({ user: "analyst-dev", role: "soc_analyst" });
+      if (path === `/api/incidents/${ID}`)
+        return jsonResponse({ ...summary, incident: { ...summary.incident, analysis_status: stored ? "succeeded" : "failed", analysis_attempts: 1 } });
+      if (path === `/api/incidents/${ID}/report`) return stored ? jsonResponse(stored) : jsonResponse(NOT_STORED, 404);
+      if (path === `/api/incidents/${ID}/analysis` && init?.method === "POST") {
+        posted.push(String(init.body));
+        return jsonResponse({ job_id: "job-1", status_url: "/jobs/job-1" }, 202);
+      }
+      if (path === "/api/jobs/job-1") return jsonResponse({ job_id: "job-1", state: jobState });
+      return jsonResponse({ error: { code: "not_found", message: "No such path." } }, 404);
+    });
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "Run analysis again" }));
+    expect(await screen.findByText(/Analysis queued \(job/)).toBeInTheDocument();
+    expect(posted).toEqual([JSON.stringify({ force: false })]);
+    stored = REPORT;
+    jobState = "done";
+    expect(await screen.findByRole("region", { name: "Summary" }, { timeout: 3000 })).toHaveTextContent(REPORT.summary);
+  });
+
+  it("does not offer 'Run analysis again' to a role that may not run it, or while an analysis runs", async () => {
+    const fetchMock = mockFetch();
+    let role = "soc_manager";
+    let status = "failed";
+    fetchMock.mockImplementation(async (url) => {
+      const path = String(url);
+      if (path === "/api/me") return jsonResponse({ user: "u", role });
+      if (path === `/api/incidents/${ID}`) return jsonResponse({ ...summary, incident: { ...summary.incident, analysis_status: status } });
+      if (path === `/api/incidents/${ID}/report`) return jsonResponse(NOT_STORED, 404);
+      return jsonResponse({ error: { code: "not_found", message: "No such path." } }, 404);
+    });
+    show();
+    await screen.findByText(/failed after/);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("button", { name: "Run analysis again" })).not.toBeInTheDocument();
+    cleanup();
+    role = "security_engineer";
+    status = "in_progress";
+    show();
+    await screen.findByText(/Analysis in progress/);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("button", { name: "Run analysis again" })).not.toBeInTheDocument();
   });
 });
