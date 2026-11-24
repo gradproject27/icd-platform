@@ -5,7 +5,7 @@
 | **Project** | ICD (Intelligent Cyber Defense) |
 | **Workstream** | C5 Incident Response & Security Assurance |
 | **Task** | T1-14 (Week 1) |
-| **Status** | Draft for team review |
+| **Status** | v1 (24 Nov 2026, decision C5-D5): approved by C3 (saradessouky) on PR #5, 23 Oct 2026. Login (Part A) is not built yet (planned T2-15); until then the API uses the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE`. Items marked proposed are not decided; they stay open for Week 5 and later |
 | **Related** | `docs/response-workflow-spec.md` (T1-13) |
 
 ## 1. Purpose and scope

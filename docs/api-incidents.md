@@ -14,7 +14,7 @@ Paths as the API sees them; the dashboard calls them under `/api` (same origin, 
 | `GET /incidents/{id}` | `IncidentSummary`: `{incident, entities, recommended_scenario_id}`; 404 `not_found` | as above |
 | `GET /incidents/{id}/events` | `IncidentEventList`: `{items: [{event, role, link_keys}]}`, oldest first | `incident_events` + `events` |
 | `GET /incidents/{id}/events/{event_id}/original` | `OriginalRecord`: `{event_id, record_ref, source_file, line}`; 404 `original_not_available` when the uploaded file is gone or the event's `record_ref` is not a line (the `fixture` dataset) | the uploaded file, `read_original` (C2) |
-| `GET /incidents/{id}/report` | **always 404 `report_not_available` for now**: no AI report is stored anywhere yet (gap G3, C1/AI1) | none |
+| `GET /incidents/{id}/report` | `AnalysisReport` (contracts) that the incident's `latest_report_id` names, **un-masked for display**: host, user and IP tokens in the text fields are replaced with the real values from the package's masking map (C2-D7). The stored copy stays masked; the un-masked copy is never stored. Header `X-ICD-Report-Masked: 1` when a token is still in the text (map missing, or a token the model invented) (C4-D1). 404 `report_not_available` until the analysis job has stored a valid report | `analysis_reports` (AI1, migration 0006) via `latest_report`; `masking_maps` via `load_masking_map` + `unmask_report` (C2) |
 | `GET /incidents/{id}/audit` | `AuditTrail`: `{items: AuditRecord[]}` in written order | C5 `audit_records` |
 | `GET /response-windows/{id}` | `ResponseWindow`, times with milliseconds (spec section 7); 404 `not_found` when the incident never had a window | C5 `window_of` |
 | `GET /incidents/{id}/decision` | `DecisionRecord` of the latest recorded decision; 404 `not_found` when none | C5 audit trail and actions |
@@ -51,7 +51,7 @@ Every refusal is also in the audit trail as `decision.refused`.
 ## 3. Gaps this does not close
 
 - **Nothing registers stored incidents with C5's engine yet**, and no analysis job runs (no HPC; only the mock LLM). So real incidents stay `new`, have no window and cannot be decided until C1/C5 wire `register` after correlation and the analysis job calls `record_analysis` (Week 3 T3 wiring). Tests and the browser check drive the engine directly.
-- **AI reports are not stored** (no table, no endpoint): C1/AI1.
+- **Reports are served, but only once something stores them.** The report endpoint reads `analysis_reports`; the analysis job that calls `analyze_incident` after correlation is C1's.
 - **UNSW-NB15 flows have no host** (C2-D8) and documentation-range IPs, so C5's target rule finds no target and they never freeze.
 - **Login** (C5, T2-15) replaces the development identity.
 - **No read checks a role.** The dashboard hides the views a role may not see (A3), but `GET /incidents`, `/audit`, `/notifications` and the others answer everybody. Server-side role checks on reads come with login: C5 (T2-15).

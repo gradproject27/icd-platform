@@ -1,6 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import type { AnalysisReport, FindingCategory, Incident } from "../api/contracts";
-import { getReport } from "../api/incidents";
+import type { AnalysisReport, FindingCategory, GroundingCounts, Incident } from "../api/contracts";
+import { ApiError } from "../api/errors";
+import { getShownReport, requestAnalysis } from "../api/incidents";
+import { getJob } from "../api/jobs";
+import { ANALYSIS_RERUNNERS } from "../auth/roles";
+import { useCurrentUser } from "../auth/useCurrentUser";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime } from "../countdown/clock";
 import { IncidentHeader } from "../incidents/IncidentHeader";
@@ -27,7 +32,7 @@ export function AiReportPage() {
 }
 
 function ReportPanel({ incidentId }: { incidentId: string }) {
-  const { load, retry } = useIncident(incidentId, (signal) => getReport(incidentId, signal));
+  const { load, retry } = useIncident(incidentId, (signal) => getShownReport(incidentId, signal));
   const back = <Link to={`/incidents/${encodeURIComponent(incidentId)}`}>Back to incident</Link>;
 
   if (load.kind !== "ready") {
@@ -46,7 +51,8 @@ function ReportPanel({ incidentId }: { incidentId: string }) {
     );
   }
 
-  const { summary, stub, extra: report } = load;
+  const { summary, stub, extra: shown } = load;
+  const report = shown?.report;
   return (
     <section>
       {back}
@@ -58,7 +64,21 @@ function ReportPanel({ incidentId }: { incidentId: string }) {
       )}
       <IncidentHeader summary={summary} />
       <RiskAndConfidence incident={summary.incident} confidence={report?.confidence ?? summary.incident.confidence} />
-      {report ? <Report incidentId={incidentId} report={report} /> : <NoReport incident={summary.incident} />}
+      {report && <Grounding grounding={report.grounding} />}
+      {shown?.masked && (
+        <p className="stub-banner" role="note">
+          Some host, user or IP names are shown as tokens (such as host-01), because the server could not map them back
+          to real values.
+        </p>
+      )}
+      {report ? (
+        <Report incidentId={incidentId} report={report} />
+      ) : (
+        <>
+          <NoReport incident={summary.incident} />
+          <RunAgain incidentId={incidentId} incident={summary.incident} onFinished={retry} />
+        </>
+      )}
     </section>
   );
 }
@@ -77,13 +97,100 @@ function NoReport({ incident }: { incident: Incident }) {
   return <PageState kind={incident.analysis_status === "failed" ? "error" : "empty"} message={message} />;
 }
 
+/**
+ * AI1's grounding counts (R2, contracts 1.3), shown as they are: how many factual claims name only
+ * entities that their cited events carry (C4-D2). Nothing is recomputed here.
+ */
+export function Grounding({ grounding }: { grounding: GroundingCounts | null | undefined }) {
+  if (!grounding) {
+    return <p className="note">Grounding: not checked for this report.</p>;
+  }
+  const { factual_claims: factual, grounded_factual_claims: grounded, unsupported } = grounding;
+  const text = `Grounding: ${grounded} of ${factual} factual claim${factual === 1 ? "" : "s"} supported by their cited events`;
+  if (unsupported > 0) {
+    return (
+      <p className="box box--warn" role="status">
+        {text} ({unsupported} unsupported: a claim names a host, user or IP its cited events do not carry). Check those
+        claims against the events.
+      </p>
+    );
+  }
+  return <p className="note">{text}.</p>;
+}
+
+const JOB_POLL_MS = 1_000;
+
+/**
+ * "Run analysis again" (C4-D3): only when the analysis failed or never ran, and only for the roles
+ * in ANALYSIS_RERUNNERS. It queues C1's analysis job, follows the job once a second and reloads the
+ * page when it ends. The server queues at most one analysis per incident.
+ */
+function RunAgain({ incidentId, incident, onFinished }: { incidentId: string; incident: Incident; onFinished: () => void }) {
+  const current = useCurrentUser();
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!jobId) return;
+    const controller = new AbortController();
+    const timer = setInterval(() => {
+      getJob(jobId, controller.signal).then(
+        (job) => {
+          if (job.state === "done" || job.state === "failed") onFinished();
+        },
+        () => undefined,
+      );
+    }, JOB_POLL_MS);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [jobId, onFinished]);
+
+  const status = incident.analysis_status ?? "not_started";
+  if (status !== "failed" && status !== "not_started") return null;
+  if (current.kind !== "known" || !ANALYSIS_RERUNNERS.includes(current.role)) return null;
+
+  if (jobId) {
+    return (
+      <p className="note" role="status">
+        Analysis queued (job <code>{jobId}</code>). This page reloads when it ends…
+      </p>
+    );
+  }
+  const run = () => {
+    setSending(true);
+    setError(null);
+    requestAnalysis(incidentId).then(
+      (accepted) => setJobId(accepted.job_id),
+      (cause: unknown) => {
+        setSending(false);
+        setError(`The analysis was not queued. ${cause instanceof ApiError ? cause.message : "Unexpected error."}`);
+      },
+    );
+  };
+  return (
+    <div className="next-step">
+      <button type="button" onClick={run} disabled={sending}>
+        {sending ? "Queuing…" : "Run analysis again"}
+      </button>
+      {error && (
+        <p className="upload-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Evidence({ incidentId, ids }: { incidentId: string; ids: string[] }) {
   if (ids.length === 0) return <span className="muted">Evidence: none cited</span>;
   return (
     <span className="evidence">
       Evidence:{" "}
       {ids.map((id, index) => (
-        <span key={id}>
+        <span key={index}>
           {index > 0 && " "}
           <Link to={`/incidents/${encodeURIComponent(incidentId)}#event-${encodeURIComponent(id)}`}>{id}</Link>
         </span>
@@ -125,8 +232,8 @@ function Report({ incidentId, report }: { incidentId: string; report: AnalysisRe
           <ol>
             {[...report.sequence]
               .sort((a, b) => a.order - b.order)
-              .map((step) => (
-                <li key={step.order}>
+              .map((step, index) => (
+                <li key={index}>
                   {step.description} <Evidence incidentId={incidentId} ids={step.cited_event_ids} />
                 </li>
               ))}
@@ -145,8 +252,8 @@ function Report({ incidentId, report }: { incidentId: string; report: AnalysisRe
                 {findings.length === 0 ? (
                   <li>None</li>
                 ) : (
-                  findings.map((finding) => (
-                    <li key={finding.statement}>
+                  findings.map((finding, index) => (
+                    <li key={index}>
                       {finding.statement} <Evidence incidentId={incidentId} ids={finding.cited_event_ids} />
                     </li>
                   ))
@@ -167,8 +274,8 @@ function Report({ incidentId, report }: { incidentId: string; report: AnalysisRe
       <Section title="Weaknesses">
         {report.weaknesses ? (
           <ul>
-            {report.weaknesses.map((item) => (
-              <li key={item}>{item}</li>
+            {report.weaknesses.map((item, index) => (
+              <li key={index}>{item}</li>
             ))}
           </ul>
         ) : (
@@ -182,8 +289,8 @@ function Report({ incidentId, report }: { incidentId: string; report: AnalysisRe
         <p className="muted">Advice for the analyst. ICD never runs these.</p>
         {report.recommendations.length > 0 ? (
           <ul>
-            {report.recommendations.map((item) => (
-              <li key={item}>{item}</li>
+            {report.recommendations.map((item, index) => (
+              <li key={index}>{item}</li>
             ))}
           </ul>
         ) : (

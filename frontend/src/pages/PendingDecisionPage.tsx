@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
-import type { ResponseAction, ScenarioId } from "../api/contracts";
+import type { AuditRecord, IncidentStatus, ResponseAction, ScenarioId } from "../api/contracts";
 import { getDecision, submitDecision } from "../api/decisions";
 import { ApiError } from "../api/errors";
-import { getIncident } from "../api/incidents";
+import { getAuditTrail, getIncident } from "../api/incidents";
 import type { DecisionRecord, DecisionRequest, DecisionType, IncidentSummary } from "../api/proposed";
 import { DECIDERS } from "../auth/roles";
 import { useCurrentUser } from "../auth/useCurrentUser";
@@ -134,6 +134,31 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
     };
   }, [actionRunning, incidentId, setDecision]);
 
+  // Path B: the window expired with no analyst decision. The server selects a scenario and runs it
+  // (simulated); GET /decision only holds analyst decisions, so read the incident and its audit
+  // trail once a second until the system's outcome is there (C4-D6).
+  const [systemOutcome, setSystemOutcome] = useState<SystemOutcome | null>(null);
+  const expiredUndecided = view.state === "expired" && load.kind === "ready" && load.decision === null;
+  const outcomeSettled = systemOutcome !== null && !UNSETTLED.includes(systemOutcome.status);
+  useEffect(() => {
+    if (!expiredUndecided || outcomeSettled) return;
+    const controller = new AbortController();
+    const read = () =>
+      Promise.all([getIncident(incidentId, controller.signal), getAuditTrail(incidentId, controller.signal)]).then(
+        ([{ data }, trail]) => {
+          setSystemOutcome(systemOutcomeOf(data.incident.status ?? "new", trail));
+          setLoad((current) => (current.kind === "ready" ? { ...current, summary: data } : current));
+        },
+        () => undefined,
+      );
+    void read();
+    const timer = setInterval(() => void read(), ACTION_POLL_MS);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [expiredUndecided, outcomeSettled, incidentId]);
+
   const back = <Link to={`/incidents/${encodeURIComponent(incidentId)}`}>Back to incident</Link>;
 
   if (load.kind !== "ready") {
@@ -183,6 +208,7 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
       <CountdownView view={view} />
 
       {decision && <DecisionRecorded decision={decision} />}
+      {expiredUndecided && <SystemSelection outcome={systemOutcome} />}
       {(!decision || escalated) && (
         <DecisionChoice
           incidentId={incidentId}
@@ -191,6 +217,71 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
           canDecide={canDecide}
           onDecided={setDecision}
         />
+      )}
+    </section>
+  );
+}
+
+/** Statuses in which the system's path after expiry has not finished yet. */
+const UNSETTLED: IncidentStatus[] = ["awaiting_human_decision", "response_in_progress"];
+
+interface SystemOutcome {
+  status: IncidentStatus;
+  /** C5's scenario.selected record of the expiry, if written. */
+  selected: AuditRecord | null;
+  /** C5's action.simulated record with trigger window_expiry, if written. */
+  action: AuditRecord | null;
+}
+
+function systemOutcomeOf(status: IncidentStatus, trail: AuditRecord[]): SystemOutcome {
+  const last = (match: (record: AuditRecord) => boolean) => [...trail].reverse().find(match) ?? null;
+  return {
+    status,
+    selected: last((record) => record.event_type === "scenario.selected"),
+    action: last((record) => record.event_type === "action.simulated" && record.details?.trigger === "window_expiry"),
+  };
+}
+
+const detail = (record: AuditRecord | null, key: string): string | null => {
+  const value = record?.details?.[key];
+  return value === undefined || value === null ? null : String(value);
+};
+
+/** What the system did after the deadline, read from C5's audit trail (nothing is computed here). */
+function SystemSelection({ outcome }: { outcome: SystemOutcome | null }) {
+  if (outcome === null || (outcome.selected === null && UNSETTLED.includes(outcome.status))) {
+    return (
+      <p className="note" role="status">
+        The window expired with no analyst decision. Waiting for the system&apos;s selection…
+      </p>
+    );
+  }
+  const scenarioId = (detail(outcome.selected, "scenario_id") ?? detail(outcome.action, "scenario_id")) as ScenarioId | null;
+  const actionId = detail(outcome.action, "action_id");
+  return (
+    <section className="box decision-recorded" aria-labelledby="system-selection-heading">
+      <h2 id="system-selection-heading">Selected by the system at the deadline</h2>
+      <p>By system (no analyst decided within the window)</p>
+      <p>
+        Scenario:{" "}
+        {scenarioId ? (
+          <>
+            {scenarioId} {SCENARIO_LABELS[scenarioId]} {simulated}
+          </>
+        ) : (
+          "none: no catalogue scenario fits, so nothing was run and the incident goes to a human"
+        )}
+      </p>
+      <p>Status: {INCIDENT_STATUS_LABELS[outcome.status]}</p>
+      {outcome.action && (
+        <p className="decision-action" role="status">
+          Action {actionId ?? ""} (SIMULATED):{" "}
+          {outcome.action.result === "success"
+            ? "simulated, succeeded"
+            : outcome.action.result === "failure"
+              ? "simulated, failed"
+              : outcome.action.result}
+        </p>
       )}
     </section>
   );
