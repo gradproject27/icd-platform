@@ -31,3 +31,17 @@ The record of `docs/ai1-runbook.md` section 8, filled in after one run of sectio
 - Grounding: 7 of 7 claims supported, confidence 1.0. **Passed.**
 
 The output folders (`tools/ai1/runs/c2-stub`, `c2-cluster`, `c2-cache`) stay out of git, as the runbook says.
+
+## C2's own run (24 Nov 2026, decision C2-D20)
+
+Run by C2 (with Claude), **without AI1**, following `docs/ai1-runbook.md` sections 5 to 7 as written plus the `--cache-dir` fix from point 1 above. Place: a GitHub Actions runner on branch `claude/project-thread-pzyncm`, stack started with `docker compose up --build --detach --wait`. **Stub backend only**: no model is reachable (no cluster or HPC access since 14 Nov), so the real-model rows stay open.
+
+| Item | Result |
+|---|---|
+| Date, who | 24 Nov 2026, C2 (with Claude). No help from AI1. |
+| Stub run: last line | `20 of 20 valid; 183 supported, 0 unsupported factual claims` (same as AI1's run) |
+| Second run answered from the cache | Yes: all 20 lines say `(cache)` |
+| `--from-db` run on stored incidents (section 5, inside the api container) | Demo slice upload (`fixtures/demo/`): `6 of 6 valid; 98 supported, 0 unsupported factual claims`. This is the step AI1's dry run could not do (Docker was not running) |
+| Real model: backend, model, site | **Not run: no compute.** To do when the cluster or a GPU laptop is available |
+| Pre-generated demo reports (tracker W4, AI1 + C2) | Command ready: the same `--from-db --upload <demo slice upload>` run with `--backend openai_http`. Reports are cached by evidence hash, so a later demo answers from the cache without the model. Not generated yet: needs the real model |
+| Help needed from AI1 | None for the stub and `--from-db` paths. The runbook worked as written |

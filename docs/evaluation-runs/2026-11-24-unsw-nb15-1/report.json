@@ -1,0 +1,354 @@
+{
+  "dataset_id": "unsw-nb15",
+  "file": "UNSW-NB15_1.csv",
+  "bytes": 168979718,
+  "correlation_config_version": "correlation-v1",
+  "risk_config_version": "risk-v0",
+  "assets_file": null,
+  "input": {
+    "events": 700001,
+    "flagged": 22215,
+    "unflagged": 677786,
+    "unlabelled": 0,
+    "context_candidates": 11289,
+    "first_event_at": "2015-01-22T11:49:37+00:00",
+    "last_event_at": "2015-01-22T19:44:02+00:00",
+    "context_linked": 11289,
+    "unflagged_or_unlabelled_outside_incidents": 666497
+  },
+  "incidents": 297,
+  "groups_before_cap": 40,
+  "size_cap": 500,
+  "sizes": {
+    "links": {
+      "count": 297,
+      "min": 1,
+      "p50": 30,
+      "p90": 402,
+      "p99": 494,
+      "max": 498,
+      "mean": 112.81
+    },
+    "flagged": {
+      "count": 297,
+      "min": 1,
+      "p50": 28,
+      "p90": 243,
+      "p99": 417,
+      "max": 494,
+      "mean": 74.8
+    },
+    "context": {
+      "count": 297,
+      "min": 0,
+      "p50": 6,
+      "p90": 153,
+      "p99": 366,
+      "max": 382,
+      "mean": 38.01
+    },
+    "buckets": {
+      "1": 6,
+      "2-9": 15,
+      "10-49": 158,
+      "50-99": 24,
+      "100-249": 39,
+      "250-499": 55,
+      "500": 0,
+      "over 500": 0
+    }
+  },
+  "groups_before_cap_sizes": {
+    "links": {
+      "count": 40,
+      "min": 191,
+      "p50": 413,
+      "p90": 804,
+      "p99": 13143,
+      "max": 13143,
+      "mean": 837.6
+    },
+    "buckets": {
+      "1": 0,
+      "2-9": 0,
+      "10-49": 0,
+      "50-99": 0,
+      "100-249": 8,
+      "250-499": 17,
+      "500": 0,
+      "over 500": 15
+    }
+  },
+  "minutes": {
+    "count": 297,
+    "min": 0.0,
+    "p50": 0.15,
+    "p90": 66.58,
+    "p99": 115.8,
+    "max": 116.52,
+    "mean": 14.96
+  },
+  "attack_types_per_incident": {
+    "1": 95,
+    "2": 34,
+    "3": 13,
+    "4": 15,
+    "5": 86,
+    "6": 23,
+    "7": 20,
+    "8": 11
+  },
+  "incident_types": {
+    "DoS": 155,
+    "Generic": 120,
+    "Exploits": 16,
+    "Shellcode": 4,
+    "Backdoors": 2
+  },
+  "splits": {
+    "groups_split": 15,
+    "parts": 272,
+    "small_parts": 21,
+    "gap_seconds": {
+      "count": 257,
+      "min": 1.0,
+      "p50": 2.0,
+      "p90": 179.0,
+      "p99": 287.0,
+      "max": 319.0,
+      "mean": 37.72
+    }
+  },
+  "over_merge_markers": {
+    "rule": "over_cap: more than the cap and one flagged event (cannot be cut); long: longer than 120 min; many_types: 4 or more attack types",
+    "counts": {
+      "many_types": 155
+    },
+    "incidents_with_any": 155
+  },
+  "risk": {
+    "levels": {
+      "high": 185,
+      "medium": 112
+    },
+    "scores": {
+      "count": 297,
+      "min": 48,
+      "p50": 92,
+      "p90": 100,
+      "p99": 100,
+      "max": 100,
+      "mean": 78.72
+    },
+    "flags": {
+      "asset_unknown": 297,
+      "outcome_unknown": 297
+    },
+    "likelihood": {
+      "count": 297,
+      "min": 0.48022566241719766,
+      "p50": 0.9177060162903259,
+      "p90": 0.9981315031069811,
+      "p99": 0.9998602187756184,
+      "max": 0.9998617672393227,
+      "mean": 0.79
+    },
+    "impact": {
+      "count": 297,
+      "min": 1.0,
+      "p50": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1.0,
+      "mean": 1.0
+    }
+  },
+  "largest_incidents": [
+    {
+      "incident_id": "inc-bea2f0c3af6e75c4",
+      "links": 498,
+      "flagged": 271,
+      "minutes": 1.3,
+      "attack_types": "Generic:269;Reconnaissance:2",
+      "level": "medium",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-8991900436e7204f",
+      "links": 497,
+      "flagged": 269,
+      "minutes": 1.73,
+      "attack_types": "Exploits:3;Generic:266",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-0bd15003491243b2",
+      "links": 494,
+      "flagged": 260,
+      "minutes": 0.95,
+      "attack_types": "Generic:259;Reconnaissance:1",
+      "level": "medium",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-ff00b8311de4840f",
+      "links": 494,
+      "flagged": 494,
+      "minutes": 0.28,
+      "attack_types": "Analysis:70;Backdoors:70;DoS:70;Exploits:141;Fuzzers:142;Reconnaissance:1",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-386820a14eac7eb2",
+      "links": 489,
+      "flagged": 289,
+      "minutes": 115.12,
+      "attack_types": "Backdoors:4;DoS:17;Exploits:121;Fuzzers:65;Generic:34;Reconnaissance:37;Shellcode:8;Worms:3",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-f9a84562d5c50752",
+      "links": 488,
+      "flagged": 488,
+      "minutes": 0.38,
+      "attack_types": "Analysis:68;Backdoors:68;DoS:69;Exploits:137;Fuzzers:146",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-66b123d075f26e54",
+      "links": 481,
+      "flagged": 218,
+      "minutes": 24.95,
+      "attack_types": "DoS:8;Exploits:20;Fuzzers:168;Generic:7;Reconnaissance:14;Shellcode:1",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-de251210f907c3f2",
+      "links": 479,
+      "flagged": 260,
+      "minutes": 1.02,
+      "attack_types": "Generic:259;Reconnaissance:1",
+      "level": "medium",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-f67797bf58c9cb00",
+      "links": 479,
+      "flagged": 260,
+      "minutes": 1.38,
+      "attack_types": "Exploits:1;Generic:259",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-57e543793ab623e5",
+      "links": 478,
+      "flagged": 348,
+      "minutes": 115.72,
+      "attack_types": "DoS:18;Exploits:117;Fuzzers:137;Generic:20;Reconnaissance:49;Shellcode:6;Worms:1",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-15cd171895798552",
+      "links": 474,
+      "flagged": 270,
+      "minutes": 92.15,
+      "attack_types": "DoS:2;Exploits:84;Fuzzers:134;Generic:8;Reconnaissance:36;Shellcode:5;Worms:1",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-fdda96e11bc76820",
+      "links": 472,
+      "flagged": 256,
+      "minutes": 2.27,
+      "attack_types": "Exploits:2;Generic:252;Reconnaissance:2",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-140d98dd273a05aa",
+      "links": 463,
+      "flagged": 253,
+      "minutes": 1.23,
+      "attack_types": "Exploits:1;Generic:252",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-6b214cc4df740118",
+      "links": 457,
+      "flagged": 247,
+      "minutes": 1.0,
+      "attack_types": "Exploits:2;Generic:245",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-b7dd677e61d11090",
+      "links": 454,
+      "flagged": 73,
+      "minutes": 15.8,
+      "attack_types": "DoS:2;Exploits:16;Fuzzers:51;Reconnaissance:4",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-5b6e3fc031133923",
+      "links": 453,
+      "flagged": 417,
+      "minutes": 113.8,
+      "attack_types": "Backdoors:10;DoS:23;Exploits:139;Fuzzers:163;Generic:14;Reconnaissance:58;Shellcode:10",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-f4e0075733841b52",
+      "links": 453,
+      "flagged": 246,
+      "minutes": 1.02,
+      "attack_types": "Generic:245;Reconnaissance:1",
+      "level": "medium",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-3d33ad24049dcbe7",
+      "links": 450,
+      "flagged": 243,
+      "minutes": 81.15,
+      "attack_types": "Backdoors:1;DoS:6;Exploits:94;Fuzzers:88;Generic:14;Reconnaissance:38;Shellcode:2",
+      "level": "high",
+      "markers": "many_types"
+    },
+    {
+      "incident_id": "inc-553f1f8bfdcb3a26",
+      "links": 440,
+      "flagged": 74,
+      "minutes": 9.27,
+      "attack_types": "Analysis:55;Exploits:15;Reconnaissance:4",
+      "level": "high",
+      "markers": ""
+    },
+    {
+      "incident_id": "inc-759d5808f6b843ca",
+      "links": 435,
+      "flagged": 236,
+      "minutes": 115.73,
+      "attack_types": "Backdoors:1;DoS:12;Exploits:94;Fuzzers:60;Generic:14;Reconnaissance:49;Shellcode:5;Worms:1",
+      "level": "high",
+      "markers": "many_types"
+    }
+  ],
+  "seconds": {
+    "read_two_passes": 82.8,
+    "correlate": 0.6,
+    "score": 0.4
+  },
+  "peak_memory_mb": 212
+}
