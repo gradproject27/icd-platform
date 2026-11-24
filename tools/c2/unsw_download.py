@@ -68,9 +68,10 @@ def walk(op, site: str, folder: str, depth: int = 0):
 def download(op, site: str, path: str, target: Path) -> int:
     url = f"{site}/_api/web/GetFileByServerRelativeUrl('{quote(path)}')/$value"
     size = 0
-    with op.open(urllib.request.Request(url, headers=UA), timeout=600) as src, target.open(
-        "wb"
-    ) as dst:
+    with (
+        op.open(urllib.request.Request(url, headers=UA), timeout=600) as src,
+        target.open("wb") as dst,
+    ):
         while chunk := src.read(1 << 20):
             dst.write(chunk)
             size += len(chunk)
@@ -93,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:  # report and try the other share
             print(f"share failed: {type(exc).__name__}: {exc}", file=sys.stderr)
     if args.list:
-        for name, (_, path, size) in sorted(files.items()):
+        for _name, (_, path, size) in sorted(files.items()):
             print(f"{size:>12,}  {path}")
     args.out.mkdir(parents=True, exist_ok=True)
     for name in args.names:

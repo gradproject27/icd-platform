@@ -10,11 +10,59 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: list the official files
-        run: python -I tools/c2/unsw_download.py --list
+      - run: pip install -q -r backend/requirements.txt
+      - name: download UNSW-NB15_1.csv (official share)
+        run: |
+          python -I tools/c2/unsw_download.py UNSW-NB15_1.csv --out "$RUNNER_TEMP/unsw"
+          sha256sum "$RUNNER_TEMP/unsw/UNSW-NB15_1.csv" | cut -c1-64
+          nproc; grep -m1 "model name" /proc/cpuinfo; free -g | head -2
+      - name: correlation and risk report on the real file (counts only)
+        working-directory: backend
+        run: |
+          /usr/bin/time -v python -m app.correlation.report unsw-nb15 "$RUNNER_TEMP/unsw/UNSW-NB15_1.csv" \
+            --out "$RUNNER_TEMP/report" --now 2026-11-24T00:00:00+00:00 2> "$RUNNER_TEMP/time-report.txt"
+          grep -E "Elapsed|Maximum resident" "$RUNNER_TEMP/time-report.txt"
+          echo "=== report.json"; cat "$RUNNER_TEMP/report/report.json"
+      - name: indicative grouping metrics (counts only)
+        working-directory: backend
+        run: |
+          /usr/bin/time -v python -m app.evaluation.cli unsw-nb15 "$RUNNER_TEMP/unsw/UNSW-NB15_1.csv" \
+            --out "$RUNNER_TEMP/evaluation" 2> "$RUNNER_TEMP/time-eval.txt"
+          grep -E "Elapsed|Maximum resident" "$RUNNER_TEMP/time-eval.txt"
+          echo "=== evaluation.md"; cat "$RUNNER_TEMP/evaluation/evaluation.md"
+          echo "=== evaluation.json"; cat "$RUNNER_TEMP/evaluation/evaluation.json"
+      - name: choose the demo slice
+        run: |
+          python tools/c2/make_demo_slice.py choose "$RUNNER_TEMP/unsw/UNSW-NB15_1.csv" --out "$RUNNER_TEMP/demo"
+          echo "=== manifest"; cat "$RUNNER_TEMP/demo/unsw-nb15-demo-slice.json"
+          mkdir -p fixtures/demo && cp "$RUNNER_TEMP/demo/unsw-nb15-demo-slice.json" fixtures/demo/
+          python tools/c2/make_demo_slice.py rebuild "$RUNNER_TEMP/unsw/UNSW-NB15_1.csv" --out "$RUNNER_TEMP/rebuilt"
+      - name: start the stack
+        run: |
+          cp .env.example .env
+          docker compose up --build --detach --wait --wait-timeout 300
+      - name: demo slice and edge cases through nginx
+        run: |
+          python tools/c2/demo_edge_cases.py "$RUNNER_TEMP/demo/unsw-nb15-demo-slice.csv" \
+            --base-url http://localhost:8080/api | tee "$RUNNER_TEMP/edge.txt"
+      - name: C2 runbook run, stub backend (docs/ai1-runbook.md sections 5 to 7)
+        run: |
+          python tools/ai1/run_analysis.py --packages fixtures/ai1/grounding-set \
+            --out "$RUNNER_TEMP/c2-stub" --cache-dir "$RUNNER_TEMP/c2-cache" | tail -3
+          python tools/ai1/run_analysis.py --packages fixtures/ai1/grounding-set \
+            --out "$RUNNER_TEMP/c2-stub-2" --cache-dir "$RUNNER_TEMP/c2-cache" | tail -3
+          upload=$(grep -oE "upl-[0-9a-f]+" "$RUNNER_TEMP/edge.txt" | head -1)
+          echo "slice upload: $upload"
+          docker compose run --rm -e PYTHONPATH=/app -v "$PWD/tools:/tools" -v "$PWD/fixtures:/fixtures" api \
+            python /tools/ai1/run_analysis.py --from-db --upload "$upload" --limit 20 \
+            --out /tmp/c2-unsw --cache-dir /tmp/c2-cache | tail -8
+      - if: failure()
+        run: docker compose ps; docker compose logs --tail 80
+      - if: always()
+        run: docker compose down --volumes || true
