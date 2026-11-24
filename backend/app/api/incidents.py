@@ -14,9 +14,10 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
@@ -32,6 +33,7 @@ from app.api.schemas import (
     IncidentEventList,
     IncidentList,
     IncidentSummary,
+    JobAccepted,
     NotificationList,
     OriginalRecord,
     ResponseWindow,
@@ -48,6 +50,8 @@ from app.contracts import (
 from app.db import get_engine
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.ingest.lines import read_original
+from app.jobs.analysis import queue_analysis
+from app.jobs.queue import utcnow
 from app.models import EventRow
 from app.response.clock import DatabaseClock
 from app.response.engine import DecisionRefused, RefusalReason, ResponseEngine, WindowView
@@ -487,3 +491,37 @@ async def window_socket(
             previous = current or previous
     except WebSocketDisconnect:
         return
+
+
+# ---- re-run the AI analysis (C1, decision F8) --------------------------------------------------
+
+
+class AnalysisRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    force: bool = Field(
+        default=False,
+        description="Skip the report cache and call the model again (AI1 step 11).",
+    )
+
+
+@router.post("/incidents/{incident_id}/analysis", status_code=202, response_model=JobAccepted)
+def queue_incident_analysis(
+    incident_id: str, http_response: Response, body: AnalysisRequest | None = None
+) -> JobAccepted:
+    """Queue an AI analysis of a stored incident. The ingest job already queues one for every
+    incident; this is for a re-run (for example after the model became reachable again).
+    An analysis already queued or running for the incident is returned instead of a new one."""
+    engine = get_engine()
+    with Session(engine) as session:
+        _incident_row(session, incident_id)
+    job, _ = queue_analysis(
+        engine,
+        incident_id,
+        force=bool(body and body.force),
+        now=utcnow(),
+        max_attempts=get_settings().job_max_attempts,
+    )
+    status_url = f"/jobs/{job.job_id}"
+    http_response.headers["Location"] = status_url
+    return JobAccepted(job_id=job.job_id, status_url=status_url)
