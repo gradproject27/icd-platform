@@ -69,7 +69,7 @@ python tools/c1/demo_reset.py --file demo/unsw-nb15-demo-slice.csv --dataset-id 
 python tools/c2/demo_edge_cases.py demo/unsw-nb15-demo-slice.csv               # duplicate 409, malformed rows quarantined
 ```
 
-The slice gives 6 incidents: High 2, Medium 2, Low 2 (`fixtures/demo/unsw-nb15-demo-slice.json`). The result of the reset on this slice is in the rehearsal record (section 4).
+The slice gives 6 incidents: High 2, Medium 2, Low 2 (`fixtures/demo/unsw-nb15-demo-slice.json`). With the stub model none of them freezes: both High incidents get confidence 0.73, under the 0.75 threshold, so they wait for a human without a timer. That is the safety rule; a freeze on UNSW data needs a real model's confidence. Show paths A and B with the fixture (sections 4 and 5). Details: rehearsal record, section 4.
 
 ## 7. Using a real model instead of the stub
 
