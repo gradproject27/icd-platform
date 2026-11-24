@@ -477,6 +477,8 @@ Any change to a value in `risk.toml` changes `config_version`, so every stored s
 
 Ground truth comes from the **dataset's documentation**: attack schedules and the attacker and victim hosts. It is built **without the correlation keys** and without any other correlator's output (CON-20, DR-04), so the evaluation does not reward the design for agreeing with itself. The method is written down **by Week 3, before any metric is reported**.
 
+**Written method and first numbers (24 Nov 2026):** [evaluation.md](evaluation.md) §2 (ground-truth rule for UNSW-NB15, decision C2-D14) and §3 (indicative metrics on `UNSW-NB15_1.csv`).
+
 ### 14.2 Pairwise metrics over flagged events
 
 A pair of flagged events is **predicted-related** if both are in the same incident, and **truly related** if both are in the same ground-truth incident.

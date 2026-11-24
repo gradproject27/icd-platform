@@ -1,0 +1,94 @@
+{
+  "source": {
+    "dataset_id": "unsw-nb15",
+    "file": "UNSW-NB15_1.csv",
+    "bytes": 168979718,
+    "sha256": "7d851bbeabd27894ce39c8e78835c73341fc946652fb7743b9eff193b55eb511",
+    "where": "official UNSW-NB15 folder 'CSV Files' (tools/c2/unsw_download.py)"
+  },
+  "rule": "every line whose Stime is in [start, end] (epoch seconds, inclusive), in file order, unchanged (C2-D17)",
+  "start_epoch": 1421930705.0,
+  "end_epoch": 1421930706.0,
+  "start_utc": "2015-01-22T12:45:05+00:00",
+  "end_utc": "2015-01-22T12:45:06+00:00",
+  "lines": 86,
+  "first_line": 83731,
+  "last_line": 83879,
+  "slice_file": "unsw-nb15-demo-slice.csv",
+  "slice_bytes": 18312,
+  "slice_sha256": "918163c082eee343d9a0d946d6eb88e6143ec9ac7672bf1d3fcfeb7343c2e5e9",
+  "events": 86,
+  "flagged": 40,
+  "unflagged": 46,
+  "unlabelled": 0,
+  "incidents": 6,
+  "levels": {
+    "high": 2,
+    "low": 2,
+    "medium": 2
+  },
+  "correlation_config_version": "correlation-v1",
+  "risk_config_version": "risk-v0",
+  "expected_incidents": [
+    {
+      "incident_id": "inc-36fe93daffc834c3",
+      "level": "medium",
+      "score": 60,
+      "flagged": 7,
+      "context": 6,
+      "minutes": 0.02,
+      "incident_type": "Generic",
+      "attack_types": "Generic:7"
+    },
+    {
+      "incident_id": "inc-49b4d8b648d8376c",
+      "level": "high",
+      "score": 99,
+      "flagged": 28,
+      "context": 0,
+      "minutes": 0.02,
+      "incident_type": "DoS",
+      "attack_types": "Analysis:4;Backdoors:4;DoS:4;Exploits:8;Fuzzers:8"
+    },
+    {
+      "incident_id": "inc-4a889dfee8ce9b62",
+      "level": "low",
+      "score": 30,
+      "flagged": 2,
+      "context": 0,
+      "minutes": 0.02,
+      "incident_type": "Fuzzers",
+      "attack_types": "Fuzzers:2"
+    },
+    {
+      "incident_id": "inc-678771cb0eeff168",
+      "level": "medium",
+      "score": 60,
+      "flagged": 1,
+      "context": 0,
+      "minutes": 0.0,
+      "incident_type": "Generic",
+      "attack_types": "Generic:1"
+    },
+    {
+      "incident_id": "inc-6d730d142193ca50",
+      "level": "low",
+      "score": 30,
+      "flagged": 1,
+      "context": 0,
+      "minutes": 0.0,
+      "incident_type": "Fuzzers",
+      "attack_types": "Fuzzers:1"
+    },
+    {
+      "incident_id": "inc-83532a7aad4ea7d4",
+      "level": "high",
+      "score": 70,
+      "flagged": 1,
+      "context": 0,
+      "minutes": 0.0,
+      "incident_type": "DoS",
+      "attack_types": "DoS:1"
+    }
+  ]
+}
