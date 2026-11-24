@@ -1,0 +1,24 @@
+# TEMPORARY (C2, 24 Nov 2026): downloads UNSW-NB15 on the runner and prints counts only.
+# Removed from the branch before the PR is marked ready. Nothing from the dataset is committed.
+name: c2-unsw-run
+on:
+  push:
+    branches: [claude/project-thread-pzyncm]
+    paths: [".github/workflows/c2-unsw-run.yml", "tools/c2/**", "backend/app/evaluation/**"]
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: find the official download link
+        run: |
+          curl -sSL -A "Mozilla/5.0" https://research.unsw.edu.au/projects/unsw-nb15-dataset -o page.html
+          ls -l page.html
+          grep -oE 'https://[a-zA-Z0-9.-]*sharepoint\.com[^"<> ]*' page.html | sort -u | head -20
+          grep -oiE 'href="[^"]*(cloudstor|onedrive|sharepoint|dropbox|download)[^"]*"' page.html | sort -u | head -20
