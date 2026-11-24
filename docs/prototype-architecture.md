@@ -5,7 +5,7 @@
 | Owner | C1 (Platform and Integration) |
 | Roadmap task | 26 (Week 4): resettable demo and prototype note |
 | Status | Draft for team review, 24 Nov 2026 |
-| Decisions | C1 F1 to F11 (this note, section 7) |
+| Decisions | C1 F1 to F11, approved by the team on 24 Nov 2026 (section 7) |
 
 The current build is the **initial prototype of the full ICD system**: every stage of the specified workflow exists and is connected, on one dataset (UNSW-NB15) and with simulated response actions. Later phases widen it (more datasets, login and roles, the model hosted on HPC) without changing the path below.
 
@@ -79,6 +79,6 @@ To use the national HPC once access exists: copy `tools/c1/icd_analyze.sbatch` t
 - The AI panel reads `GET /incidents/{id}/report`, which C4 is connecting to the stored reports.
 - The real-model numbers in the repo come from the faculty cluster runs (AI1, `docs/ai1-runs/08` to `12`), not from the app's own job.
 
-## 7. C1 decisions behind this note (24 Nov 2026, proposed)
+## 7. C1 decisions behind this note (approved 24 Nov 2026)
 
 F1 one analysis job per incident, queued with the ingest job's completion; F2 all incidents analysed, highest risk first; F3 `ICD_ANALYSIS_BACKEND` with `stub` default; F4 `hpc_batch` built, not run; F5 the analysis job drives the response engine (register, start, record); F6 no answer is retried then failed, a failed check is a result; F7 report API (moved to C4); F8 `POST /incidents/{id}/analysis` replaces the unbuilt `POST /analysis-jobs`; F9 demo reset; F10 this note; F11 scope-change note sent by the team. Full list with alternatives: the C1 decisions file in the project files.
