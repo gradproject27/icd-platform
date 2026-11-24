@@ -173,7 +173,7 @@ describe("UploadPage", () => {
       "invalid_ip4",
     ]);
     expect(screen.getByRole("link", { name: "View incidents" })).toHaveAttribute("href", "/incidents");
-    expect(screen.getByText("Incidents appear after correlation (Week 3).")).toBeInTheDocument();
+    expect(screen.getByText("Each incident's AI report appears on its page once its analysis is done.")).toBeInTheDocument();
   });
 
   it("shows a failed job with the message and code from C1", async () => {

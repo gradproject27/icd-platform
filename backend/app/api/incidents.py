@@ -14,12 +14,15 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
+from app.analysis.grounding import MASKED_TOKEN
+from app.analysis.store import latest_report
 from app.api.errors import ApiException
 from app.api.schemas import (
     AuditTrail,
@@ -32,11 +35,13 @@ from app.api.schemas import (
     IncidentEventList,
     IncidentList,
     IncidentSummary,
+    JobAccepted,
     NotificationList,
     OriginalRecord,
     ResponseWindow,
 )
 from app.contracts import (
+    AnalysisReport,
     AuditEventType,
     AuditRecord,
     Event,
@@ -46,8 +51,11 @@ from app.contracts import (
     UserRole,
 )
 from app.db import get_engine
+from app.evidence.store import load_masking_map, unmask_report
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.ingest.lines import read_original
+from app.jobs.analysis import queue_analysis
+from app.jobs.queue import utcnow
 from app.models import EventRow
 from app.response.clock import DatabaseClock
 from app.response.engine import DecisionRefused, RefusalReason, ResponseEngine, WindowView
@@ -237,14 +245,44 @@ def original_record(incident_id: str, event_id: str) -> OriginalRecord:
     )
 
 
-@router.get("/incidents/{incident_id}/report")
-def incident_report(incident_id: str) -> None:
-    """No AI report is stored anywhere yet (gap G3: report storage is C1/AI1 work)."""
-    with Session(get_engine()) as session:
+@router.get("/incidents/{incident_id}/report", response_model=AnalysisReport)
+def incident_report(incident_id: str) -> JSONResponse:
+    """The incident's latest valid AI report, un-masked for the analyst's screen (C2-D7).
+
+    The report is stored masked (AI1, migration 0006); only this answer carries real host, user
+    and IP values, and the un-masked copy is never stored. 404 report_not_available until the
+    analysis job (C1) has stored a valid report for the incident.
+
+    When the report names a token (host-01 ...) that its package's stored masking map does not
+    know, the token stays as it is and the answer carries `X-ICD-Report-Masked: 1` (C4-D1), so the
+    panel can say that some names are shown as tokens.
+    """
+    engine = get_engine()
+    with Session(engine) as session:
         _incident_row(session, incident_id)
-    raise ApiException(
-        404, ErrorCode.REPORT_NOT_AVAILABLE, "No AI report is stored for this incident yet."
-    )
+    report = latest_report(engine, incident_id)
+    if report is None:
+        raise ApiException(
+            404, ErrorCode.REPORT_NOT_AVAILABLE, "No AI report is stored for this incident yet."
+        )
+    masking_map = load_masking_map(engine, report.evidence_package_id, report.incident_id)
+    shown = unmask_report(report, masking_map)
+    body = shown.model_dump(mode="json")
+    headers = {REPORT_MASKED_HEADER: "1"} if _still_masked(shown) else None
+    return JSONResponse(body, headers=headers)
+
+
+REPORT_MASKED_HEADER = "X-ICD-Report-Masked"
+
+
+def _still_masked(report: AnalysisReport) -> bool:
+    """True when a text field still holds a masking token after un-masking."""
+    texts = [report.summary, report.attack_type or "", report.uncertainty,
+             report.impact or "", report.risk_justification or "",
+             *(s.description for s in report.sequence or []),
+             *(f.statement for f in report.findings),
+             *(report.weaknesses or []), *report.recommendations]  # fmt: skip
+    return any(MASKED_TOKEN.search(text) for text in texts)
 
 
 @router.get("/incidents/{incident_id}/audit", response_model=AuditTrail)
@@ -487,3 +525,37 @@ async def window_socket(
             previous = current or previous
     except WebSocketDisconnect:
         return
+
+
+# ---- re-run the AI analysis (C1, decision F8) --------------------------------------------------
+
+
+class AnalysisRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    force: bool = Field(
+        default=False,
+        description="Skip the report cache and call the model again (AI1 step 11).",
+    )
+
+
+@router.post("/incidents/{incident_id}/analysis", status_code=202, response_model=JobAccepted)
+def queue_incident_analysis(
+    incident_id: str, http_response: Response, body: AnalysisRequest | None = None
+) -> JobAccepted:
+    """Queue an AI analysis of a stored incident. The ingest job already queues one for every
+    incident; this is for a re-run (for example after the model became reachable again).
+    An analysis already queued or running for the incident is returned instead of a new one."""
+    engine = get_engine()
+    with Session(engine) as session:
+        _incident_row(session, incident_id)
+    job, _ = queue_analysis(
+        engine,
+        incident_id,
+        force=bool(body and body.force),
+        now=utcnow(),
+        max_attempts=get_settings().job_max_attempts,
+    )
+    status_url = f"/jobs/{job.job_id}"
+    http_response.headers["Location"] = status_url
+    return JobAccepted(job_id=job.job_id, status_url=status_url)
