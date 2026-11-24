@@ -10,6 +10,9 @@ jobs:
       - uses: actions/checkout@v5
       - run: cp .env.example .env
       - run: python3 -I tools/c2/unsw_download.py UNSW-NB15_1.csv --out data/
+      - uses: actions/setup-python@v6
+        with: {python-version: '3.12'}
+      - run: pip install -r backend/requirements.txt
       - run: python3 tools/c2/make_demo_slice.py rebuild data/UNSW-NB15_1.csv --out demo/
       - run: sha256sum demo/*.csv && cat fixtures/demo/unsw-nb15-demo-slice.sha256
       - run: docker compose up --build --detach --wait --wait-timeout 240
