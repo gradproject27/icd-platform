@@ -3,10 +3,11 @@
     stub          the deterministic stub (app.analysis.stub), no model; CI and runbook step 1
     openai_http   any OpenAI-compatible chat endpoint: Ollama on a laptop (site "local") or the
                   faculty cluster's model service through its SSH tunnel (site "hpc")
+    hpc_batch     C1's Slurm batch handoff (app/hpc/batch.py, ICD_HPC_* variables there)
 
 The platform picks one from environment variables (`generator_from_env`, runbook section 2):
 
-    ICD_ANALYSIS_BACKEND   stub (default) | openai_http
+    ICD_ANALYSIS_BACKEND   stub (default) | openai_http | hpc_batch
     ICD_LLM_ENDPOINT       for example http://127.0.0.1:11434/v1/chat/completions
     ICD_LLM_MODEL          the served model name, for example qwen3.8-27b-awq-int4
     ICD_LLM_REVISION       optional weights commit; the model pin becomes <model>@<revision>
@@ -160,4 +161,10 @@ def generator_from_env(env: Mapping[str, str] | None = None) -> Generator:
             no_thinking=_flag(env, "ICD_LLM_NO_THINKING"),
             json_schema=_flag(env, "ICD_LLM_JSON_SCHEMA"),
         )
-    raise ValueError(f"unknown ICD_ANALYSIS_BACKEND {backend!r}; use stub or openai_http")
+    if backend == "hpc_batch":  # C1 decision F4: Slurm batch handoff, app/hpc/batch.py
+        from app.hpc.batch import HpcBatchConfig, HpcBatchGenerator
+
+        return HpcBatchGenerator(HpcBatchConfig.from_env(env))  # type: ignore[return-value]
+    raise ValueError(
+        f"unknown ICD_ANALYSIS_BACKEND {backend!r}; use stub, openai_http or hpc_batch"
+    )

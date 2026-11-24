@@ -23,7 +23,7 @@ from app.analysis.backends import Generator
 from app.analysis.cache import CacheEntry
 from app.analysis.incident_fields import apply_result
 from app.analysis.models import AnalysisReportRow
-from app.analysis.service import AnalysisAttempt, analyze_package
+from app.analysis.service import MAX_TRIES, AnalysisAttempt, analyze_package
 from app.contracts import AnalysisReport, Incident
 from app.evidence.store import IncidentNotStored, build_and_store_for_incident
 from app.incidents.models import IncidentRow
@@ -114,11 +114,17 @@ def analyze_incident(
     clock: Callable[[], datetime],
     *,
     force: bool = False,
+    max_tries: int = MAX_TRIES,
 ) -> AnalysisAttempt:
-    """Analyse one stored incident end to end (module docstring). force=True skips the cache."""
+    """Analyse one stored incident end to end (module docstring). force=True skips the cache.
+
+    max_tries=1 for a backend that builds its own prompt (C1's hpc_batch), which cannot take
+    the schema-retry turn."""
     evidence = build_and_store_for_incident(engine, incident_id, clock())
     cache = DbReportCache(engine)
-    attempt = analyze_package(evidence, generator, clock=clock, cache=cache, force=force)
+    attempt = analyze_package(
+        evidence, generator, clock=clock, cache=cache, force=force, max_tries=max_tries
+    )
     record_attempt(engine, attempt, clock(), cache.pending)
     return attempt
 

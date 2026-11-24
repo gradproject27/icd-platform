@@ -22,6 +22,7 @@ Paths as the API sees them; the dashboard calls them under `/api` (same origin, 
 | `WS /ws/response-windows?incident_id=` | `response_window.opened`, `.decided`, `.expired` (fields of spec section 7) | C5 `window_of`, read every 0.5 s |
 | `GET /me` | `CurrentUser`: `{user, role}` the API acts as; 401 `not_authenticated` without the development identity (S8-D9) | `ICD_DEV_USER`, `ICD_DEV_ROLE` |
 | `GET /notifications?after=&limit=` | `NotificationList`: `{items: AuditRecord[]}`, C5's `notification.sent` records of every incident, newest first, `limit` 1 to 100 (default 50); with `after` (a `record_id`), only records written after it; an unknown `after` is ignored (S8-D8) | C5 `audit_records`, read only |
+| `POST /incidents/{id}/analysis` | body `{force}` (optional; `force: true` skips the report cache) → **202** `JobAccepted`, header `Location`; an analysis already queued or running for the incident is returned instead of a second one; 404 `not_found`. The ingest job already queues one analysis per incident, so this is for a re-run (C1 decision F8) | `jobs` (kind `analysis`), [prototype-architecture.md](prototype-architecture.md) |
 
 **Entities** are the distinct `host`, `user`, `src_ip` and `dst_ip` values of all the incident's events, flagged and context (as C4's stub did; C3 may restrict them to flagged events).
 
