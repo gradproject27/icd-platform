@@ -45,10 +45,20 @@ Only the incident's **flagged** events count; context events never become target
 | Target | Rule | Fixture incident A |
 |---|---|---|
 | Host | The `host` on the most flagged events; if no event has one, the internal `dst_ip` on the most | `web-01` (4 events; `db-01` has 3) |
-| External source IP | The `src_ip` on the most flagged events that is **not** in `[network] internal` (RFC 1918 and loopback by default) | `203.0.113.10` |
+| External source IP | The `src_ip` on the most flagged events that is **not** in `[network] internal` (RFC 1918, loopback and the UNSW-NB15 testbed nets, see below) | `203.0.113.10` |
 | Account | The `user` on the most flagged events; a tie prefers a privileged account | `svc-db` (ties with `www-data`, but privileged) |
 
 Remaining ties go to the alphabetically first value, so the same incident always gives the same targets. Python's `is_private` calls 203.0.113.0/24 private (it is a documentation range), which is why the engine uses the configured list instead.
+
+**UNSW-NB15 (config `response-v1`, decision C5-D2, 24 Nov).** UNSW-NB15 flow records have no `host`, so the target host is always the internal `dst_ip`. With only RFC 1918 ranges every UNSW incident got `no_target_host` and could never freeze (C3's post-merge review of #25, 16 Nov). The testbed networks from the dataset paper are now in `[network] internal`:
+
+| Network | Role in the testbed | In `internal`? | Effect |
+|---|---|---|---|
+| `149.171.126.0/24` | victim servers | yes | becomes the target host |
+| `59.166.0.0/24` | normal clients | yes | never blocked as a source IP |
+| `175.45.176.0/24` | attackers | **no** | stays the external source IP, so S2 (isolate + block) is recommended |
+
+These ranges come from the paper, not from a scan of `UNSW-NB15_1.csv`. To confirm them on the real file: `cut -d, -f1,3 UNSW-NB15_1.csv | tr , '\n' | cut -d. -f1-3 | sort | uniq -c | sort -rn | head`. Any other /24 with many records should be added here (and `config_version` bumped).
 
 ## 4. Catalogue v0 and the lookup (decision D11)
 
@@ -84,6 +94,8 @@ response.audit_trail(incident_id)  # AuditRecord list, in order
 - The expiry thread runs in the worker. `expire_due()` and `expire_window(window_id)` are safe to call twice or from two processes.
 
 Rule TX: each step writes its transition, side effects and audit records in one transaction. A refused step changes nothing and is audited on its own.
+
+The demo of the two freeze outcomes (analyst decides, system selects at expiry) is in [demo-script.md](demo-script.md); `tests/response/test_demo_paths_db.py` runs the same path from stored events through `analyze_incident` and the engine calls above.
 
 ## 6. Tables (migration 0003)
 
@@ -142,6 +154,7 @@ The freeze rule reads the Incident contract, not a new field: **report valid** =
 | D10 | No 30-second reminder until OD-19 is decided (W5) |
 | D11 | Catalogue lookup keeps the v0 entity rule, in `response.toml` |
 | D12 | T16 is built as decision `no_action` |
+| C5-D2 (24 Nov) | UNSW-NB15 victim and normal-client testbed nets are internal; attacker net stays external (`response-v1`) |
 
 ## 11. Acceptance-test ideas found this week (for the Week 8 suite)
 

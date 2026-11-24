@@ -96,7 +96,7 @@ def test_missing_needs(config):
 def test_config_values(config):
     assert config.confidence_threshold == 0.75
     assert config.window_seconds == 60
-    assert config.config_version == "response-v0"
+    assert config.config_version == "response-v1"
 
 
 def test_config_refuses_s4_in_the_selection_order(tmp_path: Path):
