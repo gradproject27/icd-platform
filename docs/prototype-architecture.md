@@ -67,7 +67,7 @@ docker compose up --build --detach --wait
 python tools/c1/demo_reset.py        # empty everything, load the demo file, wait for the analysis
 ```
 
-`demo_reset.py` stops the worker, empties every app table and stored upload (`app/demo/reset.py`, guarded by `ICD_ALLOW_RESET=1`; the schema stays), starts the worker, uploads the demo file and waits until every incident is analysed. It then lists the incidents and the response windows that opened. The default file is the C3 correlation fixture, where one High incident freezes with the stub model. With C2's demo slice: `--file <slice> --dataset-id unsw-nb15`.
+`demo_reset.py` stops the worker, empties every app table and stored upload (`app/demo/reset.py`, guarded by `ICD_ALLOW_RESET=1`; the schema stays), starts the worker, uploads the demo file and waits until every incident is analysed. It then lists the incidents and the response windows that opened. The default file is the C3 correlation fixture, where one High incident freezes with the stub model. With C2's demo slice: `--file <slice> --dataset-id unsw-nb15`. **Before a live demo use `--no-upload`** and upload during the demo, because the High incident's 60 s response window opens as soon as the analysis finishes.
 
 Incidents stored before the analysis job existed: `docker compose exec worker python -m app.jobs.analysis --backfill`.
 

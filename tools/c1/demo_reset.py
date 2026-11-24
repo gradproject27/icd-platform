@@ -14,6 +14,10 @@ response windows that opened, which is where demo paths A and B start.
 
 The default file is the C3 correlation fixture: with the stub model it gives one High incident
 that freezes (a response window opens) and others that do not.
+
+For a live demo, run it with --no-upload and upload during the demo: otherwise the High
+incident's response window (60 s) opens, and may expire, before anyone is looking
+(docs/demo-script.md).
 """
 
 import argparse
@@ -57,7 +61,11 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://localhost:8080/api")
     parser.add_argument("--file", type=Path, default=DEFAULT_FILE)
     parser.add_argument("--dataset-id", default="fixture")
-    parser.add_argument("--no-upload", action="store_true")
+    parser.add_argument(
+        "--no-upload",
+        action="store_true",
+        help="only empty the platform; use this before a live demo and upload during it",
+    )
     parser.add_argument("--timeout", type=float, default=600, help="seconds to wait per step")
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
