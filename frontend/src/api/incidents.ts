@@ -57,17 +57,39 @@ export function getOriginalRecord(incidentId: string, eventId: string, signal?: 
   );
 }
 
+/** A report as the report API shows it: un-masked for display, unless `masked` says otherwise. */
+export interface ShownReport {
+  report: AnalysisReport;
+  /** True when the API answered with X-ICD-Report-Masked: 1 (some names are still tokens). */
+  masked: boolean;
+}
+
+/** Header the report API sets when a host, user or IP token is still in the text (C4-D1). */
+export const REPORT_MASKED_HEADER = "X-ICD-Report-Masked";
+
 /**
- * GET /incidents/{incident_id}/report: the stored AI report, or null when none is stored yet
- * (404 report_not_available). Any other error is thrown.
+ * GET /incidents/{incident_id}/report: the latest valid AI report, un-masked for display, or
+ * null when none is stored yet (404 report_not_available). Any other error is thrown.
  */
-export async function getReport(incidentId: string, signal?: AbortSignal): Promise<AnalysisReport | null> {
+export async function getShownReport(incidentId: string, signal?: AbortSignal): Promise<ShownReport | null> {
+  let masked = false;
   try {
-    return await request<AnalysisReport>(`/incidents/${encodeURIComponent(incidentId)}/report`, { signal });
+    const report = await request<AnalysisReport>(`/incidents/${encodeURIComponent(incidentId)}/report`, {
+      signal,
+      onResponse: (headers) => {
+        masked = headers.get(REPORT_MASKED_HEADER) === "1";
+      },
+    });
+    return { report, masked };
   } catch (error) {
     if (error instanceof ApiError && error.status === 404 && error.code === "report_not_available") return null;
     throw error;
   }
+}
+
+/** The report alone, for pages that only cite it (detail, explanation). */
+export async function getReport(incidentId: string, signal?: AbortSignal): Promise<AnalysisReport | null> {
+  return (await getShownReport(incidentId, signal))?.report ?? null;
 }
 
 /** GET /incidents/{incident_id}/audit: C5's audit records of the incident, in written order. */

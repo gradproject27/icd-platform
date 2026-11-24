@@ -11,12 +11,17 @@ const ID = summary.incident.incident_id;
 const REPORT = { ...reportExample, incident_id: ID };
 const NOT_STORED = { error: { code: "report_not_available", message: "No AI report is stored for this incident yet." } };
 
-function serve(report: unknown, incident: Partial<typeof summary.incident> = {}) {
+function serve(report: unknown, incident: Partial<typeof summary.incident> = {}, masked = false) {
   const fetchMock = mockFetch();
   fetchMock.mockImplementation(async (url) => {
     const path = String(url);
     if (path === `/api/incidents/${ID}`) return jsonResponse({ ...summary, incident: { ...summary.incident, ...incident } });
-    if (path === `/api/incidents/${ID}/report`) return report ? jsonResponse(report) : jsonResponse(NOT_STORED, 404);
+    if (path === `/api/incidents/${ID}/report`) {
+      if (!report) return jsonResponse(NOT_STORED, 404);
+      const answer = jsonResponse(report);
+      if (masked) answer.headers.set("X-ICD-Report-Masked", "1");
+      return answer;
+    }
     return jsonResponse({ error: { code: "not_found", message: "No such path." } }, 404);
   });
 }
@@ -102,5 +107,49 @@ describe("AiReportPage", () => {
     serve({ ...REPORT, confidence: 0.6 });
     show();
     expect(await screen.findByText(/Below 0.75/)).toBeInTheDocument();
+  });
+
+  it("shows the grounding counts as they are", async () => {
+    serve({ ...REPORT, grounding: { claims: 9, factual_claims: 8, grounded_factual_claims: 8, unsupported: 0 } });
+    show();
+    expect(await screen.findByText(/Grounding: 8 of 8 factual claims supported by their cited events\./)).toBeInTheDocument();
+    expect(screen.getByText(/Grounding: 8 of 8/)).not.toHaveClass("box--warn");
+  });
+
+  it("warns when a claim is unsupported", async () => {
+    serve({ ...REPORT, grounding: { claims: 18, factual_claims: 18, grounded_factual_claims: 17, unsupported: 1 } });
+    show();
+    const warning = await screen.findByText(/Grounding: 17 of 18 factual claims supported/);
+    expect(warning).toHaveTextContent("1 unsupported");
+    expect(warning).toHaveClass("box--warn");
+  });
+
+  it("says when grounding was not checked", async () => {
+    serve({ ...REPORT, grounding: null });
+    show();
+    expect(await screen.findByText("Grounding: not checked for this report.")).toBeInTheDocument();
+  });
+
+  it("says when names are still masked tokens", async () => {
+    serve(REPORT, {}, true);
+    show();
+    expect(await screen.findByText(/shown as tokens \(such as host-01\)/)).toBeInTheDocument();
+  });
+
+  it("shows no masked note for an un-masked report", async () => {
+    serve(REPORT);
+    show();
+    await screen.findByRole("region", { name: "Summary" });
+    expect(screen.queryByText(/shown as tokens/)).not.toBeInTheDocument();
+  });
+
+  it("shows every line when a model repeats one", async () => {
+    const repeated = { statement: "Same line.", category: "evidence_supported", cited_event_ids: ["evt-0001", "evt-0001"] };
+    serve({ ...REPORT, findings: [repeated, repeated], recommendations: ["Patch.", "Patch."], weaknesses: ["Gap.", "Gap."] });
+    show();
+    const findings = await screen.findByRole("region", { name: "Findings" });
+    expect(within(findings).getAllByText("Same line.", { exact: false })).toHaveLength(2);
+    expect(within(section("Mitigations")).getAllByText("Patch.")).toHaveLength(2);
+    expect(within(section("Weaknesses")).getAllByText("Gap.")).toHaveLength(2);
   });
 });
