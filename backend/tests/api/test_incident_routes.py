@@ -6,7 +6,7 @@ runs on a FakeClock injected through the `response_engine` dependency, so no tes
 
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -14,8 +14,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.analysis.grounding import MASKED_TOKEN
+from app.analysis.store import analyze_incident, load_report
+from app.analysis.stub import StubGenerator
 from app.api.incidents import _window_events, response_engine
-from app.contracts import AnalysisStatus, AuditEventType, Event, Incident, IncidentStatus
+from app.contracts import (
+    AnalysisReport,
+    AnalysisStatus,
+    AuditEventType,
+    Event,
+    Incident,
+    IncidentStatus,
+)
 from app.correlation import correlate, load_config, load_risk_config, score_incidents
 from app.db import get_engine
 from app.incidents.store import store_incidents
@@ -57,7 +67,8 @@ def stored(monkeypatch, tmp_path):
     with engine.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE audit_records, response_actions, response_windows, "
+                "TRUNCATE analysis_reports, masking_maps, audit_records, response_actions, "
+                "response_windows, "
                 "incident_status_history, incident_lifecycle, incident_events, incidents, "
                 "quarantined_records, events, jobs, uploads RESTART IDENTITY CASCADE"
             )
@@ -198,10 +209,61 @@ def test_original_record_for_a_line_reference(client, stored, tmp_path):
     }
 
 
-def test_report_is_not_stored_yet(client):
+def test_no_report_before_the_analysis_ran(client):
     answer = client.get(f"/incidents/{A.incident_id}/report")
     assert answer.status_code == 404
     assert error_code(answer) == "report_not_available"
+
+
+class _Ticks:
+    def __init__(self):
+        self.now = T0
+
+    def __call__(self) -> datetime:
+        self.now += timedelta(seconds=1)
+        return self.now
+
+
+def _analyse(incident: Incident = A):
+    """C1's analysis job call (AI1's analyze_incident) with the stub model."""
+    return analyze_incident(get_engine(), incident.incident_id, StubGenerator(), _Ticks())
+
+
+def test_report_is_the_latest_valid_one_un_masked_for_display(client):
+    stored_report = _analyse().result.report
+    assert "web-01" not in json.dumps(stored_report.model_dump(mode="json"))
+    answer = client.get(f"/incidents/{A.incident_id}/report")
+    assert answer.status_code == 200
+    shown = AnalysisReport.model_validate(answer.json())
+    summary = client.get(f"/incidents/{A.incident_id}").json()
+    assert shown.report_id == summary["incident"]["latest_report_id"] == stored_report.report_id
+    text_fields = json.dumps(answer.json())
+    assert "web-01" in text_fields
+    assert MASKED_TOKEN.search(text_fields) is None
+    assert "X-ICD-Report-Masked" not in answer.headers
+    # IDs, categories and numbers are the stored ones; only text changes.
+    assert shown.evidence_package_id == stored_report.evidence_package_id
+    assert shown.confidence == stored_report.confidence
+    assert [f.cited_event_ids for f in shown.findings] == [
+        f.cited_event_ids for f in stored_report.findings
+    ]
+
+
+def test_the_stored_report_stays_masked(client):
+    report_id = _analyse().result.report.report_id
+    client.get(f"/incidents/{A.incident_id}/report")
+    assert "web-01" not in json.dumps(load_report(get_engine(), report_id).model_dump(mode="json"))
+
+
+def test_missing_masking_map_shows_tokens_and_says_so(client):
+    _analyse()
+    with get_engine().begin() as connection:
+        connection.execute(text("DELETE FROM masking_maps"))
+    answer = client.get(f"/incidents/{A.incident_id}/report")
+    assert answer.status_code == 200
+    assert answer.headers["X-ICD-Report-Masked"] == "1"
+    assert "web-01" not in json.dumps(answer.json())
+    assert MASKED_TOKEN.search(answer.json()["summary"] + json.dumps(answer.json()["sequence"]))
 
 
 # ---- window, decisions, audit ------------------------------------------------------------------

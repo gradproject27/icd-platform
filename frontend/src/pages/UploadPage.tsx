@@ -114,7 +114,7 @@ export function UploadPage() {
   return (
     <section>
       <h1>Upload logs</h1>
-      <p>Upload a dataset file. ICD parses it and stores its events; correlation into incidents follows in Week 3.</p>
+      <p>Upload a dataset file. ICD parses it, stores its events and correlates them into incidents; each incident is then analysed by the AI in the background.</p>
 
       {jobId !== null ? (
         <JobPanel jobId={jobId} acceptedUploadId={accepted?.job_id === jobId ? accepted.upload_id : null} onStartOver={startOver} />
@@ -352,7 +352,7 @@ function JobPanel({ jobId, acceptedUploadId, onStartOver }: JobPanelProps) {
           <p>
             <Link to="/incidents">View incidents</Link>
           </p>
-          <p className="note">Incidents appear after correlation (Week 3).</p>
+          <p className="note">Each incident&apos;s AI report appears on its page once its analysis is done.</p>
           <button type="button" onClick={onStartOver}>
             Upload another file
           </button>
