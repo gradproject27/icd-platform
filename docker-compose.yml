@@ -48,6 +48,19 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:?set POSTGRES_DB in .env}
       LLM_BACKEND: ${LLM_BACKEND:-mock}
       UPLOAD_DIR: /data/uploads
+      # C1 decision F3: the analysis job's model backend (stub | openai_http | hpc_batch);
+      # the variables each one needs are listed in .env.example.
+      ICD_ANALYSIS_BACKEND: ${ICD_ANALYSIS_BACKEND:-stub}
+      ICD_LLM_ENDPOINT: ${ICD_LLM_ENDPOINT:-}
+      ICD_LLM_MODEL: ${ICD_LLM_MODEL:-}
+      ICD_LLM_SITE: ${ICD_LLM_SITE:-local}
+      ICD_LLM_API_KEY: ${ICD_LLM_API_KEY:-}
+      ICD_LLM_NO_THINKING: ${ICD_LLM_NO_THINKING:-}
+      ICD_HPC_SSH_TARGET: ${ICD_HPC_SSH_TARGET:-}
+      ICD_HPC_SSH_KEY: ${ICD_HPC_SSH_KEY:-}
+      ICD_HPC_REMOTE_DIR: ${ICD_HPC_REMOTE_DIR:-}
+      ICD_HPC_SBATCH_SCRIPT: ${ICD_HPC_SBATCH_SCRIPT:-}
+      ICD_HPC_MODEL: ${ICD_HPC_MODEL:-}
     volumes:
       - uploads:/data/uploads
     depends_on:

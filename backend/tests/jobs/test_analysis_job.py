@@ -218,3 +218,25 @@ def _report_ids(engine, incident_id: str) -> list[str]:
                 )
             )
         )
+
+
+def test_the_hpc_batch_backend_runs_inside_the_job_on_a_fake_cluster(
+    upload, fixture_events, client, engine, settings, tmp_path
+):
+    """F4: the job uses the Slurm handoff and records the cluster stages; fake cluster only."""
+    from app.hpc.batch import HpcBatchGenerator
+    from tests.hpc.test_batch import CONFIG, FakeCluster
+
+    cluster = FakeCluster(tmp_path / "cluster")
+
+    def factory():
+        return HpcBatchGenerator(
+            CONFIG, run=cluster, sleep=lambda s: None, staging=tmp_path / "staging"
+        )
+
+    upload(fixture_events.read_bytes())
+    drain(engine, settings, factory)
+    for job in jobs(engine, "analysis"):
+        api = Job.model_validate(client.get(f"/jobs/{job.job_id}").json())
+        assert api.state == "done" and api.analysis is not None
+        assert api.analysis.report_valid and api.analysis.generated_by == "hpc"
