@@ -5,7 +5,7 @@
 | **Owner** | C5 (Response and Security) |
 | **Status** | v1, 24 Nov 2026 (decision C5-D4). Rehearsal is tracker task 25 (all members) |
 | **Backed by** | `backend/tests/response/test_demo_paths_db.py` (Postgres): the same steps, from stored events to the simulated action, pass in CI |
-| **Depends on** | C1's analysis job (registers incidents with the response engine and runs the analysis after correlation). Until it is on `main`, steps 3 to 5 cannot be shown in the browser; the test above shows them |
+| **Depends on** | C1's analysis job and demo reset (PR #47: registers incidents with the response engine and runs the analysis after correlation; `tools/c1/demo_reset.py`). Until #47 is on `main`, steps 3 to 5 cannot be shown in the browser; the test above shows them. Checked 24 Nov: this branch merged with #47 passes all 1,025 backend tests |
 
 The demo shows the one thing that makes ICD different: a High, confidently analysed incident **freezes** (the host is isolated, simulated) and a **60-second response window** opens. Then either an analyst decides in time (path A) or nobody does and the system selects the recommended scenario at the deadline (path B). Every action is **simulated**; nothing reaches a real system.
 
@@ -15,7 +15,7 @@ The demo shows the one thing that makes ICD different: a High, confidently analy
 2. Choose the model:
    - **HPC/cluster available:** set the backend the runbook names ([ai1-runbook.md](ai1-runbook.md) §2 and §3).
    - **HPC fallback (default for the demo):** keep `LLM_BACKEND=mock`. The stub model gives schema-valid reports with computed confidence; reports already made on the cluster are served from the report cache (`analysis_reports`, [ai1-runbook.md](ai1-runbook.md)) when the evidence is unchanged. Say this out loud: the analysis is real code, the model is the stand-in.
-3. Reset: `docker compose down --volumes && docker compose up --build` (C1's one-command reset replaces this when it lands). Wait until `docker compose ps` shows every service `(healthy)`.
+3. Start the stack (`docker compose up -d --build --wait`), then reset with C1's command: `python tools/c1/demo_reset.py --no-upload` (empties every app table and stored upload; the schema stays). Use `--no-upload` for the live demo: without it the reset uploads the fixture itself and incident A's 60-second window opens at once, before the audience sees the upload. Without C1's tool (before PR #47 is merged): `docker compose down --volumes && docker compose up --build`.
 4. Open http://localhost:8080 in one window and keep a terminal open.
 
 ## 1. Data used
