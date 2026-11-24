@@ -95,6 +95,8 @@ response.audit_trail(incident_id)  # AuditRecord list, in order
 
 Rule TX: each step writes its transition, side effects and audit records in one transaction. A refused step changes nothing and is audited on its own.
 
+The demo of the two freeze outcomes (analyst decides, system selects at expiry) is in [demo-script.md](demo-script.md); `tests/response/test_demo_paths_db.py` runs the same path from stored events through `analyze_incident` and the engine calls above.
+
 ## 6. Tables (migration 0003)
 
 | Table | Holds | Notes |

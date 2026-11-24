@@ -5,7 +5,7 @@
 | **Project** | ICD (Intelligent Cyber Defense) |
 | **Owner** | C5, Incident Response & Security Assurance |
 | **Task** | T1-13 (Week 1). Implemented in Week 2 by T2-13 (response engine v0) and T2-14 (simulated executor and catalogue) |
-| **Status** | Draft. Items marked **(proposed, needs C1/C3/C4 agreement)** are C5 design choices, not decisions |
+| **Status** | v1 (24 Nov 2026, decision C5-D5): approved by C3 (saradessouky) on PR #4, 23 Oct 2026, and built in the response engine (PR #25, [response-engine.md](response-engine.md)). Items still marked **(proposed, needs C1/C3/C4 agreement)** are not decided; they stay open for Week 5 and later |
 | **Sources** | Ratified decision register (19 Oct 2026); approved requirements FR-23 to FR-45, FR-31, NFR-SF-01, NFR-SF-06, NFR-SF-07, NFR-P-09; Week 1 task sheet |
 
 ## 1. Scope and safety rule
