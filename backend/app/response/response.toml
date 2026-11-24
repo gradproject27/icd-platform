@@ -1,7 +1,7 @@
 # C5 response engine configuration (Week 2). Read by config.py with tomllib.
 # Source: docs/response-workflow-spec.md (merged T1-13) and the decision register.
 # Any change to a value here must change config_version.
-config_version = "response-v0"
+config_version = "response-v1"  # v1: UNSW-NB15 testbed networks (decision C5-D2, 24 Nov)
 
 [freeze]
 confidence_threshold = 0.75  # OD-16: High confidence means 0.75 or more
@@ -10,7 +10,14 @@ window_seconds = 60          # OD-17: fixed, not configurable from the UI in the
 [network]
 # Addresses inside these networks are internal (decision D3). Everything else is external,
 # including documentation ranges such as 203.0.113.0/24 that Python calls "private".
-internal = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "::1/128", "fc00::/7"]
+internal = [
+  "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "::1/128", "fc00::/7",
+  # UNSW-NB15 testbed (Moustafa and Slay, 2015; decision C5-D2). Its flow records have no host
+  # name, so the target host is the internal destination IP and these ranges must count as
+  # internal: 149.171.126.0/24 = victim servers, 59.166.0.0/24 = normal clients.
+  # 175.45.176.0/24 (the attackers) stays EXTERNAL, so the attacker is the source IP to block.
+  "149.171.126.0/24", "59.166.0.0/24",
+]
 
 # Simulated response catalogue v0 (OD-20; formal approval at W7). Every scenario is a
 # simulation: the executor records what it would do and changes nothing.
