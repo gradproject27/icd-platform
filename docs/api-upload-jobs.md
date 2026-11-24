@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C1 (Platform & Integration) |
-| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker, which ends by storing the upload's incidents ([incident-storage.md](incident-storage.md)). **Not built in Week 2:** `POST /analysis-jobs`, `GET /jobs/{id}/report` and the HPC handoff. The team has no HPC access, so this part was set aside; their shapes below stay a proposal. Demo: `tools/c1/week2_demo.py` |
+| Status | **Built:** `GET /datasets`, `POST /uploads`, `GET /uploads/{id}`, `GET /jobs/{id}`, the events and quarantine pages, and the ingest worker, which ends by storing the upload's incidents ([incident-storage.md](incident-storage.md)) and queuing one **analysis job** per incident (24 Nov, C1 decisions F1 to F8, [prototype-architecture.md](prototype-architecture.md)). Re-run: `POST /incidents/{id}/analysis` ([api-incidents.md](api-incidents.md)). **Dropped:** the Week 2 proposals `POST /analysis-jobs` and `GET /jobs/{id}/report`; the report is read with `GET /incidents/{id}/report`. Demo: `tools/c1/week2_demo.py`, reset: `tools/c1/demo_reset.py` |
 | Week 2 plan | Section 4, steps 1 to 5; handoff "C1 to C4: endpoint request/response examples" |
 | Shapes (source of truth) | `backend/app/api/schemas.py` |
 | JSON Schemas (generated) | `docs/api/schemas/*.schema.json` |
@@ -28,8 +28,8 @@ There is no login in Week 2 (login is Week 5), so no endpoint needs a session ye
 | `GET /jobs/{job_id}` | Status of any job (ingest or analysis) | 200 `Job` | `job-*.json` |
 | `GET /uploads/{upload_id}/events` | The Events stored from an upload, in `event_id` order. Query: `label_status` (`flagged`, `unflagged`, `unlabelled`), `limit` (1 to 500, default 100), `after` (the last `event_id` of the previous page) | 200 `EventPage` | [event-page.json](api/examples/event-page.json) |
 | `GET /uploads/{upload_id}/quarantine` | Records that could not become Events, with the reason. Query: `limit`, `after` (a `seq`) | 200 `QuarantinePage` | [quarantine-page.json](api/examples/quarantine-page.json) |
-| `POST /analysis-jobs` | **Not built yet (proposal).** Queue an analysis of one `EvidencePackage` (JSON body) | **202** `JobAccepted`, header `Location` | [job-accepted.json](api/examples/job-accepted.json) |
-| `GET /jobs/{job_id}/report` | **Not built yet (proposal).** The `AnalysisReport` of a done analysis job with a valid report | 200 `AnalysisReport` (contract) | `contracts/examples/analysis-report.example.json` |
+| `POST /analysis-jobs` | **Dropped (F8).** Analysis jobs are queued by the ingest job, one per stored incident; a re-run is `POST /incidents/{id}/analysis` | | |
+| `GET /jobs/{job_id}/report` | **Dropped (F8).** Read the report with `GET /incidents/{id}/report`; the job's `analysis.report_id` names it | | |
 
 ## 3. Upload request
 
@@ -159,7 +159,7 @@ A failed ingest keeps nothing from that upload, so a retry starts clean.
 
 ### Analysis jobs
 
-An analysis job takes one `EvidencePackage`, sends it through the LLM adapter (mock, HPC or local fallback) and collects the report. **A report that fails the checks is a result, not a job failure**: the job is `done` with `analysis.report_valid = false` and the reasons in `analysis.problems` ([job-analysis-done-invalid-report.json](api/examples/job-analysis-done-invalid-report.json)). This matches OD-09, where "analysis failed" is a status of the incident. `report_id` and `confidence` are set exactly when the report is valid, so C5's freeze rule can read them directly.
+An analysis job takes one stored incident (`payload: {incident_id, force}`): C2's builder makes the masked `EvidencePackage`, AI1's service sends it to the model backend named by `ICD_ANALYSIS_BACKEND` (`stub`, `openai_http` or `hpc_batch`) or answers from the report cache, checks the answer and stores the report, and C5's response engine records the result (freeze or not). While it runs, `stage` is `submitting`, then `waiting_hpc` and `collecting` (hpc_batch), then `collecting`. A model that gives no answer at all is tried again up to `max_attempts` times and then fails with the backend's code (`hpc_unreachable`, `hpc_timeout`, `hpc_job_failed`, `report_missing`). **A report that fails the checks is a result, not a job failure**: the job is `done` with `analysis.report_valid = false` and the reasons in `analysis.problems` ([job-analysis-done-invalid-report.json](api/examples/job-analysis-done-invalid-report.json)). This matches OD-09, where "analysis failed" is a status of the incident. `report_id` and `confidence` are set exactly when the report is valid, so C5's freeze rule can read them directly.
 
 ## 5. For C2: the parser interface (proposed)
 
@@ -191,7 +191,7 @@ def parse(path: Path, context: IntakeContext) -> Iterator[Event | QuarantinedRec
 
 ## 6. For AI1: the HPC handoff
 
-The analysis job writes the evidence package to a file, sends it to the HPC through one transport, waits, and reads the report file back. No one copies files by hand. The transport and its settings are described in the HPC handoff PR; the shapes above do not change with the transport. Raw model output is stored for every attempt.
+With `ICD_ANALYSIS_BACKEND=hpc_batch` the analysis job writes the masked evidence package to a file, copies it to the cluster with scp, submits `tools/c1/icd_analyze.sbatch` (which runs `tools/ai1/icd_analyze.py`) with `sbatch`, polls `squeue` every 30 s for up to 120 minutes, and copies the `icd-hpc-output-v1` file back. No one copies files by hand. Code: `backend/app/hpc/batch.py`; tests against a fake cluster: `backend/tests/hpc/test_batch.py`. **It has not been run against a real HPC**: the team has no HPC access yet. The checked report and the raw model output are stored in `analysis_reports` (AI1, migration 0006).
 
 ## 7. Regenerating the schemas
 

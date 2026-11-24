@@ -128,19 +128,37 @@ def finish(
     *,
     counts: dict[str, Any] | None = None,
     analysis: dict[str, Any] | None = None,
+    follow_up: list[JobRow] | None = None,
 ) -> bool:
+    """Mark the job done. `follow_up` jobs (an ingest job's analysis jobs, decision F1) are
+    queued in the same transaction, so they exist exactly when the job is done."""
+    with Session(engine) as session, session.begin():
+        if not holds(session.connection(), job_id, worker_id):
+            return False
+        session.execute(
+            update(JobRow)
+            .where(JobRow.job_id == job_id)
+            .values(
+                state=JobState.DONE.value,
+                stage=None,
+                finished_at=now,
+                worker_id=None,
+                counts=counts,
+                analysis=analysis,
+            )
+        )
+        session.add_all(follow_up or [])
+    return True
+
+
+def requeue(engine: Engine, job_id: str, worker_id: str) -> bool:
+    """Put a running job back in the queue for another attempt (a model that did not answer).
+    The caller checks attempts < max_attempts first."""
     return _update_owned(
         engine,
         job_id,
         worker_id,
-        {
-            "state": JobState.DONE.value,
-            "stage": None,
-            "finished_at": now,
-            "worker_id": None,
-            "counts": counts,
-            "analysis": analysis,
-        },
+        {"state": JobState.QUEUED.value, "stage": None, "worker_id": None, "counts": None},
     )
 
 
