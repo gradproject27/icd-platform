@@ -18,9 +18,18 @@ from typing import Any
 from sqlalchemy import Engine
 
 from app.api.schemas import ErrorCode, JobKind
-from app.jobs.errors import JobFailure, JobLost
+from app.jobs.analysis import analysis_jobs_for_upload, run_analysis_job
+from app.jobs.errors import JobFailure, JobLost, JobRetry
 from app.jobs.ingest import run_ingest
-from app.jobs.queue import claim_next, clear_upload_rows, fail, finish, heartbeat, reap_stale
+from app.jobs.queue import (
+    claim_next,
+    clear_upload_rows,
+    fail,
+    finish,
+    heartbeat,
+    reap_stale,
+    requeue,
+)
 from app.models import JobRow
 from app.settings import Settings
 
@@ -28,15 +37,23 @@ log = logging.getLogger("icd.worker")
 
 HEARTBEAT_FILE = Path("/tmp/worker-heartbeat")
 
-# A runner returns the job's result: {"counts": ...} or {"analysis": ...}.
+# A runner returns the job's result: {"counts": ...} or {"analysis": ...}, and optionally
+# "follow_up": jobs queued in the same transaction that marks this one done.
 Runner = Callable[[Engine, JobRow, str, Settings, Callable[[], datetime]], dict[str, Any]]
 
 
 def _ingest(engine, job, worker_id, settings, clock) -> dict[str, Any]:
-    return {"counts": run_ingest(engine, job, worker_id, settings, clock)}
+    counts = run_ingest(engine, job, worker_id, settings, clock)
+    # Decision F1: one analysis job per stored incident, queued when the upload is done.
+    follow_up = analysis_jobs_for_upload(engine, job.upload_id, clock(), settings.job_max_attempts)
+    return {"counts": counts, "follow_up": follow_up}
 
 
-RUNNERS: dict[JobKind, Runner] = {JobKind.INGEST: _ingest}
+def _analysis(engine, job, worker_id, settings, clock) -> dict[str, Any]:
+    return run_analysis_job(engine, job, worker_id, settings, clock)
+
+
+RUNNERS: dict[JobKind, Runner] = {JobKind.INGEST: _ingest, JobKind.ANALYSIS: _analysis}
 
 
 def new_worker_id() -> str:
@@ -88,6 +105,10 @@ def run_job(
             log.info("job %s done", job.job_id)
     except JobLost:
         log.warning("job %s was taken back from this worker; stopping it", job.job_id)
+    except JobRetry as retry:
+        log.info("job %s will be tried again (attempt %d of %d): %s", job.job_id,
+                 job.attempts, job.max_attempts, retry.message)  # fmt: skip
+        requeue(engine, job.job_id, worker_id)
     except Exception as exc:
         if isinstance(exc, JobFailure):
             code, message = exc.code, exc.message

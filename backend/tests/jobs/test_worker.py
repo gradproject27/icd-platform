@@ -51,7 +51,14 @@ def work(engine, settings, clock=utcnow, worker_id="worker-test") -> bool:
 def test_fixture_upload_runs_end_to_end(upload, client, engine, settings):
     accepted = upload(FIXTURE_EVENTS.read_bytes())
     assert work(engine, settings) is True
-    assert work(engine, settings) is False  # queue empty
+    # Decision F1: the ingest job leaves one queued analysis job per stored incident, and
+    # nothing else (tests/jobs/test_analysis_job.py runs them).
+    from app.incidents.models import IncidentRow
+
+    with Session(engine) as session:
+        queued = session.scalars(select(JobRow).where(JobRow.state == "queued")).all()
+    assert {j.kind for j in queued} == {"analysis"}
+    assert len(queued) == stored(engine, IncidentRow, accepted["upload_id"]) > 0
 
     done = job(client, accepted["job_id"])
     assert done.state == "done" and done.stage is None and done.attempts == 1

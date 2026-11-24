@@ -14,3 +14,11 @@ class JobFailure(Exception):
 
 class JobLost(Exception):
     """This worker no longer holds the job (it was reaped). Stop without writing anything."""
+
+
+class JobRetry(Exception):
+    """Queue the job again for another attempt (attempts are left). Nothing is marked failed."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
