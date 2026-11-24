@@ -31,7 +31,7 @@ The demo shows the one thing that makes ICD different: a High, confidently analy
 
 Incident A's targets: host `web-01`, external source IP `203.0.113.10`, account `svc-db` → recommended scenario **S2** (isolate the host and block the source IP).
 
-With a UNSW-NB15 file instead (`unsw-nb15`), incidents can freeze too since config `response-v1`: the victim (`149.171.126.0/24`) becomes the host and the attacker (`175.45.176.0/24`) the source IP ([response-engine.md](response-engine.md) §3).
+With a UNSW-NB15 file instead (`unsw-nb15`), incidents can freeze too since config `response-v1`: the victim (`149.171.126.0/24`) becomes the host and the attacker (`175.45.176.0/24`) the source IP ([response-engine.md](response-engine.md) §3). With the stub model, C2's demo slice gives two High incidents at confidence 0.73, so neither freezes (checked 24 Nov 2026, [demo-runs/2026-11-24-paths-a-b.md](demo-runs/2026-11-24-paths-a-b.md) §4); use the fixture for paths A and B until a real model runs.
 
 ## 2. Common opening (both paths), about 2 minutes
 

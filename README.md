@@ -4,28 +4,23 @@ ICD (Intelligent Cyber Defense) ingests security logs, normalizes them into even
 
 ## Project status
 
-Week 1 is done. This is what is on `main`:
+**Initial prototype of the full ICD system, end to end (24 Nov 2026).** Upload, parsing, correlation, risk score, AI analysis (stub model until compute is available), the freeze gate, the 60-second response window, analyst decisions, the system selection at the deadline, simulated actions and the audit trail all run in one `docker compose` stack. **To run it and show demo paths A and B: [docs/how-to-run-prototype.md](docs/how-to-run-prototype.md).** The rehearsal of both paths on 24 Nov is recorded in [docs/demo-runs/2026-11-24-paths-a-b.md](docs/demo-runs/2026-11-24-paths-a-b.md).
 
-| Workstream | Delivered in Week 1 |
+| Workstream | On `main` |
 |---|---|
-| C1 | Dev environment (Docker Compose, CI) and backend skeleton: `/health`, Alembic baseline, LLM adapter with a mock |
-| C2 | Dataset profile of the 9 data-plan sources, dataset licence register and label mapping v1 (`docs/dataset-profile.md`, `docs/dataset-licence-register.md`, `contracts/label-mapping.json`) |
-| C3 | The six shared contracts v1 (models, JSON Schemas, examples, tests) and the correlation and risk-score design |
-| C4 | Dashboard skeleton (routes, layout, typed API client, health status), low-fidelity wireframes of every screen, and the server-driven countdown prototype (`docs/wireframes.md`, `docs/countdown-prototype.md`) |
-| C5 | The response workflow specification and the authentication approach and threat model |
+| C1 | Compose stack (db, api, worker, web) with healthchecks, CI with secret scan; upload API and Postgres job queue; analysis job after correlation (`stub`, `openai_http`, `hpc_batch` backends); one-command demo reset (`tools/c1/demo_reset.py`); architecture note ([docs/prototype-architecture.md](docs/prototype-architecture.md)) |
+| C2 | Dataset profile, licence register, label map; UNSW-NB15 parser, normalizer, quarantine with reasons, intake CLI; full-file run and masking of evidence; ground-truth method and indicative precision/recall ([docs/evaluation.md](docs/evaluation.md)); demo slice manifest and checksum, edge-case tool ([fixtures/demo/](fixtures/demo/README.md)) |
+| C3 | Six shared contracts; correlation engine, risk score, levels and factors on every stored incident |
+| C4 | React dashboard: upload, incident list, detail, AI report (with grounding), pending decision with server-held countdown, audit trail, review queue, notifications, explanation, graph and configuration views; every response label says SIMULATED |
+| C5 | Response workflow spec and threat model (v1); response engine: freeze gate, 60-second window, decisions, expiry selection, simulated executor, audit; UNSW testbed ranges (`response-v1`); demo script ([docs/demo-script.md](docs/demo-script.md)) |
 | AI1 | Analysis layer for real LLM output: LLM output v0, prompts v0 and v1, grounding check, confidence, mapping onto AnalysisReport 1.0 (`backend/app/analysis/`); answers to the T1-09 review questions; HPC probe and model benchmark (`tools/ai1/`); design note (`docs/ai1-analysis-design.md`). Five local model runs on the fallback path (Ollama on a 4 GB laptop GPU), failures included (`docs/ai1-runs/`): `llama3.2:3b` reached 3 of 3 valid analyses with every flagged event covered but stays shallow; Qwen3-4B-Instruct gives the most complete analysis but 1 of 3 valid (it quoted the injection canary); none meets the 30 s target, which needs the HPC GPU. Week 2: the HPC handoff files and runner for C1 (`icd-hpc-output-v1`, `tools/ai1/icd_analyze.py`), the Incident fields for C5's freeze rule, five test incidents with hand-written expectations and reference answers (`fixtures/ai1/`), and evaluation metrics E1 to E11 (`docs/ai1-report-schema.md`). Local run of the five incidents (14 Nov 2026, `docs/ai1-runs/` runs 6 and 7): Qwen3-4B-Instruct 15 of 15 valid with nothing invented, llama3.2 3B 12 of 15, no wrong freeze decision from either; 27 real reports. Faculty cluster (19 Nov 2026, `docs/ai1-runs/` runs 8 to 10): HPC checks done on the CSIT Compute Pool; its 27B model service gave 36 of 36 valid analyses with every metric met (46 s median, so 30 s is met only for one-event incidents); prompt v1 (context events and attack names). The model's source and licence are asked of the cluster admin. Week 3 ([docs/ai1-week3-analysis.md](docs/ai1-week3-analysis.md)): prompt v2 (the five report parts, prompt-injection hardening) is the default; the analysis service with one schema retry, `stub` and `openai_http` backends and `analyze_incident` for C1's job; a failed analysis never freezes; grounding counts in every report (contracts 1.3, R2); a 20-incident grounding-validation set with 7 injection cases and its tool; the SHA-256 report cache and stored reports (`analysis_reports`, migration 0006); the runbook for C2 ([docs/ai1-runbook.md](docs/ai1-runbook.md)). Re-checking the 81 recorded real answers: the 27B model with prompt v1 had 138 of 138 factual claims supported |
 
-C4 so far: the upload page (#20), the incident list (#22) and the pending decision panel (#23), and in Step 8 the incident detail, the AI report panel, and all incident pages on the real API (see [Frontend](#frontend)).
+Not built yet (later weeks of the roadmap):
 
-Not built yet:
-
-- dataset parsers beyond UNSW-NB15 (C2: Precinct6 and OTRF in Week 3);
-- the analysis job that calls `app.analysis.store.analyze_incident` after each new incident (C1, Step 5); the backends exist (AI1);
-- the correlation engine and risk-score code (C3, Week 2);
-- the wiring that registers stored incidents with the response engine and runs their analysis, so real incidents stay `new` with no response window yet; the incident, window and decision endpoints and the WebSocket exist ([docs/api-incidents.md](docs/api-incidents.md));
-- reading stored reports in the API: reports are stored (`analysis_reports`, AI1), but `GET /incidents/{id}/report` still answers 404 `report_not_available` until it calls `latest_report` (C4/C1);
-- the dashboard's login screen; it is still a shell (C5, T2-15);
-- authentication (C5, Week 3); until then decisions are made as the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE`.
+- real-model reports inside the app: the analysis job runs with the deterministic `stub` model until compute is available (`openai_http` and `hpc_batch` are built; `hpc_batch` is tested on a fake cluster only);
+- dataset parsers beyond UNSW-NB15 (Precinct6, OTRF: Week 5);
+- login and authentication (T2-15); until then decisions are made as the development identity `ICD_DEV_USER` / `ICD_DEV_ROLE`;
+- the 30-second reminder (OD-19).
 
 ## Prerequisites
 
@@ -48,9 +43,9 @@ Edit `.env` if you want different local credentials or ports. Never commit `.env
 | Service | What it is | URL |
 |---|---|---|
 | `api` | FastAPI backend | http://localhost:8000/health, docs at http://localhost:8000/docs |
-| `worker` | background worker: runs upload (ingest) jobs from the Postgres queue, and expires 60-second response windows on its own thread (C5) | none |
+| `worker` | background worker: runs upload (ingest) and AI analysis jobs from the Postgres queue, and expires 60-second response windows on its own thread (C5) | none |
 | `db` | PostgreSQL 17 | internal only (`docker compose exec db psql -U icd icd`) |
-| `web` | React dashboard (upload works end to end; the incident pages need the dev-only stub, see [Frontend](#frontend)); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
+| `web` | React dashboard on the real API (the dev-only stub is optional, see [Frontend](#frontend)); nginx also proxies `/api` and `/ws` to `api` | http://localhost:8080 |
 
 Startup order is enforced by healthchecks: `db` becomes healthy, then `api` starts and applies the migrations, then `worker` and `web` start once `api` is healthy. `api` and `worker` share the `uploads` volume. Check the state with `docker compose ps`. Every service should show `(healthy)`.
 
@@ -251,6 +246,8 @@ Files written inside the container are not on your disk, so you can also run Ale
 
 | File | Owner | Task | What it is |
 |---|---|---|---|
+| [docs/how-to-run-prototype.md](docs/how-to-run-prototype.md) | C1 | Week 4 | How to run the prototype: start the stack, reset, demo paths A and B, the UNSW demo slice, troubleshooting |
+| [docs/demo-runs/2026-11-24-paths-a-b.md](docs/demo-runs/2026-11-24-paths-a-b.md) | All | Week 4 (task 25) | Rehearsal record of demo paths A and B through the browser, with the audit rows |
 | [docs/contracts-v1.md](docs/contracts-v1.md) | C3 | T1-07 | Shared data contracts v1: every field of the six contracts, decisions applied, review questions |
 | [docs/correlation-and-risk-design.md](docs/correlation-and-risk-design.md) | C3 | T1-08 | Correlation and risk score design: relatedness keys, time window, grouping, risk formula, evaluation |
 | [docs/response-workflow-spec.md](docs/response-workflow-spec.md) | C5 | T1-13 | Response workflow specification: lifecycle states, transitions, freeze, 60-second window, simulated catalogue |
