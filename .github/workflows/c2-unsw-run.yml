@@ -16,9 +16,5 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: find the official download link
-        run: |
-          curl -sSL -A "Mozilla/5.0" https://research.unsw.edu.au/projects/unsw-nb15-dataset -o page.html
-          ls -l page.html
-          grep -oE 'https://[a-zA-Z0-9.-]*sharepoint\.com[^"<> ]*' page.html | sort -u | head -20
-          grep -oiE 'href="[^"]*(cloudstor|onedrive|sharepoint|dropbox|download)[^"]*"' page.html | sort -u | head -20
+      - name: list the official files
+        run: python -I tools/c2/unsw_download.py --list
