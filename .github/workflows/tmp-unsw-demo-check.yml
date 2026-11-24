@@ -1,0 +1,32 @@
+# TEMPORARY (removed before the PR): run the demo reset on C2's UNSW-NB15 demo slice.
+name: tmp-unsw-demo-check
+on:
+  push:
+    branches: [claude/project-thread-6ox2r7]
+jobs:
+  unsw-demo:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: cp .env.example .env
+      - run: python3 -I tools/c2/unsw_download.py UNSW-NB15_1.csv --out data/
+      - run: python3 tools/c2/make_demo_slice.py rebuild data/UNSW-NB15_1.csv --out demo/
+      - run: sha256sum demo/*.csv && cat fixtures/demo/unsw-nb15-demo-slice.sha256
+      - run: docker compose up --build --detach --wait --wait-timeout 240
+      - name: Demo reset with the UNSW slice
+        run: python3 tools/c1/demo_reset.py --file demo/$(ls demo | grep csv) --dataset-id unsw-nb15
+      - name: Windows and freeze reasons
+        if: always()
+        run: |
+          for id in $(curl -fsS 'http://localhost:8080/api/incidents?limit=100' | jq -r '.items[].incident.incident_id'); do
+            echo "== $id"; curl -fsS http://localhost:8080/api/response-windows/$id; echo
+            curl -fsS http://localhost:8080/api/incidents/$id/audit | jq -c '.items[] | select(.event_type=="status_changed") | .details' | tail -1
+          done
+      - name: Path B on the UNSW slice (wait past the deadline)
+        run: |
+          sleep 70
+          for id in $(curl -fsS 'http://localhost:8080/api/incidents?limit=100' | jq -r '.items[].incident.incident_id'); do
+            curl -fsS http://localhost:8080/api/incidents/$id/audit | jq -r '.items[] | select(.event_type|test("expired|selected|action")) | "\(.event_type) \(.actor) \(.details|tostring|.[0:160])"'
+          done
+      - if: always()
+        run: docker compose logs worker | tail -50
