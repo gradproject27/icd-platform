@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 import type { AnalysisReport, Incident } from "../api/contracts";
 import { ApiError } from "../api/errors";
-import { getIncidentEvents, getOriginalRecord, getReport } from "../api/incidents";
-import type { IncidentEventItem, OriginalRecord } from "../api/proposed";
+import { getIncidentEvents, getKeyFacts, getOriginalRecord, getReport } from "../api/incidents";
+import type { IncidentEventItem, IncidentKeyFacts, OriginalRecord } from "../api/proposed";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime } from "../countdown/clock";
 import { IncidentHeader } from "../incidents/IncidentHeader";
+import { KeyFacts } from "../incidents/KeyFacts";
 import { RiskAndConfidence } from "../incidents/RiskAndConfidence";
 import { STUB_BANNER } from "../incidents/format";
 import { useIncident } from "../incidents/useIncident";
@@ -20,15 +21,18 @@ const DECISION_STATES = new Set(["awaiting_human_decision", "escalated"]);
 interface Detail {
   events: IncidentEventItem[];
   report: AnalysisReport | null;
+  facts: IncidentKeyFacts | null;
 }
 
 async function loadDetail(incidentId: string, signal: AbortSignal): Promise<Detail> {
-  const [events, report] = await Promise.all([
+  const [events, report, facts] = await Promise.all([
     getIncidentEvents(incidentId, signal),
     // The report only adds the risk justification here; a failed read must not hide the incident.
     getReport(incidentId, signal).catch(() => null),
+    // Key facts (P1) are a summary of the events below; without them the page still works.
+    getKeyFacts(incidentId, signal).catch(() => null),
   ]);
-  return { events: events.items, report };
+  return { events: events.items, report, facts };
 }
 
 const dash = (value: string | null | undefined) => (value === null || value === undefined || value === "" ? "-" : value);
@@ -85,6 +89,7 @@ function IncidentDetail({ incidentId }: { incidentId: string }) {
       </nav>
 
       <RiskAndConfidence incident={incident} confidence={incident.confidence} />
+      <KeyFacts incidentId={incidentId} facts={extra.facts} />
       <RiskBox incident={incident} justification={extra.report?.risk_justification ?? null} />
       <EventTimeline incidentId={incidentId} events={extra.events} highlighted={highlighted} onRetry={retry} />
     </section>

@@ -35,6 +35,7 @@ from app.api.schemas import (
     IncidentEntities,
     IncidentEventItem,
     IncidentEventList,
+    IncidentKeyFacts,
     IncidentList,
     IncidentSummary,
     JobAccepted,
@@ -55,6 +56,7 @@ from app.contracts import (
 )
 from app.db import get_engine
 from app.evidence.store import load_masking_map, unmask_report
+from app.incidents.key_facts import key_facts
 from app.incidents.models import IncidentEventRow, IncidentRow
 from app.ingest.lines import read_original
 from app.jobs.analysis import queue_analysis
@@ -206,6 +208,29 @@ def incident_events(incident_id: str) -> IncidentEventList:
     ]
     items.sort(key=lambda item: (item.event.timestamp, item.event.event_id))
     return IncidentEventList(items=items)
+
+
+@router.get("/incidents/{incident_id}/key-facts", response_model=IncidentKeyFacts)
+def incident_key_facts(incident_id: str, response: EngineDep) -> IncidentKeyFacts:
+    """Start, assets and indicators computed by code from the flagged events (P1); no model."""
+    with Session(get_engine()) as session:
+        row = _incident_row(session, incident_id)
+        incident = Incident.model_validate(row.data)
+        events = [
+            Event.model_validate(data)
+            for data in session.scalars(
+                select(EventRow.data)
+                .join(
+                    IncidentEventRow,
+                    (EventRow.upload_id == IncidentEventRow.upload_id)
+                    & (EventRow.event_id == IncidentEventRow.event_id),
+                )
+                .where(IncidentEventRow.incident_id == incident_id)
+            )
+        ]
+    # The engine's response.toml: the same internal networks C5 uses to pick targets.
+    facts = key_facts(incident, events, response.config)
+    return IncidentKeyFacts.model_validate(asdict(facts))
 
 
 @router.get("/incidents/{incident_id}/events/{event_id}/original", response_model=OriginalRecord)

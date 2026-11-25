@@ -1,0 +1,162 @@
+{
+  "incident_id": "inc-e8d1f72159481bee",
+  "network_config_version": "response-v1",
+  "first_flagged_event_id": "fx-002",
+  "started_at": "2026-01-15T09:00:00Z",
+  "last_flagged_event_id": "fx-013",
+  "last_flagged_at": "2026-01-15T10:08:00Z",
+  "started_on": "web-01",
+  "origin_ip": "203.0.113.10",
+  "flagged_event_count": 8,
+  "context_event_count": 3,
+  "attack_types": [
+    {
+      "value": "Reconnaissance",
+      "event_count": 2,
+      "first_seen": "2026-01-15T09:00:00Z",
+      "event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "value": "Exploits",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:10:00Z",
+      "event_ids": [
+        "fx-007",
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "value": "Backdoors",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:18:00Z",
+      "event_ids": [
+        "fx-008",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "hosts": [
+    {
+      "value": "web-01",
+      "event_count": 4,
+      "first_seen": "2026-01-15T09:00:00Z",
+      "event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008"
+      ]
+    },
+    {
+      "value": "db-01",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:30:00Z",
+      "event_ids": [
+        "fx-009",
+        "fx-010",
+        "fx-012"
+      ]
+    },
+    {
+      "value": "file-01",
+      "event_count": 1,
+      "first_seen": "2026-01-15T10:08:00Z",
+      "event_ids": [
+        "fx-013"
+      ]
+    }
+  ],
+  "internal_ips": [
+    {
+      "value": "10.10.1.21",
+      "event_count": 6,
+      "first_seen": "2026-01-15T09:00:00Z",
+      "event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008",
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "value": "10.10.2.31",
+      "event_count": 2,
+      "first_seen": "2026-01-15T09:30:00Z",
+      "event_ids": [
+        "fx-009",
+        "fx-010"
+      ]
+    }
+  ],
+  "external_ips": [
+    {
+      "value": "203.0.113.10",
+      "event_count": 4,
+      "first_seen": "2026-01-15T09:00:00Z",
+      "event_ids": [
+        "fx-002",
+        "fx-004",
+        "fx-007",
+        "fx-008"
+      ]
+    }
+  ],
+  "destination_ports": [
+    {
+      "value": "443",
+      "event_count": 2,
+      "first_seen": "2026-01-15T09:04:00Z",
+      "event_ids": [
+        "fx-004",
+        "fx-007"
+      ]
+    },
+    {
+      "value": "4444",
+      "event_count": 1,
+      "first_seen": "2026-01-15T09:18:00Z",
+      "event_ids": [
+        "fx-008"
+      ]
+    },
+    {
+      "value": "5432",
+      "event_count": 2,
+      "first_seen": "2026-01-15T09:30:00Z",
+      "event_ids": [
+        "fx-009",
+        "fx-010"
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "value": "www-data",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:10:00Z",
+      "event_ids": [
+        "fx-007",
+        "fx-008",
+        "fx-009"
+      ]
+    },
+    {
+      "value": "svc-db",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:42:00Z",
+      "event_ids": [
+        "fx-010",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "truncated": false
+}

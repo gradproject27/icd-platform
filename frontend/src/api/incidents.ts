@@ -6,6 +6,7 @@ import type {
   AuditTrail,
   ContainmentList,
   IncidentEventList,
+  IncidentKeyFacts,
   IncidentList,
   IncidentSummary,
   OriginalRecord,
@@ -53,6 +54,15 @@ export async function getIncidentEvents(incidentId: string, signal?: AbortSignal
   const data = await request<IncidentEventList>(`/incidents/${encodeURIComponent(incidentId)}/events`, { signal });
   if (!Array.isArray((data as Partial<IncidentEventList> | null)?.items)) {
     throw new ApiError("parse", "The ICD API sent an unexpected event list.");
+  }
+  return data;
+}
+
+/** GET /incidents/{incident_id}/key-facts: start, assets and indicators computed by code (P1). */
+export async function getKeyFacts(incidentId: string, signal?: AbortSignal): Promise<IncidentKeyFacts> {
+  const data = await request<IncidentKeyFacts>(`/incidents/${encodeURIComponent(incidentId)}/key-facts`, { signal });
+  if (!Array.isArray((data as Partial<IncidentKeyFacts> | null)?.attack_types)) {
+    throw new ApiError("parse", "The ICD API sent unexpected key facts.");
   }
   return data;
 }

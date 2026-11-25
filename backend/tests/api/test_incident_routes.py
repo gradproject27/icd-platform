@@ -163,7 +163,7 @@ def test_list_by_upload(client, stored):
 
 
 def test_unknown_incident_is_404_in_the_error_shape(client):
-    for path in ("", "/events", "/report", "/audit", "/decision", "/containments"):
+    for path in ("", "/events", "/key-facts", "/report", "/audit", "/decision", "/containments"):
         answer = client.get(f"/incidents/inc-unknown{path}")
         assert answer.status_code == 404, path
         assert error_code(answer) == "not_found"
@@ -177,6 +177,28 @@ def test_events_oldest_first_with_role_and_link_keys(client):
     )
     roles = {i["event"]["event_id"]: i["role"] for i in items}
     assert roles == {link.event_id: link.role.value for link in A.events}
+
+
+def test_key_facts_of_incident_a(client):
+    facts = client.get(f"/incidents/{A.incident_id}/key-facts").json()
+    assert facts["incident_id"] == A.incident_id
+    assert facts["first_flagged_event_id"] == "fx-002"
+    assert facts["started_on"] == "web-01"
+    assert facts["origin_ip"] == "203.0.113.10"
+    attack_types = [i["value"] for i in facts["attack_types"]]
+    assert attack_types == ["Reconnaissance", "Exploits", "Backdoors"]
+    assert facts["network_config_version"] == "response-v1"
+    # Only flagged events: context fx-003 (10.10.5.5, port 80) is not an indicator.
+    assert "10.10.5.5" not in [i["value"] for i in facts["internal_ips"]]
+    assert "fx-003" not in {e for i in facts["destination_ports"] for e in i["event_ids"]}
+
+
+def test_key_facts_change_nothing(client):
+    # A read: no audit record, no lifecycle row, the stored incident as it was.
+    before = client.get(f"/incidents/{A.incident_id}").json()
+    assert client.get(f"/incidents/{A.incident_id}/key-facts").status_code == 200
+    assert client.get(f"/incidents/{A.incident_id}").json() == before
+    assert client.get(f"/incidents/{A.incident_id}/audit").json()["items"] == []
 
 
 def test_original_record_reads_the_uploaded_line(client, stored, tmp_path):

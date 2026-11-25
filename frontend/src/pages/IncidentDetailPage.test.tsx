@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import eventList from "../../../docs/api/examples/incident-event-list.json";
 import summary from "../../../docs/api/examples/incident-summary.json";
 import reportExample from "../../../contracts/examples/analysis-report.example.json";
+import keyFacts from "../../../docs/api/examples/incident-key-facts.json";
 import { jsonResponse, mockFetch } from "../test/fetch";
 import { IncidentDetailPage } from "./IncidentDetailPage";
 
@@ -16,6 +17,7 @@ interface Api {
   summary?: unknown;
   events?: unknown;
   report?: unknown;
+  facts?: unknown;
   original?: Response;
 }
 
@@ -26,6 +28,7 @@ function serve(api: Api = {}) {
     if (path === `/api/incidents/${ID}`) return api.summary instanceof Response ? api.summary : jsonResponse(api.summary ?? summary);
     if (path === `/api/incidents/${ID}/events`) return api.events instanceof Response ? api.events : jsonResponse(api.events ?? eventList);
     if (path === `/api/incidents/${ID}/report`) return api.report ? jsonResponse(api.report) : jsonResponse(NOT_STORED, 404);
+    if (path === `/api/incidents/${ID}/key-facts` && api.facts) return jsonResponse(api.facts);
     if (path.startsWith(`/api/incidents/${ID}/events/`) && path.endsWith("/original")) {
       return api.original ?? jsonResponse({ event_id: FIRST, record_ref: "events.json:2", source_file: "events.json", line: "raw line two" });
     }
@@ -136,5 +139,23 @@ describe("IncidentDetailPage", () => {
     serve({ events: jsonResponse({ error: { code: "internal_error", message: "Boom." } }, 500) });
     show();
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("shows the key facts the server computed from the flagged events", async () => {
+    const fetchMock = serve({ facts: keyFacts });
+    show();
+    const box = await screen.findByRole("region", { name: "Key facts" });
+    expect(within(box).getByText(/Computed by code from the 8 flagged events/)).toBeInTheDocument();
+    expect(within(box).getByText("web-01", { selector: "dd" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(`/api/incidents/${ID}/key-facts`, expect.anything());
+  });
+
+  it("still shows the incident when the key facts cannot be read", async () => {
+    serve(); // no key-facts route: the server answers 404
+    show();
+    const box = await screen.findByRole("region", { name: "Key facts" });
+    expect(within(box).getByText("Key facts are not available from this server.")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Risk and confidence" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Related events/ })).toBeInTheDocument();
   });
 });

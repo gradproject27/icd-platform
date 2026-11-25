@@ -582,6 +582,12 @@ input {
   font-size: 0.8125rem;
 }
 
+.key-facts__values {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .factor-table {
   border-collapse: collapse;
   width: 100%;

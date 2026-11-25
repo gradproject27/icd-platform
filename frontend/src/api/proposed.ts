@@ -5,6 +5,7 @@
 //
 //   GET  /incidents, /incidents/{id}                    IncidentList, IncidentSummary
 //   GET  /incidents/{id}/events                         IncidentEventList
+//   GET  /incidents/{id}/key-facts                      IncidentKeyFacts (P1, computed by code)
 //   GET  /incidents/{id}/events/{event_id}/original     OriginalRecord
 //   GET  /incidents/{id}/report                         AnalysisReport, or 404 report_not_available
 //   GET  /incidents/{id}/audit                          AuditTrail
@@ -23,8 +24,10 @@ export type {
   IncidentEntities,
   IncidentEventItem,
   IncidentEventList,
+  IncidentKeyFacts,
   IncidentList,
   IncidentSummary,
+  KeyFactItem,
   NotificationList,
   OriginalRecord,
   SimulatedContainment,
