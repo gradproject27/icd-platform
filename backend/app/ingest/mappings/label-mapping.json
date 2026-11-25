@@ -181,6 +181,55 @@
       "retrieved": "2026-10-24",
       "notes": "OTRF events carry no label field. The ATT&CK techniques are dataset metadata (metadata YAML, APT29 emulation plan), so every event enters as unlabelled with the technique kept as dataset-level metadata, never as a per-event label.",
       "values": []
+    },
+    {
+      "dataset_id": "nf-unsw-nb15-v3",
+      "profiling_status": "not_profiled_yet",
+      "tables": ["NF-UNSW-NB15-v3.csv"],
+      "label_column": "Label",
+      "attack_type_column": "Attack",
+      "label_scope": "per_record",
+      "used_in_week1": false,
+      "retrieved": "2026-11-25",
+      "notes": "NetFlow v3 CSV with a header line; the 55-column header was checked by the user on 25 Nov 2026 (same in NF-UNSW-NB15-v3 and NF-CSE-CIC-IDS2018-v3). Label is column 54, Attack column 55. Files downloaded by the team in a browser and never committed (rdm.uq.edu.au does not serve them to a script). Not profiled yet: counts are null and the class spellings come from the dataset page until the first profile run (python -m app.ingest.cli <dataset_id> <file> --profile). Role: classifier training and calibration for the risk-v1 confidence (RV1-D10), not the correlation demo. Dataset page: 2,365,424 flows, 9 attack classes. DOI 10.48610/6e0eda1.",
+      "values": [
+        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for benign (normal) flows", "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/); Luay et al. 2025, arXiv 2503.04404: binary Label, 0 benign and 1 attack", "count": null, "notes": "Attack should be 'Benign' on these flows; the parser quarantines any other value (label_attack_mismatch)."},
+        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack flows", "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/); Luay et al. 2025, arXiv 2503.04404: binary Label, 0 benign and 1 attack", "count": null, "notes": "Attack gives the attack class; a class not listed in attack_type_values is quarantined (unknown_attack_type)."}
+      ],
+      "attack_type_values": [
+        {"raw_value": "Fuzzers", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Analysis", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Backdoor", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "DoS", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Exploits", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Generic", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Reconnaissance", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Shellcode", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Worms", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"}
+      ]
+    },
+    {
+      "dataset_id": "nf-cse-cic-ids2018-v3",
+      "profiling_status": "not_profiled_yet",
+      "tables": ["NF-CSE-CIC-IDS2018-v3.csv"],
+      "label_column": "Label",
+      "attack_type_column": "Attack",
+      "label_scope": "per_record",
+      "used_in_week1": false,
+      "retrieved": "2026-11-25",
+      "notes": "NetFlow v3 CSV with a header line; the 55-column header was checked by the user on 25 Nov 2026 (same in NF-UNSW-NB15-v3 and NF-CSE-CIC-IDS2018-v3). Label is column 54, Attack column 55. Files downloaded by the team in a browser and never committed (rdm.uq.edu.au does not serve them to a script). Not profiled yet: counts are null and the class spellings come from the dataset page until the first profile run (python -m app.ingest.cli <dataset_id> <file> --profile). Role: classifier training and calibration for the risk-v1 confidence (RV1-D10), not the correlation demo. Dataset page: 20,115,529 flows (12.93% attacks), 6 attack classes. DOI 10.48610/ece9b83. Uploaded to the platform only as slices that keep the header line, for demos; classifier training reads the file directly on HPC.",
+      "values": [
+        {"raw_value": "0", "status": "unflagged", "decision": "proposed", "meaning": "0 for benign (normal) flows", "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/); Luay et al. 2025, arXiv 2503.04404: binary Label, 0 benign and 1 attack", "count": null, "notes": "Attack should be 'Benign' on these flows; the parser quarantines any other value (label_attack_mismatch)."},
+        {"raw_value": "1", "status": "flagged", "decision": "proposed", "meaning": "1 for attack flows", "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/); Luay et al. 2025, arXiv 2503.04404: binary Label, 0 benign and 1 attack", "count": null, "notes": "Attack gives the attack class; a class not listed in attack_type_values is quarantined (unknown_attack_type)."}
+      ],
+      "attack_type_values": [
+        {"raw_value": "BruteForce", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Bot", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "DoS", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "DDoS", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Infiltration", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"},
+        {"raw_value": "Web Attacks", "count": null, "meaning_source": "UQ NetFlow dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/), class list; CSV spelling not measured yet"}
+      ]
     }
   ]
 }

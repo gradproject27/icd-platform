@@ -47,6 +47,11 @@ class LabelMap:
             value["raw_value"]: LabelStatus(value["status"]) if value["status"] else None
             for value in sources[dataset_id].get("values", [])
         }
+        self.attack_types: frozenset[str] = frozenset(
+            value["raw_value"] for value in sources[dataset_id].get("attack_type_values", [])
+        )
+        """Attack-type spellings the mapping lists. A parser that checks attack types (NF-v3)
+        quarantines any other spelling instead of guessing (unknown_attack_type)."""
 
     def label(self, raw_value: str | None, attack_type: str | None = None) -> EventLabel:
         """EventLabel for one record, or LabelProblem. raw_value is matched exactly."""

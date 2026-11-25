@@ -54,6 +54,25 @@ def epoch_seconds(value: str | None) -> datetime:
     return moment
 
 
+def epoch_millis(value: str | None) -> datetime:
+    """Epoch milliseconds (UTC by definition, as in the NetFlow v3 datasets) to a UTC datetime.
+
+    Raises BadValue when the value is missing, not a number or outside 1990 to 2100.
+    """
+    text = clean(value)
+    if text is None:
+        raise BadValue("no event time")
+    if not _FLOAT.match(text):
+        raise BadValue(f"event time {text[:40]!r} is not epoch milliseconds")
+    try:
+        moment = datetime.fromtimestamp(float(text) / 1000, tz=UTC)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise BadValue(f"event time {text[:40]!r} is out of range") from exc
+    if not EARLIEST <= moment < LATEST:
+        raise BadValue(f"event time {moment.isoformat()} is outside 1990 to 2100")
+    return moment
+
+
 def ip_address(value: str | None) -> str | None:
     """A valid IPv4 or IPv6 address in canonical text form, else None. Never resolved."""
     text = clean(value)

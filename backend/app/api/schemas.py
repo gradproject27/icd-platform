@@ -50,6 +50,8 @@ class DatasetSource(StrEnum):
     LOGHUB_BGL = "loghub-bgl"
     LOGHUB_THUNDERBIRD = "loghub-thunderbird"
     OTRF = "otrf"
+    NF_UNSW_NB15_V3 = "nf-unsw-nb15-v3"
+    NF_CSE_CIC_IDS2018_V3 = "nf-cse-cic-ids2018-v3"
 
 
 class JobKind(StrEnum):
