@@ -346,3 +346,7 @@ icd-platform/
 ├── ruff.toml             lint and format rules
 └── CONTRIBUTING.md
 ```
+
+## Licence
+
+ICD's code and documentation are released under the [MIT License](LICENSE). Datasets are **not** covered: each keeps its own licence or terms (for example UNSW-NB15 is for academic research only), recorded in [docs/dataset-licence-register.md](docs/dataset-licence-register.md), and no dataset row is committed. Third-party material reproduced in the repository and its notices are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
