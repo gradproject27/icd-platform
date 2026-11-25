@@ -138,7 +138,7 @@ def main() -> int:
         print(f"      record {item['seq']}: {item['reason_code']}: {item['reason']}")
 
     heading("4. Upload for a dataset without a parser yet: a clear failure, never a hang")
-    status, accepted = upload(base, "events.json", b"[]", "otrf")
+    status, accepted = upload(base, "BGL_2k.log", b"- 1117838570 a line\n", "loghub-bgl")
     job = watch(base, accepted["job_id"], args.timeout)
     error = job["error"] or {}
     print(f"    {job['state']}: {error.get('code')}: {error.get('message')}")

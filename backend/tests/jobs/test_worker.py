@@ -124,12 +124,12 @@ def test_bad_records_are_quarantined_and_counted(upload, client, engine, setting
 
 
 def test_dataset_without_parser_fails_with_a_reason(upload, client, engine, settings):
-    accepted = upload(b'{"a": 1}\n', name="apt29.jsonl", dataset_id="otrf")
+    accepted = upload(b"- 1117838570 a line\n", name="BGL_2k.log", dataset_id="loghub-bgl")
     work(engine, settings)
     failed = job(client, accepted["job_id"])
     assert failed.state == "failed" and failed.counts is None
     assert failed.error.code == "no_parser"
-    assert "otrf" in failed.error.message
+    assert "loghub-bgl" in failed.error.message
 
 
 def test_unreadable_file_fails_parse_failed(upload, client, engine, settings):
