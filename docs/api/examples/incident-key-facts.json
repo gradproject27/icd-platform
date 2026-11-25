@@ -1,6 +1,8 @@
 {
   "incident_id": "inc-e8d1f72159481bee",
   "network_config_version": "response-v1",
+  "tactics_config_version": "tactics-v1",
+  "patterns_config_version": "patterns-v1",
   "first_flagged_event_id": "fx-002",
   "started_at": "2026-01-15T09:00:00Z",
   "last_flagged_event_id": "fx-013",
@@ -31,6 +33,47 @@
     },
     {
       "value": "Backdoors",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:18:00Z",
+      "event_ids": [
+        "fx-008",
+        "fx-012",
+        "fx-013"
+      ]
+    }
+  ],
+  "tactics": [
+    {
+      "value": "TA0043 Reconnaissance",
+      "event_count": 2,
+      "first_seen": "2026-01-15T09:00:00Z",
+      "event_ids": [
+        "fx-002",
+        "fx-004"
+      ]
+    },
+    {
+      "value": "TA0001 Initial Access",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:10:00Z",
+      "event_ids": [
+        "fx-007",
+        "fx-009",
+        "fx-010"
+      ]
+    },
+    {
+      "value": "TA0003 Persistence",
+      "event_count": 3,
+      "first_seen": "2026-01-15T09:18:00Z",
+      "event_ids": [
+        "fx-008",
+        "fx-012",
+        "fx-013"
+      ]
+    },
+    {
+      "value": "TA0011 Command and Control",
       "event_count": 3,
       "first_seen": "2026-01-15T09:18:00Z",
       "event_ids": [
@@ -158,5 +201,37 @@
       ]
     }
   ],
-  "truncated": false
+  "truncated": false,
+  "patterns": [
+    {
+      "pattern_id": "recon-then-exploitation",
+      "title": "Reconnaissance, then exploitation, on the same host",
+      "key": "web-01",
+      "event_ids": [
+        "fx-002",
+        "fx-007"
+      ],
+      "first_seen": "2026-01-15T09:00:00Z"
+    },
+    {
+      "pattern_id": "exploitation-then-installation",
+      "title": "Exploitation, then installation, on the same host",
+      "key": "web-01",
+      "event_ids": [
+        "fx-007",
+        "fx-008"
+      ],
+      "first_seen": "2026-01-15T09:10:00Z"
+    },
+    {
+      "pattern_id": "exploitation-then-installation",
+      "title": "Exploitation, then installation, on the same host",
+      "key": "db-01",
+      "event_ids": [
+        "fx-009",
+        "fx-012"
+      ],
+      "first_seen": "2026-01-15T09:30:00Z"
+    }
+  ]
 }

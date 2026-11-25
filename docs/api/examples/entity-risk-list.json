@@ -1,0 +1,195 @@
+{
+  "config_version": "entity-risk-v1",
+  "tactics_config_version": "tactics-v1",
+  "window_start": "2026-01-14T20:20:00Z",
+  "window_end": "2026-01-15T20:20:00Z",
+  "score_threshold": 70,
+  "tactics_threshold": 3,
+  "items": [
+    {
+      "entity": "10.10.1.21",
+      "score": 50,
+      "level": "medium",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-e8d1f72159481bee",
+          "score": 100
+        }
+      ],
+      "tactics": [
+        "TA0001",
+        "TA0003",
+        "TA0011"
+      ],
+      "flags": [
+        "tactic_threshold"
+      ]
+    },
+    {
+      "entity": "203.0.113.10",
+      "score": 50,
+      "level": "medium",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-e8d1f72159481bee",
+          "score": 100
+        }
+      ],
+      "tactics": [
+        "TA0001",
+        "TA0043"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "svc-db",
+      "score": 50,
+      "level": "medium",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-e8d1f72159481bee",
+          "score": 100
+        }
+      ],
+      "tactics": [
+        "TA0003",
+        "TA0011"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "ws-80",
+      "score": 19,
+      "level": "low",
+      "incident_count": 3,
+      "incidents": [
+        {
+          "incident_id": "inc-639e41803da5d007",
+          "score": 32
+        },
+        {
+          "incident_id": "inc-4ae151291ae09c7d",
+          "score": 10
+        },
+        {
+          "incident_id": "inc-80e5ee764d0493d0",
+          "score": 10
+        }
+      ],
+      "tactics": [
+        "TA0001",
+        "TA0003",
+        "TA0011",
+        "TA0043"
+      ],
+      "flags": [
+        "tactic_threshold"
+      ]
+    },
+    {
+      "entity": "ws-50",
+      "score": 11,
+      "level": "low",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-3d7d05c66ac3f0eb",
+          "score": 21
+        }
+      ],
+      "tactics": [
+        "TA0043"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "203.0.113.60",
+      "score": 10,
+      "level": "low",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-c102ca840a8da1b1",
+          "score": 19
+        }
+      ],
+      "tactics": [
+        "TA0040"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "10.10.6.60",
+      "score": 8,
+      "level": "low",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-109bc3e364d7973c",
+          "score": 15
+        }
+      ],
+      "tactics": [],
+      "flags": []
+    },
+    {
+      "entity": "ws-81",
+      "score": 7,
+      "level": "low",
+      "incident_count": 2,
+      "incidents": [
+        {
+          "incident_id": "inc-162acfe01c8d49fb",
+          "score": 10
+        },
+        {
+          "incident_id": "inc-882bf102f899227e",
+          "score": 10
+        }
+      ],
+      "tactics": [
+        "TA0043"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "ws-51",
+      "score": 6,
+      "level": "low",
+      "incident_count": 2,
+      "incidents": [
+        {
+          "incident_id": "inc-c2ccfd615157a34a",
+          "score": 9
+        },
+        {
+          "incident_id": "inc-f098d2c9dd0f8313",
+          "score": 8
+        }
+      ],
+      "tactics": [
+        "TA0043"
+      ],
+      "flags": []
+    },
+    {
+      "entity": "203.0.113.50",
+      "score": 4,
+      "level": "low",
+      "incident_count": 1,
+      "incidents": [
+        {
+          "incident_id": "inc-852bbfaea14e44fb",
+          "score": 8
+        }
+      ],
+      "tactics": [
+        "TA0043"
+      ],
+      "flags": []
+    }
+  ]
+}

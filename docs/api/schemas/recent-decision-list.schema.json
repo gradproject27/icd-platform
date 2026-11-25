@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "RecentDecision": {
+      "additionalProperties": false,
+      "description": "An analyst decision (decision.recorded) or a system selection at the deadline\n(scenario.selected), from the audit trail.",
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "actor_role": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserRole"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "by": {
+          "enum": [
+            "analyst",
+            "system"
+          ],
+          "title": "By",
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Comment"
+        },
+        "decision": {
+          "enum": [
+            "approve",
+            "reject",
+            "select",
+            "no_action",
+            "system_selection"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "incident_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "record_id": {
+          "description": "The audit record.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "scenario_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScenarioId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "record_id",
+        "incident_id",
+        "occurred_at",
+        "by",
+        "actor",
+        "actor_role",
+        "decision",
+        "scenario_id",
+        "comment"
+      ],
+      "title": "RecentDecision",
+      "type": "object"
+    },
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    },
+    "UserRole": {
+      "description": "The four roles (D7.1).",
+      "enum": [
+        "soc_analyst",
+        "soc_manager",
+        "security_engineer",
+        "system_administrator"
+      ],
+      "title": "UserRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /decisions/recent?hours=: decisions of the last hours (default 72), newest first.",
+  "properties": {
+    "hours": {
+      "maximum": 168,
+      "minimum": 1,
+      "title": "Hours",
+      "type": "integer"
+    },
+    "items": {
+      "description": "At most 200.",
+      "items": {
+        "$ref": "#/$defs/RecentDecision"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "since": {
+      "format": "date-time",
+      "title": "Since",
+      "type": "string"
+    },
+    "until": {
+      "description": "The server clock when it answered.",
+      "format": "date-time",
+      "title": "Until",
+      "type": "string"
+    }
+  },
+  "required": [
+    "hours",
+    "since",
+    "until",
+    "items"
+  ],
+  "title": "RecentDecisionList",
+  "type": "object"
+}

@@ -20,6 +20,7 @@ from app.contracts import (
     IncidentStatus,
     LinkKey,
     ResponseAction,
+    RiskLevel,
     ScenarioId,
     UserRole,
 )
@@ -351,6 +352,16 @@ class KeyFactItem(_Contract):
     )
 
 
+class KeyFactPattern(_Contract):
+    """A count or order marker over the flagged events (P5, patterns.toml). Flags nothing."""
+
+    pattern_id: NonEmptyStr
+    title: NonEmptyStr
+    key: NonEmptyStr = Field(description="What the events share: source and attack type, or host.")
+    event_ids: list[Id] = Field(min_length=2, description="The flagged events, oldest first.")
+    first_seen: UtcDatetime
+
+
 class IncidentKeyFacts(_Contract):
     """GET /incidents/{incident_id}/key-facts: computed by code, never by the model.
 
@@ -362,6 +373,12 @@ class IncidentKeyFacts(_Contract):
     incident_id: Id
     network_config_version: NonEmptyStr = Field(
         description="response.toml config_version that split internal from external addresses."
+    )
+    tactics_config_version: NonEmptyStr = Field(
+        description="tactics.toml config_version that mapped attack types to ATT&CK tactics."
+    )
+    patterns_config_version: NonEmptyStr = Field(
+        description="patterns.toml config_version of the count and order markers."
     )
     first_flagged_event_id: Id = Field(description="The earliest flagged event.")
     started_at: UtcDatetime = Field(description="Time of the earliest flagged event, UTC.")
@@ -376,12 +393,20 @@ class IncidentKeyFacts(_Contract):
     flagged_event_count: int = Field(ge=1)
     context_event_count: Count
     attack_types: list[KeyFactItem] = Field(description="Dataset attack types (labels).")
+    tactics: list[KeyFactItem] = Field(
+        description="MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from "
+        "the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE."
+    )
     hosts: list[KeyFactItem]
     internal_ips: list[KeyFactItem] = Field(description="Source or destination IPs, internal.")
     external_ips: list[KeyFactItem] = Field(description="Source or destination IPs, external.")
     destination_ports: list[KeyFactItem]
     accounts: list[KeyFactItem] = Field(description="User names on flagged events.")
     truncated: bool = Field(description="True when a list held more than 20 values and was cut.")
+    patterns: list[KeyFactPattern] = Field(
+        description="Count and order markers (P5), earliest first. Markers only: they never flag "
+        "an event, infer a label or change a score."
+    )
 
 
 class OriginalRecord(_Contract):
@@ -447,6 +472,81 @@ class ContainmentList(_Contract):
     """GET /incidents/{incident_id}/containments: blocks it started or extended, oldest first."""
 
     items: list[SimulatedContainment]
+
+
+class EntityRiskIncident(_Contract):
+    incident_id: Id
+    score: int = Field(ge=0, le=100, description="The incident's stored risk score (C3).")
+
+
+class EntityRiskItem(_Contract):
+    """One source-side entity: source IP, else user, else host of its flagged events."""
+
+    entity: NonEmptyStr
+    score: int = Field(ge=0, le=100, description="Rank-weighted roll-up of its incident scores.")
+    level: RiskLevel = Field(description="C3's level of the roll-up score (risk.toml thresholds).")
+    incident_count: int = Field(ge=1)
+    incidents: list[EntityRiskIncident] = Field(description="Highest score first.")
+    tactics: list[NonEmptyStr] = Field(description="Distinct ATT&CK tactic IDs, sorted.")
+    flags: list[Literal["score_threshold", "tactic_threshold"]] = Field(
+        description="Thresholds reached; nothing acts on them."
+    )
+
+
+class EntityRiskList(_Contract):
+    """GET /entity-risk: the entity roll-up (P3). Read-only: never changes an incident score."""
+
+    config_version: NonEmptyStr = Field(description="entity_risk.toml config_version.")
+    tactics_config_version: NonEmptyStr = Field(description="tactics.toml config_version.")
+    window_start: UtcDatetime | None = Field(description="Null when no scored incident is read.")
+    window_end: UtcDatetime | None = Field(description="Latest last event of the incidents read.")
+    score_threshold: int = Field(ge=0, le=100)
+    tactics_threshold: int = Field(ge=1)
+    items: list[EntityRiskItem] = Field(description="Highest score first, then entity.")
+
+
+class ScenarioItem(_Contract):
+    """One simulated scenario of the catalogue, with its display metadata (P6)."""
+
+    scenario_id: ScenarioId
+    title: NonEmptyStr = Field(description="From response.toml.")
+    automatic: bool = Field(description="May the system select it at the deadline (response.toml).")
+    needs: list[Literal["source_ip", "account"]] = Field(description="Targets it needs.")
+    impact: Literal["low", "medium", "high"] = Field(description="From scenario_meta.toml.")
+    reversible: bool
+    revert: NonEmptyStr = Field(description="How the simulated effect ends, in plain words.")
+
+
+class ScenarioCatalogue(_Contract):
+    """GET /scenarios: the simulated catalogue v0 with display metadata. Every one is simulated."""
+
+    config_version: NonEmptyStr = Field(description="response.toml config_version.")
+    meta_version: NonEmptyStr = Field(description="scenario_meta.toml config_version.")
+    items: list[ScenarioItem]
+
+
+class RecentDecision(_Contract):
+    """An analyst decision (decision.recorded) or a system selection at the deadline
+    (scenario.selected), from the audit trail."""
+
+    record_id: Id = Field(description="The audit record.")
+    incident_id: Id
+    occurred_at: UtcDatetime
+    by: Literal["analyst", "system"]
+    actor: NonEmptyStr
+    actor_role: UserRole | None
+    decision: Literal["approve", "reject", "select", "no_action", "system_selection"]
+    scenario_id: ScenarioId | None
+    comment: NonEmptyStr | None
+
+
+class RecentDecisionList(_Contract):
+    """GET /decisions/recent?hours=: decisions of the last hours (default 72), newest first."""
+
+    hours: int = Field(ge=1, le=168)
+    since: UtcDatetime
+    until: UtcDatetime = Field(description="The server clock when it answered.")
+    items: list[RecentDecision] = Field(description="At most 200.")
 
 
 class DecisionType(StrEnum):

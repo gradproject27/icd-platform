@@ -44,6 +44,54 @@
       ],
       "title": "KeyFactItem",
       "type": "object"
+    },
+    "KeyFactPattern": {
+      "additionalProperties": false,
+      "description": "A count or order marker over the flagged events (P5, patterns.toml). Flags nothing.",
+      "properties": {
+        "event_ids": {
+          "description": "The flagged events, oldest first.",
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "type": "string"
+          },
+          "minItems": 2,
+          "title": "Event Ids",
+          "type": "array"
+        },
+        "first_seen": {
+          "format": "date-time",
+          "title": "First Seen",
+          "type": "string"
+        },
+        "key": {
+          "description": "What the events share: source and attack type, or host.",
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        },
+        "pattern_id": {
+          "minLength": 1,
+          "title": "Pattern Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern_id",
+        "title",
+        "key",
+        "event_ids",
+        "first_seen"
+      ],
+      "title": "KeyFactPattern",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -153,6 +201,20 @@
       "description": "Source IP of the earliest flagged event when it is external; else null.",
       "title": "Origin Ip"
     },
+    "patterns": {
+      "description": "Count and order markers (P5), earliest first. Markers only: they never flag an event, infer a label or change a score.",
+      "items": {
+        "$ref": "#/$defs/KeyFactPattern"
+      },
+      "title": "Patterns",
+      "type": "array"
+    },
+    "patterns_config_version": {
+      "description": "patterns.toml config_version of the count and order markers.",
+      "minLength": 1,
+      "title": "Patterns Config Version",
+      "type": "string"
+    },
     "started_at": {
       "description": "Time of the earliest flagged event, UTC.",
       "format": "date-time",
@@ -172,6 +234,20 @@
       "description": "Host of the earliest flagged event, else its internal destination IP.",
       "title": "Started On"
     },
+    "tactics": {
+      "description": "MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE.",
+      "items": {
+        "$ref": "#/$defs/KeyFactItem"
+      },
+      "title": "Tactics",
+      "type": "array"
+    },
+    "tactics_config_version": {
+      "description": "tactics.toml config_version that mapped attack types to ATT&CK tactics.",
+      "minLength": 1,
+      "title": "Tactics Config Version",
+      "type": "string"
+    },
     "truncated": {
       "description": "True when a list held more than 20 values and was cut.",
       "title": "Truncated",
@@ -181,6 +257,8 @@
   "required": [
     "incident_id",
     "network_config_version",
+    "tactics_config_version",
+    "patterns_config_version",
     "first_flagged_event_id",
     "started_at",
     "last_flagged_event_id",
@@ -190,12 +268,14 @@
     "flagged_event_count",
     "context_event_count",
     "attack_types",
+    "tactics",
     "hosts",
     "internal_ips",
     "external_ips",
     "destination_ports",
     "accounts",
-    "truncated"
+    "truncated",
+    "patterns"
   ],
   "title": "IncidentKeyFacts",
   "type": "object"

@@ -53,6 +53,33 @@ describe("KeyFacts", () => {
     );
   });
 
+  it("shows the ATT&CK tactics from the table, with the table version and MITRE's notice", () => {
+    const box = show(FACTS);
+    const tactics = row(box, "MITRE ATT&CK tactics (from the table, not the AI)");
+    expect(within(tactics).getAllByRole("listitem").map((li) => li.querySelector("strong")!.textContent)).toEqual([
+      "TA0043 Reconnaissance",
+      "TA0001 Initial Access",
+      "TA0003 Persistence",
+      "TA0011 Command and Control",
+    ]);
+    expect(within(box).getByText(/reviewed table tactics-v1/)).toBeInTheDocument();
+    expect(within(box).getByText(/© The MITRE Corporation/)).toBeInTheDocument();
+  });
+
+  it("shows the count and order patterns with their events in order", () => {
+    const box = show(FACTS);
+    const patterns = within(box).getByRole("list", { name: "Patterns" });
+    const [first, second] = within(patterns).getAllByRole("listitem");
+    expect(first).toHaveTextContent("Reconnaissance, then exploitation, on the same host (web-01): fx-002 → fx-007");
+    expect(second).toHaveTextContent("Exploitation, then installation, on the same host (web-01): fx-007 → fx-008");
+    expect(within(box).getByText(/never flag an event or change a score/)).toBeInTheDocument();
+  });
+
+  it("says when no pattern matched", () => {
+    const box = show({ ...FACTS, patterns: [] });
+    expect(within(box).getByText("No count or order pattern among the flagged events.")).toBeInTheDocument();
+  });
+
   it("says None for an empty list and marks cut lists", () => {
     const box = show({ ...FACTS, accounts: [], truncated: true });
     expect(within(row(box, "Accounts")).getByText("None")).toBeInTheDocument();

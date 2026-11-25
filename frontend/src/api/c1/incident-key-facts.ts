@@ -50,6 +50,14 @@ export interface IncidentKeyFacts {
    */
   origin_ip: string | null;
   /**
+   * Count and order markers (P5), earliest first. Markers only: they never flag an event, infer a label or change a score.
+   */
+  patterns: KeyFactPattern[];
+  /**
+   * patterns.toml config_version of the count and order markers.
+   */
+  patterns_config_version: string;
+  /**
    * Time of the earliest flagged event, UTC.
    */
   started_at: string;
@@ -57,6 +65,14 @@ export interface IncidentKeyFacts {
    * Host of the earliest flagged event, else its internal destination IP.
    */
   started_on: string | null;
+  /**
+   * MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE.
+   */
+  tactics: KeyFactItem[];
+  /**
+   * tactics.toml config_version that mapped attack types to ATT&CK tactics.
+   */
+  tactics_config_version: string;
   /**
    * True when a list held more than 20 values and was cut.
    */
@@ -98,4 +114,25 @@ export interface KeyFactItem {
    * The value: an attack type, host, IP, port or user.
    */
   value: string;
+}
+/**
+ * A count or order marker over the flagged events (P5, patterns.toml). Flags nothing.
+ *
+ * This interface was referenced by `IncidentKeyFacts`'s JSON-Schema
+ * via the `definition` "KeyFactPattern".
+ */
+export interface KeyFactPattern {
+  /**
+   * The flagged events, oldest first.
+   *
+   * @minItems 2
+   */
+  event_ids: [string, string, ...string[]];
+  first_seen: string;
+  /**
+   * What the events share: source and attack type, or host.
+   */
+  key: string;
+  pattern_id: string;
+  title: string;
 }

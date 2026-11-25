@@ -6,8 +6,11 @@ import { formatLocalDateTime } from "../countdown/clock";
 // backend computes by code from the incident's flagged events (GET /incidents/{id}/key-facts).
 // They are not AI output and never sent to the model. Nothing is computed here.
 
-const ROWS: { key: keyof Pick<IncidentKeyFacts, "attack_types" | "hosts" | "internal_ips" | "external_ips" | "destination_ports" | "accounts">; title: string }[] = [
+type ListKey = "attack_types" | "tactics" | "hosts" | "internal_ips" | "external_ips" | "destination_ports" | "accounts";
+
+const ROWS: { key: keyof Pick<IncidentKeyFacts, ListKey>; title: string }[] = [
   { key: "attack_types", title: "Attack types (dataset labels)" },
+  { key: "tactics", title: "MITRE ATT&CK tactics (from the table, not the AI)" },
   { key: "hosts", title: "Hosts" },
   { key: "internal_ips", title: "Internal IPs" },
   { key: "external_ips", title: "External IPs" },
@@ -100,6 +103,29 @@ export function KeyFacts({ incidentId, facts }: { incidentId: string; facts: Inc
         </tbody>
       </table>
       {facts.truncated && <p className="muted">Some lists are cut at 20 values.</p>}
+      <h3>Patterns ({facts.patterns_config_version})</h3>
+      {facts.patterns.length === 0 ? (
+        <p className="muted">No count or order pattern among the flagged events.</p>
+      ) : (
+        <ul className="key-facts__values" aria-label="Patterns">
+          {facts.patterns.map((pattern) => (
+            <li key={`${pattern.pattern_id}|${pattern.key}`}>
+              <strong>{pattern.title}</strong> ({pattern.key}):{" "}
+              {pattern.event_ids.map((id, index) => (
+                <span key={id}>
+                  {index > 0 && " → "}
+                  <Link to={`/incidents/${encodeURIComponent(incidentId)}#event-${encodeURIComponent(id)}`}>{id}</Link>
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="muted">Patterns are markers over the flagged events only: they never flag an event or change a score.</p>
+      <p className="muted">
+        Tactics come from the reviewed table {facts.tactics_config_version} through each event's dataset attack type.
+        MITRE ATT&CK® © The MITRE Corporation, used under its terms of use.
+      </p>
     </section>
   );
 }
