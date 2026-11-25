@@ -180,7 +180,7 @@ Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingest
 
 ## Shared contracts
 
-ICD's components exchange six contracts: **Event**, **Incident**, **EvidencePackage**, **AnalysisReport**, **ResponseAction** and **AuditRecord**. C3 owns them. They are version `1.0` (`SCHEMA_VERSION` in `backend/app/contracts/common.py`) and are a **draft until frozen at M1**.
+ICD's components exchange six contracts: **Event**, **Incident**, **EvidencePackage**, **AnalysisReport**, **ResponseAction** and **AuditRecord**. C3 owns them. They are **frozen at M1 (25 Nov 2026)** at version 1.3 (`SCHEMA_VERSION` `"1.0"` in `backend/app/contracts/common.py`; 1.1 to 1.3 only added optional fields). Changes follow the change rule in [contracts/README.md](contracts/README.md).
 
 | What | Where | Edited by hand |
 |---|---|---|
