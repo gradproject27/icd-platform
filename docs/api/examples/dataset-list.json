@@ -8,7 +8,7 @@
     {
       "dataset_id": "precinct6",
       "name": "Precinct6 (WitFoo)",
-      "parser_available": false
+      "parser_available": true
     },
     {
       "dataset_id": "unsw-nb15",

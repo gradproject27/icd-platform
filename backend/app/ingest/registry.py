@@ -5,6 +5,7 @@ from app.ingest.fixture import parse_fixture
 from app.ingest.interface import Parser
 from app.ingest.nf_v3 import parse_nf_v3
 from app.ingest.otrf import parse_otrf
+from app.ingest.precinct6 import parse_precinct6
 from app.ingest.unsw_nb15 import parse_unsw_nb15
 
 PARSERS: dict[DatasetSource, Parser] = {
@@ -13,6 +14,7 @@ PARSERS: dict[DatasetSource, Parser] = {
     DatasetSource.NF_UNSW_NB15_V3: parse_nf_v3,
     DatasetSource.NF_CSE_CIC_IDS2018_V3: parse_nf_v3,
     DatasetSource.OTRF: parse_otrf,
+    DatasetSource.PRECINCT6: parse_precinct6,
 }
 
 DATASET_NAMES: dict[DatasetSource, str] = {

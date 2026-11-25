@@ -72,3 +72,25 @@ Totals: 24 read, 15 events (5 flagged, 9 unflagged, 1 unlabelled), 9 quarantined
 | 16 | Security 4689 with `Hostname` `-` | `process_termination`, host null |
 
 Totals: 16 read, 10 events (all unlabelled), 6 quarantined. The time-zone cases (no paired event, disagreeing offsets, `TimeCreated`) are built inside the test file.
+
+## Precinct6 sample
+
+`precinct6-sample.jsonl`: 13 lines shaped like rows exported from `signals/*.parquet` by `precinct6_export` (dataset profile section 4.1 columns). Every value is **invented** (tokens `HOST-0001`, `USER-0001`, `ORG-0001`, documentation IPs, 29 Jul 2024). `backend/tests/ingest/test_precinct6.py` expects:
+
+| Lines | Case | Result |
+|---|---|---|
+| 1 | `malicious` with CON-20 values (incident, rule, MO, technique, disposition) | flagged; no CON-20 value anywhere in the Event |
+| 2 | `benign` with empty IPs, ports and protocol | unflagged, entities null |
+| 3 | `suspicious` | unflagged, raw value `suspicious` |
+| 4 | Host name `HOST-0042` in `src_ip` | `src_ip` null, `extra_fields.src_ip_raw` |
+| 5 | `src_ip` = `-` | `src_ip` null |
+| 6 | `label_binary` = `evil` | quarantined `unknown_label` |
+| 7 | `artifact_id` null | quarantined `missing_record_id` |
+| 8 | `timestamp` empty | quarantined `missing_timestamp` |
+| 9 | `timestamp` = `not-a-time` | quarantined `bad_timestamp` |
+| 10 | Empty line | quarantined `empty_record` |
+| 11 | `{bad json` | quarantined `bad_json` |
+| 12 | No `label_binary` | **unlabelled** |
+| 13 | `timestamp` as text with a fraction, `src_port` 70000 | unflagged, time 00:00:13.5, `src_port` null with `_raw` |
+
+Totals: 13 read, 7 events (1 flagged, 5 unflagged, 1 unlabelled), 6 quarantined. The Parquet export is tested on a table built inside the test.

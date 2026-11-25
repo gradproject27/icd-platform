@@ -192,6 +192,12 @@
         "microsoft-windows-terminalservices-localsessionmanager/operational:24": "remote_desktop_session"
       },
       "notes": "Key is '<Channel in lower case>:<EventID>', so 'Security' and 'security' (both occur in OTRF) map alike. Each ID was checked on 25 Nov 2026 against the first line of the event's own Message text in OTRF APT29 day 1 and the two atomic sets (for example Sysmon 10 'Process accessed:', Security 5156 'The Windows Filtering Platform has permitted a connection.'); IDs as documented by Microsoft (Sysmon, Windows security auditing). Any other channel or ID is unknown. APT29 day 1 by events: Sysmon 12, 10, 7, 13 and Security 4658, 4656, 4690, 4663 are the largest groups."
+    },
+    {
+      "dataset_id": "precinct6",
+      "field": "message_type",
+      "map": {},
+      "notes": "Precinct6 message_type values are free product codes (595 distinct in signals, 21 in incident_signals; dataset profile section 4.1) and are not in this repository, because huggingface.co is blocked from the development container. The map stays empty, so every Precinct6 event is unknown, until a profile run (python -m app.ingest.cli precinct6 <slice.jsonl> --profile) lists the codes and a reviewed change adds them. Never from label_binary or any CON-20 column."
     }
   ]
 }

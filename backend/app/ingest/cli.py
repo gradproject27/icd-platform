@@ -25,7 +25,7 @@ from typing import Any
 
 from app.api.schemas import DatasetSource, IntakeCounts
 from app.contracts import Event
-from app.ingest import nf_v3, otrf, unsw_nb15
+from app.ingest import nf_v3, otrf, precinct6, unsw_nb15
 from app.ingest.interface import IntakeContext, ParseError, Quarantined
 from app.ingest.lines import read_original
 from app.ingest.registry import PARSERS
@@ -35,6 +35,7 @@ PROFILERS = {
     DatasetSource.NF_UNSW_NB15_V3: nf_v3.profile,
     DatasetSource.NF_CSE_CIC_IDS2018_V3: nf_v3.profile,
     DatasetSource.OTRF: otrf.profile,
+    DatasetSource.PRECINCT6: precinct6.profile,
 }
 
 
