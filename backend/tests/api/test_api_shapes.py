@@ -27,7 +27,9 @@ from app.api.schemas import (
     NotificationList,
     OriginalRecord,
     QuarantinePage,
+    RecentDecisionList,
     ResponseWindow,
+    ScenarioCatalogue,
     Upload,
     UploadAccepted,
 )
@@ -59,6 +61,8 @@ EXAMPLE_SHAPES: dict[str, type[BaseModel]] = {
     "decision-record": DecisionRecord,
     "notification-list": NotificationList,
     "current-user": CurrentUser,
+    "scenario-catalogue": ScenarioCatalogue,
+    "recent-decision-list": RecentDecisionList,
     "entity-risk-list": EntityRiskList,
 }
 

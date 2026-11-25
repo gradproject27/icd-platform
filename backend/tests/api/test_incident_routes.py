@@ -384,6 +384,51 @@ def test_containments_show_the_simulated_ip_block_and_its_end(client, response, 
     assert len(reverted) == 1 and reverted[0]["simulated"] is True
 
 
+def test_scenarios_carry_impact_and_how_they_are_reverted(client):
+    # P6: display metadata beside response.toml's catalogue; nothing selects from it.
+    answer = client.get("/scenarios").json()
+    assert (answer["config_version"], answer["meta_version"]) == ("response-v1", "scenario-meta-v1")
+    items = {item["scenario_id"]: item for item in answer["items"]}
+    assert list(items) == ["S1", "S2", "S3", "S4"]
+    assert (items["S2"]["impact"], items["S2"]["needs"], items["S2"]["automatic"]) == (
+        "high",
+        ["source_ip"],
+        True,
+    )
+    assert items["S4"]["automatic"] is False and items["S4"]["impact"] == "low"
+    assert "ends on its own" in items["S2"]["revert"]
+
+
+def test_recent_decisions_list_analysts_and_the_system(client, response, clock, analyst):
+    # P6: the analyst approves A; another incident's window expires and the system selects.
+    freeze(response)
+    window = client.get(f"/response-windows/{A.incident_id}").json()
+    client.post(
+        f"/incidents/{A.incident_id}/decisions",
+        json={"decision": "approve", "window_id": window["window_id"], "comment": "seen"},
+    )
+    other = A.model_copy(update={"incident_id": "inc-a-other"})
+    freeze(response, other)
+    clock.advance(61)
+    response.expire_due()
+
+    answer = client.get("/decisions/recent").json()
+    assert answer["hours"] == 72
+    assert [
+        (i["incident_id"], i["by"], i["decision"], i["scenario_id"]) for i in answer["items"]
+    ] == [
+        ("inc-a-other", "system", "system_selection", "S2"),
+        (A.incident_id, "analyst", "approve", "S2"),
+    ]
+    assert answer["items"][1]["comment"] == "seen"
+    assert answer["items"][1]["actor_role"] == "soc_analyst"
+
+    clock.advance(73 * 60 * 60)
+    assert client.get("/decisions/recent").json()["items"] == []
+    assert len(client.get("/decisions/recent", params={"hours": 168}).json()["items"]) == 2
+    assert client.get("/decisions/recent", params={"hours": 0}).status_code == 422
+
+
 def test_reject_keeps_the_incident_awaiting_and_releases_isolation(client, response, analyst):
     freeze(response)
     record = client.post(

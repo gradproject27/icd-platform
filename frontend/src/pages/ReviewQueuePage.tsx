@@ -9,6 +9,7 @@ import { PageState } from "../components/PageState";
 import { formatListTime, riskText, STUB_BANNER } from "../incidents/format";
 import { reviewGroups, type ReviewGroup } from "../incidents/review";
 import { SCENARIO_LABELS } from "../labels";
+import { RecentDecisions } from "../incidents/ScenarioMeta";
 
 // Review queue (S8-D10; response-workflow-spec.md section 5 and T04, T12, T16). Incidents that
 // wait for an analyst with no timer: nothing runs on its own for them. The incidents and their
@@ -72,6 +73,7 @@ export function ReviewQueuePage() {
         />
       )}
       {load.kind === "ready" && <Queue items={load.items} seesEscalated={seesEscalated} roleKnown={role !== null} />}
+      <RecentDecisions />
     </section>
   );
 }

@@ -97,9 +97,17 @@ export type {
   QuarantinedRecord,
 } from "./quarantine-page";
 export type {
+  RecentDecision,
+  RecentDecisionList,
+} from "./recent-decision-list";
+export type {
   ResponseWindow,
   ResponseWindowStatus,
 } from "./response-window";
+export type {
+  ScenarioCatalogue,
+  ScenarioItem,
+} from "./scenario-catalogue";
 export type {
   Upload,
 } from "./upload";

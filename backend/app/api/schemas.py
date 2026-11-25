@@ -505,6 +505,50 @@ class EntityRiskList(_Contract):
     items: list[EntityRiskItem] = Field(description="Highest score first, then entity.")
 
 
+class ScenarioItem(_Contract):
+    """One simulated scenario of the catalogue, with its display metadata (P6)."""
+
+    scenario_id: ScenarioId
+    title: NonEmptyStr = Field(description="From response.toml.")
+    automatic: bool = Field(description="May the system select it at the deadline (response.toml).")
+    needs: list[Literal["source_ip", "account"]] = Field(description="Targets it needs.")
+    impact: Literal["low", "medium", "high"] = Field(description="From scenario_meta.toml.")
+    reversible: bool
+    revert: NonEmptyStr = Field(description="How the simulated effect ends, in plain words.")
+
+
+class ScenarioCatalogue(_Contract):
+    """GET /scenarios: the simulated catalogue v0 with display metadata. Every one is simulated."""
+
+    config_version: NonEmptyStr = Field(description="response.toml config_version.")
+    meta_version: NonEmptyStr = Field(description="scenario_meta.toml config_version.")
+    items: list[ScenarioItem]
+
+
+class RecentDecision(_Contract):
+    """An analyst decision (decision.recorded) or a system selection at the deadline
+    (scenario.selected), from the audit trail."""
+
+    record_id: Id = Field(description="The audit record.")
+    incident_id: Id
+    occurred_at: UtcDatetime
+    by: Literal["analyst", "system"]
+    actor: NonEmptyStr
+    actor_role: UserRole | None
+    decision: Literal["approve", "reject", "select", "no_action", "system_selection"]
+    scenario_id: ScenarioId | None
+    comment: NonEmptyStr | None
+
+
+class RecentDecisionList(_Contract):
+    """GET /decisions/recent?hours=: decisions of the last hours (default 72), newest first."""
+
+    hours: int = Field(ge=1, le=168)
+    since: UtcDatetime
+    until: UtcDatetime = Field(description="The server clock when it answered.")
+    items: list[RecentDecision] = Field(description="At most 200.")
+
+
 class DecisionType(StrEnum):
     APPROVE = "approve"
     REJECT = "reject"
