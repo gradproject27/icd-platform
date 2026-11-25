@@ -18,7 +18,7 @@ Each rule cites its source. Items marked **(proposed, needs team agreement)** ar
 
 **Rule 1: no detection layer (D2).** ICD has no detection layer. Correlation never decides that an event is malicious. Whether an event is flagged, unflagged or unlabelled comes only from the dataset label (FR-40, OD-21). Correlation groups events that the dataset has already flagged, and attaches related events as context. This document therefore uses the words **flagged**, **unflagged**, **unlabelled** and **context**, and does not call events or incidents malicious.
 
-**Rule 2: the risk score is code (OD-04, FR-19).** The numeric risk score is computed by C3 code from configured weights. The LLM never computes or changes it. The LLM writes only the risk justification (`AnalysisReport.risk_justification`), which explains the score it is given.
+**Rule 2: the risk score is code (OD-04, FR-19).** The numeric risk score is computed by C3 code from configured weights. The LLM never computes or changes it. The LLM writes only the risk justification (`AnalysisReport.risk_justification`), which explains the score it is given. From `risk-v1` (section 9A), the LLM also gives one calibrated input, its opinion on the event confidence `C_i` of an evidence group; the score itself is still computed by code (decision RV1-D2).
 
 **Rule 3: deterministic (AS-04).** The same input and the same configuration always give the same incidents, links, types and scores.
 
@@ -307,6 +307,8 @@ The type is recomputed whenever the incident is updated. The list of attack type
 
 ## 9. Risk score
 
+> **`risk-v0`, replaced by `risk-v1` on 25 Nov 2026 (section 9A, decisions RV1-D1 to RV1-D7).** This section is kept unchanged as the decision history. Where section 9A changes a term, section 9A applies; every term section 9A does not change still follows this section.
+
 **Method: team decision of 29 Oct 2026.** It replaces the weighted factor sum proposed in Week 1 (sections 9 and 10 of earlier versions). The score is still computed in code from configured values (OD-04, OD-05); the LLM writes only the justification (FR-19). Code: `backend/app/correlation/risk.py`; values: `backend/app/correlation/risk.toml`.
 
 ### 9.1 Formula
@@ -368,6 +370,78 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 
 **Risk is not confidence.** The AI report confidence and its 0.75 gate belong to AI1 and C5 (OD-16; response workflow spec, section 5). It is a different thing from the event confidence `C_i`. Risk and report confidence are **never combined into one number**.
 
+## 9A. Risk score v1 (`risk-v1`)
+
+**Status: design approved by Sara (C3) on 25 Nov 2026 (decisions RV1-D1 to RV1-D7 in [decision-log.md](decision-log.md)). Not built yet.** It replaces `risk-v0` (section 9). The formula of section 9.1 stays: `q_i = S_i · C_i · O_i · D_i`, the max per `(technique, entity)`, noisy-OR, `score = round_half_up(100 · L · I)`. What changes is how `C_i` is found, when the score is computed, and which data trains and checks it.
+
+### 9A.1 What stays the same
+
+| Rule | In `risk-v1` |
+|---|---|
+| Rule 1, no detection layer (D2) | Kept. Labels still come only from the dataset (FR-40, OD-21). The classifier of 9A.2 rates how confident ICD is in a label; it never creates, changes or removes one (RV1-D4) |
+| Rule 2, the score is code (OD-04) | Kept for the score. Changed for one input: the LLM gives a calibrated opinion that feeds `C_i`. It never computes or changes the score, the level or the thresholds (RV1-D2) |
+| Rule 3, deterministic (AS-04) | Kept for a fixed set of versions: classifier, calibrator, stacker, conformal threshold, LLM model, prompt and `risk.toml`. The LLM opinions are stored and re-used, so re-scoring never calls the LLM again unless asked |
+| `S_i`, `O_i`, `D_i`, `I` | Unchanged from section 9.2 until decisions R2 to R5 are taken (RV1-D7) |
+| Risk is not report confidence | Kept. `C_i` is about one event's label; the AI report confidence (OD-16) is about the report. They are never combined into one number |
+
+### 9A.2 Event confidence `C_i` (RV1-D2)
+
+| Step | What happens | Output |
+|---|---|---|
+| 1. Classifier | Gradient-boosted trees on the event's flow features, trained per 9A.4. Runs for every flagged event | `p_clf` |
+| 2. Calibration | Isotonic regression fitted on a calibration split that training never sees, so that a value of 0.8 means "right about 8 times in 10" | calibrated `p_clf` |
+| 3. LLM opinion | Once per evidence group `(technique, entity)`: is this group a real attack, given its masked evidence? Five samples (share of "yes") or the token probability of "yes", calibrated with Platt scaling on the calibration split. A separate short prompt, not the AI report | `p_llm` per group |
+| 4. Stacking | `logit(C) = a + b1 · logit(p_clf) + b2 · logit(p_llm)`, a logistic regression fitted on the calibration split; the data sets the weights | `C` |
+| 5. Uncertainty | Split conformal prediction at 95%: when both "attack" and "not attack" stay possible, the event gets flag `needs_review` | flag |
+| 6. Range and fallback | `C` is clamped to 0.05 to 1, so one uncertain event never erases an attack. Without `p_llm`, `C` = calibrated `p_clf` and the incident carries `llm_pending` (phase 1) or `llm_unavailable` (the LLM step failed) | `C`, flags |
+
+**Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark.
+
+### 9A.3 When the score is computed (RV1-D3)
+
+| Phase | When | `C_i` used | Stored as |
+|---|---|---|---|
+| 1. Initial | When the incident is stored (`correlate_upload`, decision D1 of 16 Nov still holds) | Calibrated `p_clf` | Initial score, flag `llm_pending` |
+| 2. Final | After the LLM confidence step has run for every evidence group of the incident | Stacked `C` | Final score |
+| — | The AI report (AI1) | — | Runs only after phase 2, and receives the final score |
+| Failure | The LLM fails or is unavailable | Calibrated `p_clf` | The initial score stays the current score, with flag `llm_unavailable`. It is never shown or used as an LLM-informed final score. The step can be retried; a later success writes the final score |
+| Re-score | `risk.toml` or a model version changes | Stored `p_clf` and `p_llm`, re-computed only when their own version changed | A new record; earlier records stay |
+
+C5's freeze precondition (`is_high`) reads the current score; whether a phase 1 score may start a freeze is a C5 question to settle in step 6.
+
+**Audit.** Every scoring writes one record that is never changed: incident ID, phase, score, level, `L`, `I`, flags, `computed_at`, and every version behind it (`risk.toml`, classifier, calibrator, stacker, conformal threshold, LLM model and prompt). `Incident.risk` shows the newest record.
+
+**Proposed contract and storage additions (contracts 1.4, additive; designed in detail in step 6, not built now):**
+
+| Addition | Content |
+|---|---|
+| `RiskAssessment.phase` | `initial` or `final` |
+| `RiskAssessment.confidence_versions` | The model, calibrator, stacker, conformal, LLM model and prompt versions used |
+| New `RiskFlag` values | `llm_pending`, `llm_unavailable`, `needs_review` |
+| `RiskContributor.reason` | Also names `p_clf`, `p_llm` and `C` of the group's strongest event |
+| Table `risk_assessments` (new migration, C1) | One append-only row per scoring, as listed under "Audit" |
+| Job stage (C1) | `llm_confidence` between the initial score and the AI report job |
+
+### 9A.4 Data (RV1-D5)
+
+| Role | Dataset |
+|---|---|
+| Train and calibrate the classifier | UNSW-NB15 + one CIC dataset (CSE-CIC-IDS2018, or a corrected CIC-IDS2017; chosen in step 2), possibly in their shared NetFlow feature versions (step 2 checks they keep timestamps and IPs) |
+| ATT&CK technique ground truth | OTRF (APT29 emulation, atomic tests) |
+| Agreement check only, never an input (CON-20) | Precinct6 |
+| Knowledge base | ATT&CK v20, NVD, KEV, EPSS, CIRCL (snapshots of 24 Oct 2026) |
+| Not used for risk | Loghub (system faults, not attacks), TON_IoT (dropped in the data plan) |
+
+Events from different datasets are never merged into one stream or one incident. Splits are by file, day or scenario, never by random rows. Training is stratified by `(dataset, technique)` with a cap per class (UNSW `Generic` is 215,481 of 321,283 attack records); test and calibration sets keep each dataset's natural attack ratio. Results are reported per dataset, as a macro average, and across datasets.
+
+### 9A.5 ATT&CK mapping (RV1-D6)
+
+One reviewed table per dataset, pinned to ATT&CK v20: dataset label, technique ID(s), tactic, ICD stage, mapping quality (`exact`, `partial`, `category-only`), source and reviewer. Kill-chain stages (section 8) are derived from ATT&CK tactics. The UNSW ground-truth CVE references (dataset profile §7.3) may refine the table and the evaluation, never a per-event score input.
+
+### 9A.6 Still open (RV1-D7)
+
+Outcome `O` (R2), asset impact `I` (R3), severity for unknown types (R4), score range and completeness (R5) and the validation plan (R6) are not decided. Options and recommendations: decision document "Risk score inputs: recommendations" of 25 Nov 2026. A better `C` alone does not fix the high share of High incidents on UNSW-NB15, because `I` is still 1.0 there.
+
 ## 10. Decision record
 
 | Date | Decision | Where |
@@ -375,6 +449,7 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 | 29 Oct 2026 | Risk method `q = S·C·O·D`, max per (technique, entity), noisy-OR, `I` max, `Risk = 100·L·I` | Team |
 | 29 Oct 2026 | Q1, Q2: impact = NIST FIPS 199, three levels; unknown = 1.0 with `asset_unknown` (four levels may be tried later) | Team |
 | 29 Oct 2026 | Q3 source-side entity; Q4 `C` = dataset label trust, `O` success/failed/unknown; Q5 to Q7 dataset clock, 24 h, strong = Backdoors/Backdoor/Worms; Q8 severity from the source value, else the stage; Q9 to Q13 contract 1.1, flagged only, unknown technique 0.5, round then band, host else destination IP | Team (C3 thread, `c3-week2/02-risk-score-gaps-and-questions.md`) |
+| 25 Nov 2026 | `risk-v1`: hybrid calibrated `C` (classifier + LLM), two-phase scoring with audit records, one role per dataset, ATT&CK mapping (RV1-D1 to RV1-D7) | Sara (C3); section 9A, [decision-log.md](decision-log.md) |
 
 All values are provisional and are re-tuned in W11 with the thresholds (OD-05). Any change changes `config_version`.
 
