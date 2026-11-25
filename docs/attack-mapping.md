@@ -68,7 +68,7 @@ Class names as printed on the [UQ NetFlow dataset page](https://staff.itee.uq.ed
 
 ### OTRF (`otrf.toml`)
 
-The technique comes from each dataset's own metadata, so the rows are `exact`. APT29 day 1 and 2 are mapped per emulation-plan step with the OTRF parser (step 3).
+The technique comes from each dataset's own metadata, so the rows are `exact`. APT29 day 1 and 2 are mapped per emulation-plan step. The OTRF parser (step 3b, [ingestion.md](ingestion.md) §10) keeps every event unlabelled; the technique is joined by dataset in step 6, because the plan's steps carry no times.
 
 | Dataset | Technique | Tactic | Stage |
 |---|---|---|---|

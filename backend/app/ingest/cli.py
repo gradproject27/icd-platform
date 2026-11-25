@@ -5,6 +5,7 @@
     python -m app.ingest.cli unsw-nb15 D:/data/UNSW-NB15_1.csv --profile
     python -m app.ingest.cli unsw-nb15 D:/data/UNSW-NB15_1.csv --show-record UNSW-NB15_1.csv:42
     python -m app.ingest.cli nf-unsw-nb15-v3 D:/data/NF-UNSW-NB15-v3.csv --profile
+    python -m app.ingest.cli otrf D:/data/apt29_evals_day1_manual_2020-05-01225525.json --profile
 
 No database is needed: the counts follow the same rules as the ingest worker
 (app/jobs/ingest.py), including quarantining a repeated event_id. The summary and the profile
@@ -24,7 +25,7 @@ from typing import Any
 
 from app.api.schemas import DatasetSource, IntakeCounts
 from app.contracts import Event
-from app.ingest import nf_v3, unsw_nb15
+from app.ingest import nf_v3, otrf, unsw_nb15
 from app.ingest.interface import IntakeContext, ParseError, Quarantined
 from app.ingest.lines import read_original
 from app.ingest.registry import PARSERS
@@ -33,6 +34,7 @@ PROFILERS = {
     DatasetSource.UNSW_NB15: unsw_nb15.profile,
     DatasetSource.NF_UNSW_NB15_V3: nf_v3.profile,
     DatasetSource.NF_CSE_CIC_IDS2018_V3: nf_v3.profile,
+    DatasetSource.OTRF: otrf.profile,
 }
 
 

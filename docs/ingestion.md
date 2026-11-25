@@ -12,12 +12,13 @@ parse(path: Path, context: IntakeContext) -> Iterator[Event | Quarantined]
 
 - One item per record read, in file order. One bad record never raises; `ParseError` only when the whole file cannot be read.
 - The parser never writes to the database. The worker stores events in `events` and the rest in `quarantined_records` (C1 migration `0002`), and counts both into `IntakeCounts`.
-- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2). Risk-v1 step 3a: **`nf-unsw-nb15-v3`** and **`nf-cse-cic-ids2018-v3`** (section 9).
+- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2). Risk-v1 step 3a: **`nf-unsw-nb15-v3`** and **`nf-cse-cic-ids2018-v3`** (section 9); step 3b: **`otrf`** (section 10).
 
 | Module (`backend/app/ingest/`) | Job |
 |---|---|
 | `unsw_nb15.py` | UNSW-NB15 parser and the aggregate-only profile |
 | `nf_v3.py` | NetFlow v3 parser (both UQ NF-v3 datasets) and its aggregate-only profile |
+| `otrf.py` | OTRF Windows event parser and its aggregate-only profile |
 | `normalize.py` | Pure value normalizers (time, IP, port, protocol, numbers, IDs) |
 | `labels.py` | Label mapping from `contracts/label-mapping.json` |
 | `event_types.py` | `event_type` vocabulary from `contracts/event-types.json` |
@@ -67,7 +68,7 @@ Headerless CSV, 49 columns in the order of `NUSW-NB15_features.csv` (column 44 i
 
 ## 4. Event type vocabulary
 
-`contracts/event-types.json` is the list C2 publishes (contracts v1, open question 1). Types: `network_flow`, `http_request`, `dns_query`, `ftp_session`, `ftp_data_transfer`, `smtp_session`, `pop3_session`, `ssh_session`, `tls_session`, `snmp_request`, `irc_session`, `radius_request`, `dhcp_request`, `unknown`. Each source maps one activity column; a value not in the map is `unknown`. C3's fixture names (`network_scan`, `fuzzing`, ...) are placeholders, not part of this list.
+`contracts/event-types.json` is the list C2 publishes (contracts v1, open question 1). Types: `network_flow`, `http_request`, `dns_query`, `ftp_session`, `ftp_data_transfer`, `smtp_session`, `pop3_session`, `ssh_session`, `tls_session`, `snmp_request`, `irc_session`, `radius_request`, `dhcp_request`, `unknown`. Each source maps one activity column; a value not in the map is `unknown`. C3's fixture names (`network_scan`, `fuzzing`, ...) are placeholders, not part of this list. Step 3b adds 34 Windows event types for OTRF (`process_creation`, `network_connection`, `logon_success`, `process_access`, `registry_change`, `powershell_script_block` and others; the full list and the `Channel:EventID` keys are in the file).
 
 ## 5. Quarantine reason codes
 
@@ -80,12 +81,15 @@ Every quarantined record keeps `record_ref` (file and line), the reason in plain
 | `line_too_long` | The line is longer than 64 KiB (the rest of the line is skipped, the next line is read) |
 | `bad_csv` | The CSV reader rejects the line |
 | `wrong_column_count` | Not 49 columns (UNSW-NB15) or 55 columns (NetFlow v3) |
-| `missing_timestamp` | `Stime` (UNSW-NB15) or `FLOW_START_MILLISECONDS` (NetFlow v3) is empty |
+| `missing_timestamp` | `Stime` (UNSW-NB15) or `FLOW_START_MILLISECONDS` (NetFlow v3) is empty, or an OTRF event has no `UtcTime`, `EventTime` or `TimeCreated` |
 | `bad_timestamp` | `Stime` is not epoch seconds, or `FLOW_START_MILLISECONDS` is not epoch milliseconds, or the time is outside 1990 to 2100 |
 | `unknown_label` | The label value is not in the label mapping (rule `unknown_value`) |
 | `pending_label` | The label value is listed with a pending decision (rule `pending_values`) |
 | `unknown_attack_type` | NetFlow v3 only: `Label` is 1 and `Attack` is not a spelling the label mapping lists for the dataset (never guessed) |
 | `label_attack_mismatch` | NetFlow v3 only: `Label` is 0 but `Attack` is neither `Benign` nor empty |
+| `bad_json` | OTRF only: the line is not valid JSON |
+| `not_an_object` | OTRF only: the line is JSON but not an object |
+| `unknown_time_zone` | OTRF only: the event has only a local time and the file gives no single offset to UTC (section 10) |
 | `invalid_event` | The built Event fails the contract (should not happen; kept as a safety net) |
 | `duplicate_event_id` | Set by the worker (C1): the same `event_id` appeared earlier in the file |
 
@@ -166,3 +170,32 @@ Datasets `nf-unsw-nb15-v3` and `nf-cse-cic-ids2018-v3` (University of Queensland
 | `extra_fields` | the other 47 columns | Numbers as int or float; `L7_PROTO` kept as text (`7.178` must not become a float). `Label` and `Attack` are never copied here |
 
 **Not measured yet.** Class spellings come from the dataset page, and the L7 master IDs from nDPI's `ndpi_protocol_ids.h`. The first run of `python -m app.ingest.cli <dataset_id> <file> --profile` on each real file prints the counts of `Label`, `Attack`, (`Label`, `Attack`) pairs, `PROTOCOL` and L7 master IDs (no IP or port), and the label mapping counts are filled from it. A spelling seen there but not listed is added to the mapping by a reviewed change, never accepted silently.
+
+## 10. OTRF field mapping (risk-v1 step 3b)
+
+Dataset `otrf`, parser `otrf.py`. Input: the JSON-lines file inside an OTRF zip (unzip first; uploads take `.json`), one Windows event per line: APT29 day 1 (`apt29_evals_day1_manual_*.json`, 385 MB), APT29 day 2 (1.7 GB: larger than the 512 MB upload limit, so upload it in line slices, each line is independent) and the atomic sets. The Zeek logs are another format and are not read. Role: ATT&CK technique ground truth (RV1-D5), not the classifier.
+
+**Label.** None per event: every event is `unlabelled` with no attack type. The technique is dataset metadata (`label_scope` `per_dataset`; `backend/app/correlation/attack_maps/otrf.toml`) and is joined to events by dataset, not by any event field, in step 6. APT29 emulation-plan steps carry no times (dataset profile section 7.2), so steps cannot be tied to single events yet.
+
+**Event time.** In order:
+
+1. `UtcTime` (Sysmon events; UTC by definition, no zone written).
+2. Otherwise the local time `EventTime` (or `TimeCreated` in some atomic sets), minus the file's offset. Before parsing, the parser reads the file once and computes local minus `UtcTime` (rounded to 15 minutes) on every event that has both. If all of them agree, that offset is used; if they disagree or there is no such event, the event is quarantined `unknown_time_zone`, never guessed. `extra_fields.timestamp_source` and `utc_offset_minutes` record what was used.
+
+Measured on 25 Nov 2026: APT29 day 1, -240 minutes in 143,883 of 143,883 pairs (event times 2020-05-02 02:55 to 03:28 UTC, as in the dataset profile); SMB atomic set, -240 in 412 of 412; LSASS atomic set, -960 in 148 of 148 (its `TimeCreated` is a 12-hour clock without AM or PM, so a fixed UTC-4 rule would have been 12 hours wrong). `@timestamp` is the collection time, not the event time, and is only kept in `extra_fields`.
+
+| Event field | Source | Rule |
+|---|---|---|
+| `event_id` | none unique (`RecordNumber` repeats) | `otrf:<file stem>:<line>` |
+| `event_type` | `Channel` + `EventID` | Key `<channel in lower case>:<EventID>` in `contracts/event-types.json` (so `Security` and `security` map alike); 67 keys; other keys `unknown` |
+| `host` | `Hostname` | As written; `-` is null. The NXLog field `host` is the collector, not the event's host, and stays in `extra_fields` |
+| `src_ip`, `dst_ip` | `SourceAddress` / `DestAddress` (Security), `SourceIp` / `DestinationIp` (Sysmon) | As written by Windows; not an IP: null and `<field>_raw`. For Security 5156 the direction is in `extra_fields.Direction` |
+| `src_port`, `dst_port` | `SourcePort`, `DestPort` / `DestinationPort` | 0 to 65535, else null and `<field>_raw` |
+| `protocol` | `Protocol` | IANA number to name (`6` tcp, `17` udp, ...); Sysmon's `tcp` kept |
+| `user` | `TargetUserName` for logon and credential events (4624, 4625, 4634, 4647, 4648, 4768, 4769, 4776), else `SubjectUserName`, else `User` | All account fields also stay in `extra_fields` |
+| `privileged_user` | EventID 4672 | `true` on 4672 ("Special privileges assigned to new logon"); null on every other event (the data does not say) |
+| `summary` | event type, channel, EventID, program file name | For example `process creation (Microsoft-Windows-Sysmon/Operational 1), program tool.exe`. Only the program's file name, never its folder (folders can hold a user name). Never an IP, host or user |
+| `provenance` | | `source_format` = `json`, `record_ref` = `<file name>:<line>` |
+| `extra_fields` | every other field | Scalars kept; lists and objects as JSON text; text longer than 4,000 characters cut (script blocks) |
+
+**Real files, 25 Nov 2026** (development container, 4 vCPU, Python 3.13; files downloaded from the public `OTRF/Security-Datasets` repository and not committed): APT29 day 1, 196,081 lines read, 196,081 events, 0 quarantined, 3,902 events with an unmapped type (mostly Security 5447 and 4627), 13.5 s including the offset pass. LSASS atomic set 184 / 184 and SMB atomic set 506 / 506, 0 quarantined. Run `python -m app.ingest.cli otrf <file> --profile` for counts by type, time field and offset (no host, user, IP or message).

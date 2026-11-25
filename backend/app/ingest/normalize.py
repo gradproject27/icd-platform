@@ -102,6 +102,22 @@ def protocol(value: str | None) -> str | None:
     return text.lower() if text is not None else None
 
 
+# IANA protocol numbers seen in flow and Windows network events, as lower-case names. Any other
+# number is kept as its decimal text (no guess).
+IANA_PROTOCOLS = {
+    "1": "icmp", "2": "igmp", "6": "tcp", "17": "udp", "47": "gre", "50": "esp", "51": "ah",
+    "58": "ipv6-icmp", "132": "sctp",
+}  # fmt: skip
+
+
+def iana_protocol(value: str | None) -> str | None:
+    """Protocol name from an IANA protocol number ("6" -> "tcp"); other text lower-cased."""
+    text = clean(value)
+    if text is None:
+        return None
+    return IANA_PROTOCOLS.get(text, text.lower())
+
+
 def scalar(value: str | None) -> JsonScalar:
     """A source column for extra_fields: int, float or the trimmed text; sentinels to None."""
     text = clean(value)
