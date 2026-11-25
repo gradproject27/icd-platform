@@ -172,6 +172,20 @@
       "description": "Host of the earliest flagged event, else its internal destination IP.",
       "title": "Started On"
     },
+    "tactics": {
+      "description": "MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE.",
+      "items": {
+        "$ref": "#/$defs/KeyFactItem"
+      },
+      "title": "Tactics",
+      "type": "array"
+    },
+    "tactics_config_version": {
+      "description": "tactics.toml config_version that mapped attack types to ATT&CK tactics.",
+      "minLength": 1,
+      "title": "Tactics Config Version",
+      "type": "string"
+    },
     "truncated": {
       "description": "True when a list held more than 20 values and was cut.",
       "title": "Truncated",
@@ -181,6 +195,7 @@
   "required": [
     "incident_id",
     "network_config_version",
+    "tactics_config_version",
     "first_flagged_event_id",
     "started_at",
     "last_flagged_event_id",
@@ -190,6 +205,7 @@
     "flagged_event_count",
     "context_event_count",
     "attack_types",
+    "tactics",
     "hosts",
     "internal_ips",
     "external_ips",
