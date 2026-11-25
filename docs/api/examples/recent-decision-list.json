@@ -1,0 +1,29 @@
+{
+  "hours": 72,
+  "since": "2026-01-12T20:22:13Z",
+  "until": "2026-01-15T20:22:13Z",
+  "items": [
+    {
+      "record_id": "aud-example-0023",
+      "incident_id": "inc-example-expired",
+      "occurred_at": "2026-01-15T20:22:13Z",
+      "by": "system",
+      "actor": "system",
+      "actor_role": null,
+      "decision": "system_selection",
+      "scenario_id": "S2",
+      "comment": null
+    },
+    {
+      "record_id": "aud-example-0009",
+      "incident_id": "inc-e8d1f72159481bee",
+      "occurred_at": "2026-01-15T20:21:12Z",
+      "by": "analyst",
+      "actor": "analyst-dev",
+      "actor_role": "soc_analyst",
+      "decision": "approve",
+      "scenario_id": "S2",
+      "comment": "Checked the timeline"
+    }
+  ]
+}

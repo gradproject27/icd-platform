@@ -11,6 +11,8 @@ import type {
   IncidentList,
   IncidentSummary,
   OriginalRecord,
+  RecentDecisionList,
+  ScenarioCatalogue,
 } from "./proposed";
 
 /**
@@ -83,6 +85,24 @@ export async function getEntityRisk(uploadId?: string, signal?: AbortSignal): Pr
   const data = await request<EntityRiskList>(`/entity-risk${query}`, { signal });
   if (!Array.isArray((data as Partial<EntityRiskList> | null)?.items)) {
     throw new ApiError("parse", "The ICD API sent an unexpected entity risk list.");
+  }
+  return data;
+}
+
+/** GET /scenarios: the simulated catalogue with impact and how each scenario is reverted (P6). */
+export async function getScenarios(signal?: AbortSignal): Promise<ScenarioCatalogue> {
+  const data = await request<ScenarioCatalogue>("/scenarios", { signal });
+  if (!Array.isArray((data as Partial<ScenarioCatalogue> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected scenario catalogue.");
+  }
+  return data;
+}
+
+/** GET /decisions/recent?hours=: analyst decisions and system selections, newest first (P6). */
+export async function getRecentDecisions(hours = 72, signal?: AbortSignal): Promise<RecentDecisionList> {
+  const data = await request<RecentDecisionList>(`/decisions/recent?hours=${hours}`, { signal });
+  if (!Array.isArray((data as Partial<RecentDecisionList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected decision list.");
   }
   return data;
 }

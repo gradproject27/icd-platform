@@ -1,0 +1,46 @@
+{
+  "config_version": "response-v1",
+  "meta_version": "scenario-meta-v1",
+  "items": [
+    {
+      "scenario_id": "S1",
+      "title": "Keep the host isolated and flag it for investigation",
+      "automatic": true,
+      "needs": [],
+      "impact": "medium",
+      "reversible": true,
+      "revert": "Only an analyst ends the isolation (S4, response spec section 9)."
+    },
+    {
+      "scenario_id": "S2",
+      "title": "Isolate the host and block the source IP",
+      "automatic": true,
+      "needs": [
+        "source_ip"
+      ],
+      "impact": "high",
+      "reversible": true,
+      "revert": "The simulated IP block ends on its own after 60, 120 or 240 minutes (containment.toml); only an analyst ends the isolation (S4)."
+    },
+    {
+      "scenario_id": "S3",
+      "title": "Isolate the host and disable the involved account",
+      "automatic": true,
+      "needs": [
+        "account"
+      ],
+      "impact": "high",
+      "reversible": true,
+      "revert": "Only an analyst ends the isolation (S4) and re-enables the account; nothing ends on its own."
+    },
+    {
+      "scenario_id": "S4",
+      "title": "Release isolation and raise monitoring",
+      "automatic": false,
+      "needs": [],
+      "impact": "low",
+      "reversible": true,
+      "revert": "An analyst can isolate the host again with S1, S2 or S3."
+    }
+  ]
+}
