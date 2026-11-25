@@ -363,6 +363,9 @@ class IncidentKeyFacts(_Contract):
     network_config_version: NonEmptyStr = Field(
         description="response.toml config_version that split internal from external addresses."
     )
+    tactics_config_version: NonEmptyStr = Field(
+        description="tactics.toml config_version that mapped attack types to ATT&CK tactics."
+    )
     first_flagged_event_id: Id = Field(description="The earliest flagged event.")
     started_at: UtcDatetime = Field(description="Time of the earliest flagged event, UTC.")
     last_flagged_event_id: Id = Field(description="The latest flagged event.")
@@ -376,6 +379,10 @@ class IncidentKeyFacts(_Contract):
     flagged_event_count: int = Field(ge=1)
     context_event_count: Count
     attack_types: list[KeyFactItem] = Field(description="Dataset attack types (labels).")
+    tactics: list[KeyFactItem] = Field(
+        description="MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from "
+        "the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE."
+    )
     hosts: list[KeyFactItem]
     internal_ips: list[KeyFactItem] = Field(description="Source or destination IPs, internal.")
     external_ips: list[KeyFactItem] = Field(description="Source or destination IPs, external.")

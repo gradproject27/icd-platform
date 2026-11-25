@@ -1,0 +1,44 @@
+# Dataset attack type -> MITRE ATT&CK Enterprise tactics (P4 of the competitor feature study,
+# sections F-F and F-H). Read by tactics.py with tomllib. Any change must change config_version.
+#
+# Deterministic and reviewed: the model never chooses a tactic, and this table is never given to
+# it, so AI1's grounding check G3 (no ATT&CK IDs in model output) stays as it is.
+#
+# Tactic IDs and names: MITRE's STIX data, enterprise-attack.json (matrix modified 2026-07-31),
+# read from wazuh/wazuh@6cc7b2e ruleset/mitre. ATT&CK is (c) The MITRE Corporation, used under
+# the ATT&CK Terms of Use; see THIRD_PARTY_NOTICES.md.
+#
+# Mapping (Inferred, needs C3 and AI1 review, decision D7): UNSW-NB15 publishes only the category
+# names (dataset page), not definitions we could read, so a row maps only what its name clearly
+# implies, each with a representative technique of that tactic from the same STIX data. When the
+# name implies nothing certain, the row is empty: no tactic is guessed.
+config_version = "tactics-v1"
+
+[tactics]
+TA0001 = "Initial Access"
+TA0002 = "Execution"
+TA0003 = "Persistence"
+TA0004 = "Privilege Escalation"
+TA0005 = "Stealth"
+TA0006 = "Credential Access"
+TA0007 = "Discovery"
+TA0008 = "Lateral Movement"
+TA0009 = "Collection"
+TA0010 = "Exfiltration"
+TA0011 = "Command and Control"
+TA0040 = "Impact"
+TA0042 = "Resource Development"
+TA0043 = "Reconnaissance"
+TA0112 = "Defense Impairment"
+
+[attack_types]
+Reconnaissance = ["TA0043"]        # T1595 Active Scanning
+Fuzzers = ["TA0043"]               # T1595.002 Vulnerability Scanning
+Analysis = []                      # name implies no one tactic
+Generic = []                       # name implies no tactic
+Exploits = ["TA0001"]              # T1190 Exploit Public-Facing Application
+Shellcode = ["TA0002"]             # T1203 Exploitation for Client Execution
+Backdoors = ["TA0003", "TA0011"]   # T1505 Server Software Component; T1071 Application Layer Protocol
+Backdoor = ["TA0003", "TA0011"]    # spelling variant kept by C2 (decision D5)
+Worms = ["TA0008"]                 # T1210 Exploitation of Remote Services
+DoS = ["TA0040"]                   # T1498 Network Denial of Service

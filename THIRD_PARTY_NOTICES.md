@@ -12,4 +12,24 @@ Dependencies installed by `pip` and `npm` (`backend/requirements*.txt`, `fronten
 
 ## Entries
 
-None yet. Each change that adds third-party material adds its entry below, in the same pull request.
+Each change that adds third-party material adds its entry below, in the same pull request.
+
+### MITRE ATT&CK (tactic IDs and names)
+
+- **What:** the 15 Enterprise ATT&CK tactic IDs and names in `backend/app/correlation/tactics.toml`, shown in an incident's key facts. No techniques, descriptions or other ATT&CK text are reproduced.
+- **Source:** MITRE's STIX data `enterprise-attack.json` (matrix modified 2026-07-31), read from `wazuh/wazuh@6cc7b2e` `ruleset/mitre/`. Licence text from `mitre-attack/attack-stix-data` `LICENSE.txt` (read 25 Nov 2026), the same terms as https://attack.mitre.org/resources/legal-and-branding/terms-of-use/.
+- **Licence (reproduced as the terms require):**
+
+> **License**
+>
+> The MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use ATT&CK® for research, development, and commercial purposes. Any copy you make for such purposes is authorized provided that you reproduce MITRE's copyright designation and this license in any such copy.
+>
+> "© 2026 The MITRE Corporation. This work is reproduced and distributed with the permission of The MITRE Corporation."
+>
+> **Disclaimers**
+>
+> MITRE does not claim ATT&CK enumerates all possibilities for the types of actions and behaviors documented as part of its adversary model and framework of techniques. Using the information contained within ATT&CK to address or cover full categories of techniques will not guarantee full defensive coverage as there may be undisclosed techniques or variations on existing techniques not documented by ATT&CK.
+>
+> ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN "AS IS" BASIS AND THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+MITRE ATT&CK and ATT&CK are registered trademarks of The MITRE Corporation.

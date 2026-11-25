@@ -58,6 +58,14 @@ export interface IncidentKeyFacts {
    */
   started_on: string | null;
   /**
+   * MITRE ATT&CK tactics ('TA0043 Reconnaissance') of those attack types, from the reviewed table tactics.toml; never chosen by the model. ATT&CK (c) MITRE.
+   */
+  tactics: KeyFactItem[];
+  /**
+   * tactics.toml config_version that mapped attack types to ATT&CK tactics.
+   */
+  tactics_config_version: string;
+  /**
    * True when a list held more than 20 values and was cut.
    */
   truncated: boolean;
