@@ -5,7 +5,7 @@
 | Project | ICD (Intelligent Cyber Defense) |
 | Scope | How open-source and commercial SOC products implement ten features ICD lacks or does differently (F-A to F-J) |
 | Status | Sections 1 to 14: the read-only study (Phase 1, 25 Nov 2026, PR #51). Section 15: the outcome, meaning the decisions, what was built and what was rejected (Phase 4, 25 Nov 2026) |
-| Built | P1 to P7 and the MIT licence: #52 (merged), then #53 and #55 to #60 in merge order, and the final record PR. See section 15 |
+| Built | P1 to P7 and the MIT licence: #52 (merged); open chain #53 → #55 → #57 → #62. See section 15 |
 
 ## 1. Method and rules
 
@@ -403,7 +403,7 @@ None. P3 to P7 were built in the second round (15.2).
 
 ### 15.5 Open items (for the team; none can be done by a pull request)
 
-1. **Merge in order:** #53, #54, #55, #56, #57, #58, #59, #60, then the final record PR. Each needs an approving review (CONTRIBUTING). The stack is built so that each merges without conflicts; GitHub re-targets each PR to `main` when the one below it is merged and its branch deleted.
+1. **Merge in order: #53 → #55 → #57 → #62.** On 25 Nov the team merged #56 into #55's branch and #58, #59 and #60 into #57's branch, so those four are already inside #55 and #57. #62 includes #54, so #54 can be closed. Each merge needs an approving review (CONTRIBUTING). The chain merges into `main` without conflicts (checked with `git merge-tree` against `main` at `93fc80e`, after #61); GitHub re-targets each PR to `main` when the one below it is merged and its branch deleted.
 2. **#55, licence:** every team member agrees to MIT before merging.
 3. **Supervisor:** fill in and send [../enhancement-note.md](../enhancement-note.md).
 4. **Reviews of two judgement calls:** the P4 tactic table (C3 and AI1; D7) and the P3 numbers (C3; D6). Changing a value means a new `config_version`.
@@ -417,11 +417,11 @@ None. P3 to P7 were built in the second round (15.2).
 | [#51](https://github.com/gradproject27/icd-platform/pull/51) | `claude/competitor-feature-study` | This study, sections 1 to 14 | merged (`8c95c24`) |
 | [#52](https://github.com/gradproject27/icd-platform/pull/52) | `claude/incident-key-facts` | P1 | merged (`8992488`) |
 | [#53](https://github.com/gradproject27/icd-platform/pull/53) | `claude/timed-containment` | P2 (with `main` merged in, `db658e0`; no force-push) | `main` |
-| [#54](https://github.com/gradproject27/icd-platform/pull/54) | `claude/competitor-study-wrap-up` | First version of this section | `main` |
+| [#54](https://github.com/gradproject27/icd-platform/pull/54) | `claude/competitor-study-wrap-up` | First version of this section | `main`; included in #62 |
 | [#55](https://github.com/gradproject27/icd-platform/pull/55) | `claude/licence` | MIT licence, notices | #53 |
-| [#56](https://github.com/gradproject27/icd-platform/pull/56) | `claude/attack-tactics` | P4 | #55 |
-| [#57](https://github.com/gradproject27/icd-platform/pull/57) | `claude/entity-risk` | P3 | #56 |
-| [#58](https://github.com/gradproject27/icd-platform/pull/58) | `claude/incident-patterns` | P5 | #57 |
-| [#59](https://github.com/gradproject27/icd-platform/pull/59) | `claude/scenario-metadata` | P6 | #58 |
-| [#60](https://github.com/gradproject27/icd-platform/pull/60) | `claude/ecs-export` | P7 | #59 |
-| Final record PR | `claude/final-wrap-up` | This section, README status, supervisor note (includes #54) | #60 |
+| [#56](https://github.com/gradproject27/icd-platform/pull/56) | `claude/attack-tactics` | P4 | merged into #55's branch |
+| [#57](https://github.com/gradproject27/icd-platform/pull/57) | `claude/entity-risk` | P3, now also P5, P6 and P7 | #55 |
+| [#58](https://github.com/gradproject27/icd-platform/pull/58) | `claude/incident-patterns` | P5 (with P6 and P7 folded in) | merged into #57's branch |
+| [#59](https://github.com/gradproject27/icd-platform/pull/59) | `claude/scenario-metadata` | P6 (with P7 folded in) | merged into #58's branch |
+| [#60](https://github.com/gradproject27/icd-platform/pull/60) | `claude/ecs-export` | P7 | merged into #59's branch |
+| [#62](https://github.com/gradproject27/icd-platform/pull/62) | `claude/final-wrap-up` | This section, README status, supervisor note (includes #54) | #57 |
