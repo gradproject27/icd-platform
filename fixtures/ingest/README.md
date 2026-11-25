@@ -50,3 +50,25 @@ Totals: 30 read, 23 events (13 flagged, 9 unflagged, 1 unlabelled), 7 quarantine
 | 25 | `PROTOCOL` 47 | unflagged, protocol `gre` |
 
 Totals: 24 read, 15 events (5 flagged, 9 unflagged, 1 unlabelled), 9 quarantined. The NF-CSE-CIC-IDS2018-v3 classes and the header checks are built inside the test file.
+
+## OTRF sample
+
+`otrf-sample.json`: 16 lines in the OTRF Windows event JSON-lines layout. Every value is **invented** (host `wks1.example.test`, users `alice`, `bob`, `admin`, documentation IPs). `backend/tests/ingest/test_otrf.py` expects:
+
+| Lines | Case | Result |
+|---|---|---|
+| 1, 2, 9 | Sysmon 1, 3 and 11 with `UtcTime` and `EventTime` (4 h apart) | events; time from `UtcTime`; the file offset is -240 minutes |
+| 3 | Security 5156 with channel `security` (lower case), only `EventTime`, `Protocol` 6 | `network_connection`, time converted with -240, protocol `tcp` |
+| 4 | Security 4624 with `SubjectUserName` `WKS1$` and `TargetUserName` `bob` | `logon_success`, user `bob` |
+| 5 | Security 4672 | `special_privileges_logon`, `privileged_user` true |
+| 6 | PowerShell 4104 with a 6,800-character script block | text cut to 4,000 characters |
+| 7 | Security 5447 (not in the map) | `unknown` |
+| 8 | 5156 with `SourceAddress` `LOCAL`, port 70000, IPv6 destination, `Protocol` 17 | `src_ip` and `src_port` null with `_raw`, `udp` |
+| 10 | Empty line | quarantined `empty_record` |
+| 11 | `{bad json` | quarantined `bad_json` |
+| 12 | `[1, 2]` | quarantined `not_an_object` |
+| 13 | No time field | quarantined `missing_timestamp` |
+| 14, 15 | `UtcTime` `yesterday`, and 1970 | quarantined `bad_timestamp` |
+| 16 | Security 4689 with `Hostname` `-` | `process_termination`, host null |
+
+Totals: 16 read, 10 events (all unlabelled), 6 quarantined. The time-zone cases (no paired event, disagreeing offsets, `TimeCreated`) are built inside the test file.

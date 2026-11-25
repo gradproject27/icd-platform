@@ -33,7 +33,7 @@
     {
       "dataset_id": "otrf",
       "name": "OTRF Security Datasets",
-      "parser_available": false
+      "parser_available": true
     },
     {
       "dataset_id": "nf-unsw-nb15-v3",

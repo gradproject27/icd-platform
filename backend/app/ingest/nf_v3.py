@@ -64,13 +64,6 @@ EXTRA = tuple(name for name in COLUMNS if name not in MAPPED)
 # under Label 0 is quarantined (label_attack_mismatch), never dropped or guessed.
 BENIGN = "Benign"
 
-# IANA protocol numbers seen in flow data, as lower-case names. Any other number is kept as
-# its decimal text (no guess).
-IANA_PROTOCOLS = {
-    "1": "icmp", "2": "igmp", "6": "tcp", "17": "udp", "47": "gre", "50": "esp", "51": "ah",
-    "58": "ipv6-icmp", "132": "sctp",
-}  # fmt: skip
-
 
 def _split(text: str) -> list[str]:
     return next(csv.reader([text]), [])
@@ -85,11 +78,7 @@ def l7_master(value: str | None) -> str | None:
     return master if master.isdigit() else None
 
 
-def protocol_name(value: str | None) -> str | None:
-    text = norm.clean(value)
-    if text is None:
-        return None
-    return IANA_PROTOCOLS.get(text, text.lower())
+protocol_name = norm.iana_protocol
 
 
 def _check_header(first: Line | None) -> None:
