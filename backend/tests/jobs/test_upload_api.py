@@ -25,7 +25,8 @@ def test_datasets_list_every_source_and_the_limit(client, settings):
     available = {item.dataset_id.value: item.parser_available for item in body.items}
     assert available["fixture"] is True
     assert available["unsw-nb15"] is True
-    assert available["otrf"] is False
+    assert available["otrf"] is True
+    assert available["loghub-bgl"] is False
     assert body.max_upload_bytes == settings.max_upload_bytes
 
 
