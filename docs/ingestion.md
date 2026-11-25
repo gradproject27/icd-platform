@@ -12,13 +12,15 @@ parse(path: Path, context: IntakeContext) -> Iterator[Event | Quarantined]
 
 - One item per record read, in file order. One bad record never raises; `ParseError` only when the whole file cannot be read.
 - The parser never writes to the database. The worker stores events in `events` and the rest in `quarantined_records` (C1 migration `0002`), and counts both into `IntakeCounts`.
-- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2). Risk-v1 step 3a: **`nf-unsw-nb15-v3`** and **`nf-cse-cic-ids2018-v3`** (section 9); step 3b: **`otrf`** (section 10).
+- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2). Risk-v1 step 3a: **`nf-unsw-nb15-v3`** and **`nf-cse-cic-ids2018-v3`** (section 9); step 3b: **`otrf`** (section 10); step 3c: **`precinct6`** (section 11).
 
 | Module (`backend/app/ingest/`) | Job |
 |---|---|
 | `unsw_nb15.py` | UNSW-NB15 parser and the aggregate-only profile |
 | `nf_v3.py` | NetFlow v3 parser (both UQ NF-v3 datasets) and its aggregate-only profile |
 | `otrf.py` | OTRF Windows event parser and its aggregate-only profile |
+| `precinct6.py` | Precinct6 signal parser (JSON lines) and its aggregate-only profile |
+| `precinct6_export.py` | Export a Precinct6 Parquet slice to JSON lines for upload (needs pyarrow) |
 | `normalize.py` | Pure value normalizers (time, IP, port, protocol, numbers, IDs) |
 | `labels.py` | Label mapping from `contracts/label-mapping.json` |
 | `event_types.py` | `event_type` vocabulary from `contracts/event-types.json` |
@@ -87,8 +89,9 @@ Every quarantined record keeps `record_ref` (file and line), the reason in plain
 | `pending_label` | The label value is listed with a pending decision (rule `pending_values`) |
 | `unknown_attack_type` | NetFlow v3 only: `Label` is 1 and `Attack` is not a spelling the label mapping lists for the dataset (never guessed) |
 | `label_attack_mismatch` | NetFlow v3 only: `Label` is 0 but `Attack` is neither `Benign` nor empty |
-| `bad_json` | OTRF only: the line is not valid JSON |
-| `not_an_object` | OTRF only: the line is JSON but not an object |
+| `bad_json` | OTRF and Precinct6: the line is not valid JSON |
+| `not_an_object` | OTRF and Precinct6: the line is JSON but not an object |
+| `missing_record_id` | Precinct6 only: `artifact_id` is empty |
 | `unknown_time_zone` | OTRF only: the event has only a local time and the file gives no single offset to UTC (section 10) |
 | `invalid_event` | The built Event fails the contract (should not happen; kept as a safety net) |
 | `duplicate_event_id` | Set by the worker (C1): the same `event_id` appeared earlier in the file |
@@ -199,3 +202,35 @@ Measured on 25 Nov 2026: APT29 day 1, -240 minutes in 143,883 of 143,883 pairs (
 | `extra_fields` | every other field | Scalars kept; lists and objects as JSON text; text longer than 4,000 characters cut (script blocks) |
 
 **Real files, 25 Nov 2026** (development container, 4 vCPU, Python 3.13; files downloaded from the public `OTRF/Security-Datasets` repository and not committed): APT29 day 1, 196,081 lines read, 196,081 events, 0 quarantined, 3,902 events with an unmapped type (mostly Security 5447 and 4627), 13.5 s including the offset pass. LSASS atomic set 184 / 184 and SMB atomic set 506 / 506, 0 quarantined. Run `python -m app.ingest.cli otrf <file> --profile` for counts by type, time field and offset (no host, user, IP or message).
+
+## 11. Precinct6 field mapping (risk-v1 step 3c)
+
+Dataset `precinct6`, parser `precinct6.py`. Role: agreement check against WitFoo's own correlation engine (RV1-D5, CON-20); never ground truth, never training data.
+
+**Input.** Precinct6 ships Parquet (`signals/signals.parquet`, 2,011,674 rows; `signals/incident_signals.parquet`, 238,511 rows). Uploads take text files, so export a slice to JSON lines first (needs `pip install -r requirements-dev.txt` for pyarrow):
+
+```
+cd backend
+python -m app.ingest.precinct6_export <dir>/signals/incident_signals.parquet --out leads.jsonl
+python -m app.ingest.precinct6_export <dir>/signals/signals.parquet --out live-2024-07-29.jsonl \
+    --start 2024-07-29T00:00:00Z --end 2024-07-30T00:00:00Z
+```
+
+These are the dataset profile's two slices (section 8): 238,511 leads, and 411,564 live signals of 29 Jul 2024 UTC. The export keeps every column unchanged; datetime columns become epoch seconds. A Parquet file uploaded as is fails with a parse error that names this command. The exported files hold real rows: never commit them.
+
+| Event field | Source | Rule |
+|---|---|---|
+| `event_id` | `artifact_id` | `precinct6:<artifact_id>` (unique in both tables, so stable across slices). Empty: `missing_record_id` |
+| `timestamp` | `timestamp` | Epoch seconds, UTC. The card says it is Precinct's ingest time (live rows) or the time a lead was raised; product time `event_time` (often empty) stays in `extra_fields` |
+| `event_type` | `message_type` | Map in `contracts/event-types.json`, **empty for now**: every event is `unknown` until a profile run lists the codes (595 in signals) and a reviewed change maps them. Never from `label_binary` or a CON-20 column |
+| `label` | `label_binary` | `malicious` flagged; `benign` and `suspicious` unflagged (`suspicious` stays visible as the raw value). Missing: unlabelled; other values: `unknown_label`. `attack_type` null (profile Q12) |
+| `host` | `src_host` | Sanitised `HOST-NNNN` token; `dst_host` stays in `extra_fields` |
+| `src_ip`, `dst_ip` | `src_ip`, `dst_ip` | Empty or `-`: null. A host name in an IP column: null, original in `<column>_raw` |
+| `src_port`, `dst_port`, `protocol` | same names | Ports 0 to 65535; protocol IANA number to name |
+| `user` | `username` | Sanitised `USER-NNNN` token |
+| `privileged_user` | none | null |
+| `summary` | `stream_name`, `message_type`, `product_name`, `action` | For example `Precinct6 signal: stream Firewall, type fw_allow, product ExampleFW, action allow`. Never an IP, host or user |
+| `extra_fields` | the other columns | Lists and objects as JSON text, long text cut at 4,000 characters |
+| (dropped) | the 15 CON-20 columns | `label_binary` (read only as the label), `incident_ids`, `matched_rules`, `set_roles`, `mo_name`, `suspicion_score`, `label_confidence`, `lifecycle_stage`, `disposition`, `status_name`, `disposition_category`, `is_false_positive`, `attack_techniques`, `attack_tactics`, `defense_techniques`: never an Event field, never in `extra_fields` |
+
+**Not run on the real files yet.** huggingface.co is blocked from the development container, so the parser is built from the dataset profile (section 4.1) and tested on invented rows. The first `python -m app.ingest.cli precinct6 <slice.jsonl> --profile` on a team machine lists the columns, labels, streams and message types (counts only, no entity or CON-20 value) to confirm it.

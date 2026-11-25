@@ -91,7 +91,7 @@ describe("UploadPage", () => {
     chooseFile(jsonFile());
     expect(upload).toBeEnabled();
 
-    chooseDataset("precinct6");
+    chooseDataset("loghub-bgl");
     expect(screen.getByText("No parser yet: the job will fail with no_parser.")).toBeInTheDocument();
   });
 
