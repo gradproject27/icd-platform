@@ -1,0 +1,178 @@
+{
+  "$defs": {
+    "EntityRiskIncident": {
+      "additionalProperties": false,
+      "properties": {
+        "incident_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "score": {
+          "description": "The incident's stored risk score (C3).",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "incident_id",
+        "score"
+      ],
+      "title": "EntityRiskIncident",
+      "type": "object"
+    },
+    "EntityRiskItem": {
+      "additionalProperties": false,
+      "description": "One source-side entity: source IP, else user, else host of its flagged events.",
+      "properties": {
+        "entity": {
+          "minLength": 1,
+          "title": "Entity",
+          "type": "string"
+        },
+        "flags": {
+          "description": "Thresholds reached; nothing acts on them.",
+          "items": {
+            "enum": [
+              "score_threshold",
+              "tactic_threshold"
+            ],
+            "type": "string"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "incident_count": {
+          "minimum": 1,
+          "title": "Incident Count",
+          "type": "integer"
+        },
+        "incidents": {
+          "description": "Highest score first.",
+          "items": {
+            "$ref": "#/$defs/EntityRiskIncident"
+          },
+          "title": "Incidents",
+          "type": "array"
+        },
+        "level": {
+          "$ref": "#/$defs/RiskLevel",
+          "description": "C3's level of the roll-up score (risk.toml thresholds)."
+        },
+        "score": {
+          "description": "Rank-weighted roll-up of its incident scores.",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "tactics": {
+          "description": "Distinct ATT&CK tactic IDs, sorted.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Tactics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entity",
+        "score",
+        "level",
+        "incident_count",
+        "incidents",
+        "tactics",
+        "flags"
+      ],
+      "title": "EntityRiskItem",
+      "type": "object"
+    },
+    "RiskLevel": {
+      "description": "Risk level derived from the score by C3's configurable thresholds (FR-20).",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /entity-risk: the entity roll-up (P3). Read-only: never changes an incident score.",
+  "properties": {
+    "config_version": {
+      "description": "entity_risk.toml config_version.",
+      "minLength": 1,
+      "title": "Config Version",
+      "type": "string"
+    },
+    "items": {
+      "description": "Highest score first, then entity.",
+      "items": {
+        "$ref": "#/$defs/EntityRiskItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "score_threshold": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Score Threshold",
+      "type": "integer"
+    },
+    "tactics_config_version": {
+      "description": "tactics.toml config_version.",
+      "minLength": 1,
+      "title": "Tactics Config Version",
+      "type": "string"
+    },
+    "tactics_threshold": {
+      "minimum": 1,
+      "title": "Tactics Threshold",
+      "type": "integer"
+    },
+    "window_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Latest last event of the incidents read.",
+      "title": "Window End"
+    },
+    "window_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null when no scored incident is read.",
+      "title": "Window Start"
+    }
+  },
+  "required": [
+    "config_version",
+    "tactics_config_version",
+    "window_start",
+    "window_end",
+    "score_threshold",
+    "tactics_threshold",
+    "items"
+  ],
+  "title": "EntityRiskList",
+  "type": "object"
+}

@@ -4,11 +4,13 @@ POST /uploads stores the file and queues a job, then answers 202 at once: the HT
 never waits for processing. The worker does the rest.
 """
 
+import json
 from pathlib import PurePosixPath
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -29,7 +31,9 @@ from app.api.schemas import (
     UploadAccepted,
 )
 from app.contracts import Event, LabelStatus
+from app.correlation.tactics import load_tactics_config
 from app.db import get_engine
+from app.ingest.ecs_export import to_ecs
 from app.ingest.registry import DATASET_NAMES, PARSERS
 from app.jobs.queue import new_id, new_job, to_api, utcnow
 from app.models import EventRow, JobRow, QuarantineRow, UploadRow
@@ -201,6 +205,40 @@ def list_events(
     return EventPage(
         items=[Event.model_validate(data) for _, data in page],
         next_after=page[-1].event_id if len(rows) > limit else None,
+    )
+
+
+ECS_BATCH = 500
+
+
+@router.get(
+    "/uploads/{upload_id}/ecs",
+    response_class=StreamingResponse,
+    responses={200: {"content": {"application/x-ndjson": {}}}},
+)
+def export_ecs(upload_id: str) -> StreamingResponse:
+    """P7: the upload's events as ECS 9.5.0 documents, one JSON object per line, oldest first.
+    An export view: the stored events and the Event contract are unchanged."""
+    with Session(get_engine()) as session:
+        _require_upload(session, upload_id)
+    tactics = load_tactics_config()
+
+    def lines():
+        with Session(get_engine()) as session:
+            rows = session.execute(
+                select(EventRow.data)
+                .where(EventRow.upload_id == upload_id)
+                .order_by(EventRow.timestamp, EventRow.event_id)
+                .execution_options(yield_per=ECS_BATCH)
+            )
+            for (data,) in rows:
+                event = Event.model_validate(data)
+                yield json.dumps(to_ecs(event, tactics), ensure_ascii=False) + "\n"
+
+    return StreamingResponse(
+        lines(),
+        media_type="application/x-ndjson",
+        headers={"Content-Disposition": f'attachment; filename="{upload_id}-ecs.ndjson"'},
     )
 
 

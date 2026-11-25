@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "ScenarioId": {
+      "description": "Simulated response catalogue v0 (OD-20). Anything else is rejected (FR-44).",
+      "enum": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "title": "ScenarioId",
+      "type": "string"
+    },
+    "ScenarioItem": {
+      "additionalProperties": false,
+      "description": "One simulated scenario of the catalogue, with its display metadata (P6).",
+      "properties": {
+        "automatic": {
+          "description": "May the system select it at the deadline (response.toml).",
+          "title": "Automatic",
+          "type": "boolean"
+        },
+        "impact": {
+          "description": "From scenario_meta.toml.",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Impact",
+          "type": "string"
+        },
+        "needs": {
+          "description": "Targets it needs.",
+          "items": {
+            "enum": [
+              "source_ip",
+              "account"
+            ],
+            "type": "string"
+          },
+          "title": "Needs",
+          "type": "array"
+        },
+        "reversible": {
+          "title": "Reversible",
+          "type": "boolean"
+        },
+        "revert": {
+          "description": "How the simulated effect ends, in plain words.",
+          "minLength": 1,
+          "title": "Revert",
+          "type": "string"
+        },
+        "scenario_id": {
+          "$ref": "#/$defs/ScenarioId"
+        },
+        "title": {
+          "description": "From response.toml.",
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scenario_id",
+        "title",
+        "automatic",
+        "needs",
+        "impact",
+        "reversible",
+        "revert"
+      ],
+      "title": "ScenarioItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /scenarios: the simulated catalogue v0 with display metadata. Every one is simulated.",
+  "properties": {
+    "config_version": {
+      "description": "response.toml config_version.",
+      "minLength": 1,
+      "title": "Config Version",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ScenarioItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "meta_version": {
+      "description": "scenario_meta.toml config_version.",
+      "minLength": 1,
+      "title": "Meta Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "config_version",
+    "meta_version",
+    "items"
+  ],
+  "title": "ScenarioCatalogue",
+  "type": "object"
+}

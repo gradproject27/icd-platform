@@ -169,6 +169,48 @@ def test_unknown_incident_is_404_in_the_error_shape(client):
         assert error_code(answer) == "not_found"
 
 
+def test_entity_risk_rolls_up_the_stored_incidents(client, stored):
+    # P3: read-only roll-up per source-side entity; ws-80 reaches the tactic threshold.
+    answer = client.get("/entity-risk", params={"upload_id": stored}).json()
+    assert answer["config_version"] == "entity-risk-v1"
+    assert (answer["score_threshold"], answer["tactics_threshold"]) == (70, 3)
+    items = {item["entity"]: item for item in answer["items"]}
+    assert items["203.0.113.10"]["score"] == 50 and items["203.0.113.10"]["level"] == "medium"
+    assert items["ws-80"]["tactics"] == ["TA0001", "TA0003", "TA0011", "TA0043"]
+    assert items["ws-80"]["flags"] == ["tactic_threshold"]
+    assert [i["score"] for i in items["ws-80"]["incidents"]] == [32, 10, 10]
+    # A read: the incidents keep their own scores.
+    assert client.get(f"/incidents/{A.incident_id}").json()["incident"]["risk"]["score"] == 100
+
+
+def test_ecs_export_streams_one_ecs_document_per_event(client, stored):
+    # P7: an export view; the stored events stay as they are.
+    answer = client.get(f"/uploads/{stored}/ecs")
+    assert answer.status_code == 200
+    assert answer.headers["content-type"].startswith("application/x-ndjson")
+    assert f'filename="{stored}-ecs.ndjson"' in answer.headers["content-disposition"]
+    docs = [json.loads(line) for line in answer.text.splitlines()]
+    assert len(docs) == len(EVENTS)
+    times = [d["@timestamp"] for d in docs]
+    assert times == sorted(times)
+    by_id = {d["event"]["id"]: d for d in docs}
+    assert by_id["fx-007"]["event"]["kind"] == "alert"
+    assert by_id["fx-007"]["threat"]["tactic"]["id"] == ["TA0001"]
+    assert by_id["fx-003"]["event"]["kind"] == "event"
+    assert {d["ecs"]["version"] for d in docs} == {"9.5.0"}
+
+
+def test_ecs_export_of_an_unknown_upload_is_404(client):
+    answer = client.get("/uploads/upl-none/ecs")
+    assert answer.status_code == 404
+    assert error_code(answer) == "not_found"
+
+
+def test_entity_risk_of_an_upload_without_incidents_is_empty(client):
+    answer = client.get("/entity-risk", params={"upload_id": "upl-none"}).json()
+    assert answer["items"] == [] and answer["window_end"] is None
+
+
 def test_events_oldest_first_with_role_and_link_keys(client):
     items = client.get(f"/incidents/{A.incident_id}/events").json()["items"]
     assert [i["event"]["event_id"] for i in items] == sorted(
@@ -363,6 +405,51 @@ def test_containments_show_the_simulated_ip_block_and_its_end(client, response, 
     reverted = [r for r in trail if r["details"].get("trigger") == "containment_expiry"]
     assert [r["event_type"] for r in reverted] == ["action.simulated"]
     assert len(reverted) == 1 and reverted[0]["simulated"] is True
+
+
+def test_scenarios_carry_impact_and_how_they_are_reverted(client):
+    # P6: display metadata beside response.toml's catalogue; nothing selects from it.
+    answer = client.get("/scenarios").json()
+    assert (answer["config_version"], answer["meta_version"]) == ("response-v1", "scenario-meta-v1")
+    items = {item["scenario_id"]: item for item in answer["items"]}
+    assert list(items) == ["S1", "S2", "S3", "S4"]
+    assert (items["S2"]["impact"], items["S2"]["needs"], items["S2"]["automatic"]) == (
+        "high",
+        ["source_ip"],
+        True,
+    )
+    assert items["S4"]["automatic"] is False and items["S4"]["impact"] == "low"
+    assert "ends on its own" in items["S2"]["revert"]
+
+
+def test_recent_decisions_list_analysts_and_the_system(client, response, clock, analyst):
+    # P6: the analyst approves A; another incident's window expires and the system selects.
+    freeze(response)
+    window = client.get(f"/response-windows/{A.incident_id}").json()
+    client.post(
+        f"/incidents/{A.incident_id}/decisions",
+        json={"decision": "approve", "window_id": window["window_id"], "comment": "seen"},
+    )
+    other = A.model_copy(update={"incident_id": "inc-a-other"})
+    freeze(response, other)
+    clock.advance(61)
+    response.expire_due()
+
+    answer = client.get("/decisions/recent").json()
+    assert answer["hours"] == 72
+    assert [
+        (i["incident_id"], i["by"], i["decision"], i["scenario_id"]) for i in answer["items"]
+    ] == [
+        ("inc-a-other", "system", "system_selection", "S2"),
+        (A.incident_id, "analyst", "approve", "S2"),
+    ]
+    assert answer["items"][1]["comment"] == "seen"
+    assert answer["items"][1]["actor_role"] == "soc_analyst"
+
+    clock.advance(73 * 60 * 60)
+    assert client.get("/decisions/recent").json()["items"] == []
+    assert len(client.get("/decisions/recent", params={"hours": 168}).json()["items"]) == 2
+    assert client.get("/decisions/recent", params={"hours": 0}).status_code == 422
 
 
 def test_reject_keeps_the_incident_awaiting_and_releases_isolation(client, response, analyst):

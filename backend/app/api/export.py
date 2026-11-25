@@ -14,6 +14,7 @@ from app.api.schemas import (
     DatasetList,
     DecisionRecord,
     DecisionRequest,
+    EntityRiskList,
     ErrorResponse,
     EventPage,
     IncidentEventList,
@@ -25,7 +26,9 @@ from app.api.schemas import (
     NotificationList,
     OriginalRecord,
     QuarantinePage,
+    RecentDecisionList,
     ResponseWindow,
+    ScenarioCatalogue,
     Upload,
     UploadAccepted,
 )
@@ -52,6 +55,9 @@ SHAPES: dict[str, type[BaseModel]] = {
     "decision-record": DecisionRecord,
     "notification-list": NotificationList,
     "current-user": CurrentUser,
+    "scenario-catalogue": ScenarioCatalogue,
+    "recent-decision-list": RecentDecisionList,
+    "entity-risk-list": EntityRiskList,
 }
 
 # The repo root's docs/api/schemas/ folder: works from a repo checkout only.
