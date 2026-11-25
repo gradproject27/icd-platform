@@ -1,0 +1,195 @@
+{
+  "additionalProperties": false,
+  "description": "The LLM's calibrated opinion that one evidence group is a real attack.",
+  "properties": {
+    "cache_key": {
+      "description": "SHA-256 of the view, prompt, model and settings.",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Cache Key",
+      "type": "string"
+    },
+    "calibrator_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Calibrator that produced p_llm; null when p_llm is null.",
+      "title": "Calibrator Version"
+    },
+    "entity": {
+      "description": "Group key, part 2: source-side entity as C3 computes it (real value; this record stays on the app host, the model only ever saw a masked token).",
+      "minLength": 1,
+      "title": "Entity",
+      "type": "string"
+    },
+    "event_count": {
+      "description": "Events in the group.",
+      "minimum": 1,
+      "title": "Event Count",
+      "type": "integer"
+    },
+    "failure": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why there is no opinion (status failed only).",
+      "title": "Failure"
+    },
+    "format": {
+      "const": "icd-llm-opinion-v1",
+      "default": "icd-llm-opinion-v1",
+      "description": "File format and version.",
+      "title": "Format",
+      "type": "string"
+    },
+    "incident_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Incident the group belongs to; null for a calibration group.",
+      "title": "Incident Id"
+    },
+    "method": {
+      "description": "samples = share of 'yes' over n answers; logprob = token probability of 'yes'.",
+      "enum": [
+        "samples",
+        "logprob"
+      ],
+      "title": "Method",
+      "type": "string"
+    },
+    "model_id": {
+      "description": "Model pin (name, or name@revision).",
+      "minLength": 1,
+      "title": "Model Id",
+      "type": "string"
+    },
+    "p_llm": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Calibrated probability (Platt scaling); null when no calibrator was given or the opinion failed. This is the value C3's stacker reads.",
+      "title": "P Llm"
+    },
+    "p_raw": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Uncalibrated probability of 'real attack'.",
+      "title": "P Raw"
+    },
+    "prompt_version": {
+      "description": "Opinion prompt version.",
+      "minLength": 1,
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "reasons": {
+      "description": "Short reasons the model gave (audit).",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Reasons",
+      "type": "array"
+    },
+    "samples_requested": {
+      "description": "Answers asked for.",
+      "minimum": 1,
+      "title": "Samples Requested",
+      "type": "integer"
+    },
+    "samples_valid": {
+      "description": "Answers that parsed as yes or no.",
+      "minimum": 0,
+      "title": "Samples Valid",
+      "type": "integer"
+    },
+    "shown_event_ids": {
+      "description": "The events the model was shown (up to the view cap).",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Shown Event Ids",
+      "type": "array"
+    },
+    "status": {
+      "description": "ok = p_raw is set; failed = no opinion.",
+      "enum": [
+        "ok",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "technique": {
+      "description": "Group key, part 1: dataset attack type, or 'unknown'.",
+      "minLength": 1,
+      "title": "Technique",
+      "type": "string"
+    },
+    "temperature": {
+      "description": "Sampling temperature used.",
+      "minimum": 0,
+      "title": "Temperature",
+      "type": "number"
+    },
+    "yes_count": {
+      "description": "Valid answers that said yes.",
+      "minimum": 0,
+      "title": "Yes Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "technique",
+    "entity",
+    "event_count",
+    "shown_event_ids",
+    "status",
+    "method",
+    "samples_requested",
+    "samples_valid",
+    "yes_count",
+    "prompt_version",
+    "model_id",
+    "temperature",
+    "cache_key"
+  ],
+  "title": "GroupOpinion",
+  "type": "object"
+}
