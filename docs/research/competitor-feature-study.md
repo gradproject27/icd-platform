@@ -419,4 +419,4 @@ Both PRs were checked against a running stack (isolated Compose project, `stub` 
 | [#51](https://github.com/gradproject27/icd-platform/pull/51) | `claude/competitor-feature-study` | 1 | This study, sections 1 to 14 (docs only) | Merged (`8c95c24`) |
 | [#52](https://github.com/gradproject27/icd-platform/pull/52) | `claude/incident-key-facts` | 3 | P1 incident key facts | Merged (`8992488`) |
 | [#53](https://github.com/gradproject27/icd-platform/pull/53) | `claude/timed-containment` | 3 | P2 timed simulated containment; `main` merged in (`db658e0`), no force-push | Open (draft), CI green |
-| This PR | `claude/competitor-study-wrap-up` | 4 | Section 15 and the header (docs only) | Draft |
+| [#54](https://github.com/gradproject27/icd-platform/pull/54) | `claude/competitor-study-wrap-up` | 4 | Section 15 and the header (docs only) | Draft |
