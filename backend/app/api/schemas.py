@@ -352,6 +352,16 @@ class KeyFactItem(_Contract):
     )
 
 
+class KeyFactPattern(_Contract):
+    """A count or order marker over the flagged events (P5, patterns.toml). Flags nothing."""
+
+    pattern_id: NonEmptyStr
+    title: NonEmptyStr
+    key: NonEmptyStr = Field(description="What the events share: source and attack type, or host.")
+    event_ids: list[Id] = Field(min_length=2, description="The flagged events, oldest first.")
+    first_seen: UtcDatetime
+
+
 class IncidentKeyFacts(_Contract):
     """GET /incidents/{incident_id}/key-facts: computed by code, never by the model.
 
@@ -366,6 +376,9 @@ class IncidentKeyFacts(_Contract):
     )
     tactics_config_version: NonEmptyStr = Field(
         description="tactics.toml config_version that mapped attack types to ATT&CK tactics."
+    )
+    patterns_config_version: NonEmptyStr = Field(
+        description="patterns.toml config_version of the count and order markers."
     )
     first_flagged_event_id: Id = Field(description="The earliest flagged event.")
     started_at: UtcDatetime = Field(description="Time of the earliest flagged event, UTC.")
@@ -390,6 +403,10 @@ class IncidentKeyFacts(_Contract):
     destination_ports: list[KeyFactItem]
     accounts: list[KeyFactItem] = Field(description="User names on flagged events.")
     truncated: bool = Field(description="True when a list held more than 20 values and was cut.")
+    patterns: list[KeyFactPattern] = Field(
+        description="Count and order markers (P5), earliest first. Markers only: they never flag "
+        "an event, infer a label or change a score."
+    )
 
 
 class OriginalRecord(_Contract):

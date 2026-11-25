@@ -59,6 +59,7 @@ export type {
 export type {
   IncidentKeyFacts,
   KeyFactItem,
+  KeyFactPattern,
 } from "./incident-key-facts";
 export type {
   AnalysisStatus,
