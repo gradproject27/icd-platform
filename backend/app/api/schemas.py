@@ -20,6 +20,7 @@ from app.contracts import (
     IncidentStatus,
     LinkKey,
     ResponseAction,
+    RiskLevel,
     ScenarioId,
     UserRole,
 )
@@ -454,6 +455,37 @@ class ContainmentList(_Contract):
     """GET /incidents/{incident_id}/containments: blocks it started or extended, oldest first."""
 
     items: list[SimulatedContainment]
+
+
+class EntityRiskIncident(_Contract):
+    incident_id: Id
+    score: int = Field(ge=0, le=100, description="The incident's stored risk score (C3).")
+
+
+class EntityRiskItem(_Contract):
+    """One source-side entity: source IP, else user, else host of its flagged events."""
+
+    entity: NonEmptyStr
+    score: int = Field(ge=0, le=100, description="Rank-weighted roll-up of its incident scores.")
+    level: RiskLevel = Field(description="C3's level of the roll-up score (risk.toml thresholds).")
+    incident_count: int = Field(ge=1)
+    incidents: list[EntityRiskIncident] = Field(description="Highest score first.")
+    tactics: list[NonEmptyStr] = Field(description="Distinct ATT&CK tactic IDs, sorted.")
+    flags: list[Literal["score_threshold", "tactic_threshold"]] = Field(
+        description="Thresholds reached; nothing acts on them."
+    )
+
+
+class EntityRiskList(_Contract):
+    """GET /entity-risk: the entity roll-up (P3). Read-only: never changes an incident score."""
+
+    config_version: NonEmptyStr = Field(description="entity_risk.toml config_version.")
+    tactics_config_version: NonEmptyStr = Field(description="tactics.toml config_version.")
+    window_start: UtcDatetime | None = Field(description="Null when no scored incident is read.")
+    window_end: UtcDatetime | None = Field(description="Latest last event of the incidents read.")
+    score_threshold: int = Field(ge=0, le=100)
+    tactics_threshold: int = Field(ge=1)
+    items: list[EntityRiskItem] = Field(description="Highest score first, then entity.")
 
 
 class DecisionType(StrEnum):

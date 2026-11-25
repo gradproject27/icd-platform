@@ -583,3 +583,18 @@ Q1 to Q9 were answered by the team on 28 Oct 2026. Q10 to Q16 keep their propose
 | 13. Configuration | OD-02, OD-04, OD-05, OD-15, FR-20, AS-04 |
 | 14. Evaluation | AS-04, DR-04, CON-20, C-17, FR-12, OD-03, OD-05 |
 | 15. Review and open questions | All of the above |
+
+## 17. Entity risk roll-up (P3, decision D6)
+
+A read-only view **beside** the incident score, added from the competitor feature study (PR #51, sections F-C and F-H: Elastic's entity risk score and Splunk's risk-based alerting, re-implemented clean-room). It never changes an incident's score or level and never reaches the freeze gate (Rule 2, OD-04, OD-16).
+
+| Item | Rule (`backend/app/correlation/entity_risk.py`, `entity_risk.toml`, `entity-risk-v1`) |
+|---|---|
+| Entity | The source-side entity of each flagged event, as in section 9 (`entity_of`: source IP, else user, else host); events with none are skipped |
+| Incidents counted | Scored incidents whose last event is at most `window_hours` (24) before the latest last event of the incidents read: the **dataset clock**, as in correlation |
+| Score | Incident scores of the entity, highest first: `sum(score_i / i^1.5)` over the top 10, divided by `sum(1 / i^1.5)` for i = 1..10, rounded half up, so 0-100. One incident at 100 gives 50; ten give 100. The level uses `risk.toml`'s thresholds |
+| Tactics | Distinct ATT&CK tactics (`tactics.toml`, P4) of the entity's **own** flagged events, never chosen by the model |
+| Flags | `score_threshold` at a score of 70 or more; `tactic_threshold` at 3 or more tactics (Splunk ES's finding-based detection uses `mitre_tactic_id_count >= 3`). Flags only: nothing acts on them |
+| No asset criticality | Entities are mostly sources (attackers), where FIPS 199 asset impact does not apply; incident scores already carry the impact of their assets |
+
+Fixture result (`backend/tests/correlation/test_entity_risk.py`): `203.0.113.10` scores 50 (incident A at 100, tactics TA0001 and TA0043); `ws-80` scores 19 (incidents at 32, 10 and 10) and reaches the tactic threshold with TA0001, TA0003, TA0011 and TA0043. Read with `GET /entity-risk` ([api-incidents.md](api-incidents.md)) and the dashboard's Entities page.

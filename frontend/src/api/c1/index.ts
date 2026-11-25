@@ -33,6 +33,12 @@ export type {
   DecisionRequest,
 } from "./decision-request";
 export type {
+  EntityRiskIncident,
+  EntityRiskItem,
+  EntityRiskList,
+  RiskLevel,
+} from "./entity-risk-list";
+export type {
   ApiError,
   ErrorCode,
   ErrorResponse,
@@ -66,7 +72,6 @@ export type {
   RiskContributor,
   RiskFactor,
   RiskFlag,
-  RiskLevel,
   SplitReason,
 } from "./incident-list";
 export type {

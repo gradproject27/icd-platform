@@ -12,6 +12,7 @@
 //   GET  /incidents/{id}/decision                       DecisionRecord, or 404 when none
 //   POST /incidents/{id}/decisions                      DecisionRequest -> 201 DecisionRecord
 //   GET  /incidents/{id}/containments                   ContainmentList (P2, simulated IP blocks)
+//   GET  /entity-risk?upload_id=                     EntityRiskList (P3, read-only roll-up)
 //   GET  /me                                            CurrentUser, or 401 not_authenticated (S8-D9)
 //   GET  /notifications?after=&limit=                   NotificationList (S8-D8)
 
@@ -21,6 +22,8 @@ export type {
   CurrentUser,
   DecisionRecord,
   DecisionRequest,
+  EntityRiskItem,
+  EntityRiskList,
   IncidentEntities,
   IncidentEventItem,
   IncidentEventList,

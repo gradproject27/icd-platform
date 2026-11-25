@@ -31,6 +31,9 @@ from app.api.schemas import (
     CurrentUser,
     DecisionRecord,
     DecisionRequest,
+    EntityRiskIncident,
+    EntityRiskItem,
+    EntityRiskList,
     ErrorCode,
     IncidentEntities,
     IncidentEventItem,
@@ -53,6 +56,12 @@ from app.contracts import (
     IncidentStatus,
     ScenarioId,
     UserRole,
+)
+from app.correlation.entity_risk import (
+    EntityRiskConfig,
+    EntityRiskReport,
+    entity_risk,
+    load_entity_risk_config,
 )
 from app.db import get_engine
 from app.evidence.store import load_masking_map, unmask_report
@@ -170,6 +179,57 @@ def list_incidents(
             query = query.where(IncidentRow.upload_id == upload_id)
         rows = list(session.scalars(query.limit(MAX_INCIDENTS)))
     return IncidentList(items=_summaries(engine, rows))
+
+
+@router.get("/entity-risk", response_model=EntityRiskList)
+def entity_risk_list(
+    upload_id: Annotated[str | None, Query(max_length=128)] = None,
+) -> EntityRiskList:
+    """P3: the entity roll-up over the stored incidents (of one upload, if given). A read."""
+    config = load_entity_risk_config()
+    with Session(get_engine()) as session:
+        query = select(IncidentRow).order_by(IncidentRow.last_event_at.desc())
+        if upload_id is not None:
+            query = query.where(IncidentRow.upload_id == upload_id)
+        rows = list(session.scalars(query.limit(MAX_INCIDENTS)))
+        events = [
+            Event.model_validate(data)
+            for data in session.scalars(
+                select(EventRow.data)
+                .join(
+                    IncidentEventRow,
+                    (EventRow.upload_id == IncidentEventRow.upload_id)
+                    & (EventRow.event_id == IncidentEventRow.event_id),
+                )
+                .where(IncidentEventRow.incident_id.in_([r.incident_id for r in rows]))
+            )
+        ]
+    report = entity_risk([Incident.model_validate(r.data) for r in rows], events, config)
+    return entity_risk_answer(report, config)
+
+
+def entity_risk_answer(report: EntityRiskReport, config: EntityRiskConfig) -> EntityRiskList:
+    """The API shape of an entity roll-up report (also writes the docs/api example)."""
+    return EntityRiskList(
+        config_version=report.config_version,
+        tactics_config_version=report.tactics_config_version,
+        window_start=report.window_start,
+        window_end=report.window_end,
+        score_threshold=config.score_threshold,
+        tactics_threshold=config.tactics_threshold,
+        items=[
+            EntityRiskItem(
+                entity=item.entity,
+                score=item.score,
+                level=item.level,
+                incident_count=item.incident_count,
+                incidents=[EntityRiskIncident(incident_id=i, score=s) for i, s in item.incidents],
+                tactics=item.tactics,
+                flags=item.flags,
+            )
+            for item in report.items
+        ],
+    )
 
 
 @router.get("/incidents/{incident_id}", response_model=IncidentSummary)

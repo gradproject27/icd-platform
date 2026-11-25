@@ -5,6 +5,7 @@ import type { AnalysisReport, AuditRecord } from "./contracts";
 import type {
   AuditTrail,
   ContainmentList,
+  EntityRiskList,
   IncidentEventList,
   IncidentKeyFacts,
   IncidentList,
@@ -72,6 +73,16 @@ export async function getContainments(incidentId: string, signal?: AbortSignal):
   const data = await request<ContainmentList>(`/incidents/${encodeURIComponent(incidentId)}/containments`, { signal });
   if (!Array.isArray((data as Partial<ContainmentList> | null)?.items)) {
     throw new ApiError("parse", "The ICD API sent an unexpected containment list.");
+  }
+  return data;
+}
+
+/** GET /entity-risk: the read-only entity roll-up across incidents (P3), of one upload if given. */
+export async function getEntityRisk(uploadId?: string, signal?: AbortSignal): Promise<EntityRiskList> {
+  const query = uploadId ? `?upload_id=${encodeURIComponent(uploadId)}` : "";
+  const data = await request<EntityRiskList>(`/entity-risk${query}`, { signal });
+  if (!Array.isArray((data as Partial<EntityRiskList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected entity risk list.");
   }
   return data;
 }

@@ -169,6 +169,25 @@ def test_unknown_incident_is_404_in_the_error_shape(client):
         assert error_code(answer) == "not_found"
 
 
+def test_entity_risk_rolls_up_the_stored_incidents(client, stored):
+    # P3: read-only roll-up per source-side entity; ws-80 reaches the tactic threshold.
+    answer = client.get("/entity-risk", params={"upload_id": stored}).json()
+    assert answer["config_version"] == "entity-risk-v1"
+    assert (answer["score_threshold"], answer["tactics_threshold"]) == (70, 3)
+    items = {item["entity"]: item for item in answer["items"]}
+    assert items["203.0.113.10"]["score"] == 50 and items["203.0.113.10"]["level"] == "medium"
+    assert items["ws-80"]["tactics"] == ["TA0001", "TA0003", "TA0011", "TA0043"]
+    assert items["ws-80"]["flags"] == ["tactic_threshold"]
+    assert [i["score"] for i in items["ws-80"]["incidents"]] == [32, 10, 10]
+    # A read: the incidents keep their own scores.
+    assert client.get(f"/incidents/{A.incident_id}").json()["incident"]["risk"]["score"] == 100
+
+
+def test_entity_risk_of_an_upload_without_incidents_is_empty(client):
+    answer = client.get("/entity-risk", params={"upload_id": "upl-none"}).json()
+    assert answer["items"] == [] and answer["window_end"] is None
+
+
 def test_events_oldest_first_with_role_and_link_keys(client):
     items = client.get(f"/incidents/{A.incident_id}/events").json()["items"]
     assert [i["event"]["event_id"] for i in items] == sorted(

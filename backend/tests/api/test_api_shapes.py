@@ -14,6 +14,7 @@ from app.api.schemas import (
     DatasetSource,
     DecisionRecord,
     DecisionRequest,
+    EntityRiskList,
     ErrorResponse,
     EventPage,
     IncidentEventList,
@@ -58,6 +59,7 @@ EXAMPLE_SHAPES: dict[str, type[BaseModel]] = {
     "decision-record": DecisionRecord,
     "notification-list": NotificationList,
     "current-user": CurrentUser,
+    "entity-risk-list": EntityRiskList,
 }
 
 EXAMPLES = sorted(path.stem for path in EXAMPLES_DIR.glob("*.json"))
