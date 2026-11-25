@@ -10,7 +10,15 @@
  * via the `definition` "DatasetSource".
  */
 export type DatasetSource =
-  "fixture" | "precinct6" | "unsw-nb15" | "cic-ids2017" | "loghub-bgl" | "loghub-thunderbird" | "otrf";
+  | "fixture"
+  | "precinct6"
+  | "unsw-nb15"
+  | "cic-ids2017"
+  | "loghub-bgl"
+  | "loghub-thunderbird"
+  | "otrf"
+  | "nf-unsw-nb15-v3"
+  | "nf-cse-cic-ids2018-v3";
 
 /**
  * GET /datasets: the choices for the upload form.

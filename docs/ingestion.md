@@ -12,11 +12,12 @@ parse(path: Path, context: IntakeContext) -> Iterator[Event | Quarantined]
 
 - One item per record read, in file order. One bad record never raises; `ParseError` only when the whole file cannot be read.
 - The parser never writes to the database. The worker stores events in `events` and the rest in `quarantined_records` (C1 migration `0002`), and counts both into `IntakeCounts`.
-- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2).
+- Parsers are registered by `dataset_id` in `backend/app/ingest/registry.py`. Week 2: `fixture` (C1) and **`unsw-nb15`** (C2). Risk-v1 step 3a: **`nf-unsw-nb15-v3`** and **`nf-cse-cic-ids2018-v3`** (section 9).
 
 | Module (`backend/app/ingest/`) | Job |
 |---|---|
 | `unsw_nb15.py` | UNSW-NB15 parser and the aggregate-only profile |
+| `nf_v3.py` | NetFlow v3 parser (both UQ NF-v3 datasets) and its aggregate-only profile |
 | `normalize.py` | Pure value normalizers (time, IP, port, protocol, numbers, IDs) |
 | `labels.py` | Label mapping from `contracts/label-mapping.json` |
 | `event_types.py` | `event_type` vocabulary from `contracts/event-types.json` |
@@ -78,11 +79,13 @@ Every quarantined record keeps `record_ref` (file and line), the reason in plain
 | `bad_encoding` | The line is not UTF-8, or holds a NUL byte |
 | `line_too_long` | The line is longer than 64 KiB (the rest of the line is skipped, the next line is read) |
 | `bad_csv` | The CSV reader rejects the line |
-| `wrong_column_count` | Not 49 columns |
-| `missing_timestamp` | `Stime` is empty |
-| `bad_timestamp` | `Stime` is not epoch seconds or is outside 1990 to 2100 |
+| `wrong_column_count` | Not 49 columns (UNSW-NB15) or 55 columns (NetFlow v3) |
+| `missing_timestamp` | `Stime` (UNSW-NB15) or `FLOW_START_MILLISECONDS` (NetFlow v3) is empty |
+| `bad_timestamp` | `Stime` is not epoch seconds, or `FLOW_START_MILLISECONDS` is not epoch milliseconds, or the time is outside 1990 to 2100 |
 | `unknown_label` | The label value is not in the label mapping (rule `unknown_value`) |
 | `pending_label` | The label value is listed with a pending decision (rule `pending_values`) |
+| `unknown_attack_type` | NetFlow v3 only: `Label` is 1 and `Attack` is not a spelling the label mapping lists for the dataset (never guessed) |
+| `label_attack_mismatch` | NetFlow v3 only: `Label` is 0 but `Attack` is neither `Benign` nor empty |
 | `invalid_event` | The built Event fails the contract (should not happen; kept as a safety net) |
 | `duplicate_event_id` | Set by the worker (C1): the same `event_id` appeared earlier in the file |
 
@@ -141,3 +144,25 @@ The job takes about 3.1 times the parser alone; the extra is PostgreSQL inserts.
 | Full upload job, one 700,001-line file | 3 min 49 s; worker 188 MB | ≤ 8 min; worker ≤ 400 MB |
 | Database per stored event | 2.4 KB | ≤ 4 KB (all four files ≈ 6 GB of disk) |
 | Quarantined records on the official files | 0 | 0 (any quarantine on these files is a bug to look at) |
+
+## 9. NetFlow v3 field mapping (risk-v1 step 3a)
+
+Datasets `nf-unsw-nb15-v3` and `nf-cse-cic-ids2018-v3` (University of Queensland, [dataset page](https://staff.itee.uq.edu.au/marius/NIDS_datasets/)) share one parser, `nf_v3.py`, because their header is the same. Their role is classifier training and calibration for the risk-v1 confidence (decision RV1-D10), not the correlation demo.
+
+**Header.** Line 1 must be exactly the 55 column names, from `FLOW_START_MILLISECONDS` to `Label`, `Attack` (checked by the user in both files on 25 Nov 2026). Any other first line stops the file with a parse error, because every column is read by its position. A demo slice of the 20.1M-flow CIC file must keep this line, for example `head -n 50001 NF-CSE-CIC-IDS2018-v3.csv > slice.csv`.
+
+| Event field | Source | Rule |
+|---|---|---|
+| `event_id` | none in the data | `<dataset_id>:<file stem>:<line>`, as for UNSW-NB15 |
+| `timestamp` | `FLOW_START_MILLISECONDS` | Epoch milliseconds, UTC. Empty: `missing_timestamp`; not a number or outside 1990 to 2100: `bad_timestamp` |
+| `event_type` | `L7_PROTO` | nDPI `<master id>.<app id>`; only the master ID is looked up (`contracts/event-types.json`): 0 `network_flow`, 1 `ftp_session`, 175 `ftp_data_transfer`, 2 `pop3_session`, 3 `smtp_session`, 5 `dns_query`, 7 `http_request`, 14 `snmp_request`, 18 `dhcp_request`, 65 `irc_session`, 91 `tls_session`, 92 `ssh_session`, 146 `radius_request`; anything else `unknown`. Never from `Label` or `Attack` |
+| `label.raw_value`, `label.status` | `Label` | Exact match: `1` flagged, `0` unflagged (proposed, as UNSW-NB15). Empty: unlabelled; other values: `unknown_label` |
+| `label.attack_type` | `Attack` | Spaces trimmed. Only on `Label` 1, and only a spelling listed in `attack_type_values` of the label mapping, else `unknown_attack_type`. On `Label` 0, `Attack` must be `Benign` or empty, else `label_attack_mismatch` |
+| `src_ip`, `dst_ip` | `IPV4_SRC_ADDR`, `IPV4_DST_ADDR` | As UNSW-NB15; not an IP: null, original in `extra_fields.IPV4_SRC_ADDR_raw` / `IPV4_DST_ADDR_raw` |
+| `src_port`, `dst_port` | `L4_SRC_PORT`, `L4_DST_PORT` | As UNSW-NB15; original in `extra_fields.L4_SRC_PORT_raw` / `L4_DST_PORT_raw` |
+| `protocol` | `PROTOCOL` | IANA number to name: 1 icmp, 2 igmp, 6 tcp, 17 udp, 47 gre, 50 esp, 51 ah, 58 ipv6-icmp, 132 sctp; other numbers kept as their text |
+| `host`, `user`, `privileged_user` | none | null |
+| `summary` | `PROTOCOL`, `L7_PROTO`, `FLOW_DURATION_MILLISECONDS`, `IN_BYTES`, `OUT_BYTES` | For example `tcp flow, L7 7.178, 120 ms, 1,256 B src to dst, 8,420 B dst to src`. Never an IP, host or user |
+| `extra_fields` | the other 47 columns | Numbers as int or float; `L7_PROTO` kept as text (`7.178` must not become a float). `Label` and `Attack` are never copied here |
+
+**Not measured yet.** Class spellings come from the dataset page, and the L7 master IDs from nDPI's `ndpi_protocol_ids.h`. The first run of `python -m app.ingest.cli <dataset_id> <file> --profile` on each real file prints the counts of `Label`, `Attack`, (`Label`, `Attack`) pairs, `PROTOCOL` and L7 master IDs (no IP or port), and the label mapping counts are filled from it. A spelling seen there but not listed is added to the mapping by a reviewed change, never accepted silently.

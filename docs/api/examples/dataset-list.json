@@ -34,6 +34,16 @@
       "dataset_id": "otrf",
       "name": "OTRF Security Datasets",
       "parser_available": false
+    },
+    {
+      "dataset_id": "nf-unsw-nb15-v3",
+      "name": "NF-UNSW-NB15-v3 (UQ NetFlow v3)",
+      "parser_available": true
+    },
+    {
+      "dataset_id": "nf-cse-cic-ids2018-v3",
+      "name": "NF-CSE-CIC-IDS2018-v3 (UQ NetFlow v3)",
+      "parser_available": true
     }
   ],
   "accepted_extensions": [

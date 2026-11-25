@@ -44,6 +44,46 @@
         "dhcp": "dhcp_request"
       },
       "notes": "Service names as documented in NUSW-NB15_features.csv (column 14, service); '-' means no service was recognised. Checked on 31 Oct 2026 against all four UNSW-NB15 CSVs: the 13 measured service values are exactly the 13 keys of this map ('-' 1,246,397 records, dns 781,668, http 206,273, ftp-data 125,783, smtp 81,645, ftp 49,090, ssh 47,160, pop3 1,533, dhcp 172, ssl 142, snmp 113, radius 40, irc 31)."
+    },
+    {
+      "dataset_id": "nf-unsw-nb15-v3",
+      "field": "L7_PROTO",
+      "map": {
+        "0": "network_flow",
+        "1": "ftp_session",
+        "175": "ftp_data_transfer",
+        "2": "pop3_session",
+        "3": "smtp_session",
+        "5": "dns_query",
+        "7": "http_request",
+        "14": "snmp_request",
+        "18": "dhcp_request",
+        "65": "irc_session",
+        "91": "tls_session",
+        "92": "ssh_session",
+        "146": "radius_request"
+      },
+      "notes": "L7_PROTO is nDPI '<master id>.<app id>' (for example '7.178'); the parser looks up the master id only (the part before the dot). IDs from nDPI src/include/ndpi_protocol_ids.h (ntop/nDPI, read 25 Nov 2026): 0 UNKNOWN, 1 FTP_CONTROL, 2 MAIL_POP, 3 MAIL_SMTP, 5 DNS, 7 HTTP, 14 SNMP, 18 DHCP, 65 IRC, 91 TLS, 92 SSH, 146 RADIUS, 175 FTP_DATA. 0 (no application recognised) is network_flow, like '-' in UNSW-NB15; any other id is unknown. Not measured against the files yet: the first profile run lists the master ids seen."
+    },
+    {
+      "dataset_id": "nf-cse-cic-ids2018-v3",
+      "field": "L7_PROTO",
+      "map": {
+        "0": "network_flow",
+        "1": "ftp_session",
+        "175": "ftp_data_transfer",
+        "2": "pop3_session",
+        "3": "smtp_session",
+        "5": "dns_query",
+        "7": "http_request",
+        "14": "snmp_request",
+        "18": "dhcp_request",
+        "65": "irc_session",
+        "91": "tls_session",
+        "92": "ssh_session",
+        "146": "radius_request"
+      },
+      "notes": "L7_PROTO is nDPI '<master id>.<app id>' (for example '7.178'); the parser looks up the master id only (the part before the dot). IDs from nDPI src/include/ndpi_protocol_ids.h (ntop/nDPI, read 25 Nov 2026): 0 UNKNOWN, 1 FTP_CONTROL, 2 MAIL_POP, 3 MAIL_SMTP, 5 DNS, 7 HTTP, 14 SNMP, 18 DHCP, 65 IRC, 91 TLS, 92 SSH, 146 RADIUS, 175 FTP_DATA. 0 (no application recognised) is network_flow, like '-' in UNSW-NB15; any other id is unknown. Not measured against the files yet: the first profile run lists the master ids seen."
     }
   ]
 }

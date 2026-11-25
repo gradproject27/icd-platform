@@ -4,6 +4,7 @@
     python -m app.ingest.cli unsw-nb15 D:/data/UNSW-NB15_1.csv --json
     python -m app.ingest.cli unsw-nb15 D:/data/UNSW-NB15_1.csv --profile
     python -m app.ingest.cli unsw-nb15 D:/data/UNSW-NB15_1.csv --show-record UNSW-NB15_1.csv:42
+    python -m app.ingest.cli nf-unsw-nb15-v3 D:/data/NF-UNSW-NB15-v3.csv --profile
 
 No database is needed: the counts follow the same rules as the ingest worker
 (app/jobs/ingest.py), including quarantining a repeated event_id. The summary and the profile
@@ -23,10 +24,16 @@ from typing import Any
 
 from app.api.schemas import DatasetSource, IntakeCounts
 from app.contracts import Event
+from app.ingest import nf_v3, unsw_nb15
 from app.ingest.interface import IntakeContext, ParseError, Quarantined
 from app.ingest.lines import read_original
 from app.ingest.registry import PARSERS
-from app.ingest.unsw_nb15 import profile
+
+PROFILERS = {
+    DatasetSource.UNSW_NB15: unsw_nb15.profile,
+    DatasetSource.NF_UNSW_NB15_V3: nf_v3.profile,
+    DatasetSource.NF_CSE_CIC_IDS2018_V3: nf_v3.profile,
+}
 
 
 def intake_counts(items: Iterable[Event | Quarantined]) -> IntakeCounts:
@@ -116,10 +123,16 @@ def main(argv: list[str] | None = None) -> int:
         print(read_original(args.file, args.show_record))
         return 0
     if args.profile:
-        if dataset_id != DatasetSource.UNSW_NB15:
-            print("error: --profile supports unsw-nb15 only", file=sys.stderr)
+        if dataset_id not in PROFILERS:
+            names = ", ".join(sorted(source.value for source in PROFILERS))
+            print(f"error: --profile supports {names} only", file=sys.stderr)
             return 2
-        print(json.dumps(profile(args.file), indent=2, ensure_ascii=False))
+        try:
+            summary = PROFILERS[dataset_id](args.file)
+        except ParseError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(summary, indent=2, ensure_ascii=False))
         return 0
     try:
         result = run(dataset_id, args.file)

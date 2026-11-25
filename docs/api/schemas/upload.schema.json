@@ -9,7 +9,9 @@
         "cic-ids2017",
         "loghub-bgl",
         "loghub-thunderbird",
-        "otrf"
+        "otrf",
+        "nf-unsw-nb15-v3",
+        "nf-cse-cic-ids2018-v3"
       ],
       "title": "DatasetSource",
       "type": "string"
