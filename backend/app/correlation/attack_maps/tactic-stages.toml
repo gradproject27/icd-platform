@@ -1,0 +1,23 @@
+# ATT&CK Enterprise tactic -> ICD kill-chain stage (risk-v1 step 2, decision RV1-D8).
+# Read by attack_mapping.py. An attack type's stage is the highest stage among its tactics.
+# Stage names as in correlation.toml: 1 reconnaissance, 2 exploitation, 3 installation,
+# 4 propagation, 5 actions on objectives. Review: Sara (C3).
+config_version = "tactic-stages-v1"
+attack_version = "20.1"
+
+[stages]
+TA0043 = 1  # Reconnaissance
+TA0042 = 1  # Resource Development
+TA0007 = 1  # Discovery
+TA0001 = 2  # Initial Access
+TA0002 = 2  # Execution
+TA0006 = 2  # Credential Access
+TA0003 = 3  # Persistence
+TA0004 = 3  # Privilege Escalation
+TA0005 = 3  # Stealth
+TA0112 = 3  # Defense Impairment
+TA0011 = 3  # Command and Control
+TA0008 = 4  # Lateral Movement
+TA0009 = 5  # Collection
+TA0010 = 5  # Exfiltration
+TA0040 = 5  # Impact

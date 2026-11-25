@@ -1,0 +1,51 @@
+# NF-CSE-CIC-IDS2018-v3 attack class -> MITRE ATT&CK (risk-v1 step 2, decision RV1-D9).
+# Class names as printed on the dataset page (staff.itee.uq.edu.au/marius/NIDS_datasets/);
+# the CSV spelling is not verified yet (header check pending). What each class covers comes from
+# the CSE-CIC-IDS2018 page (unb.ca/cic/datasets/ids-2018.html). Techniques checked in
+# Enterprise ATT&CK 20.1. Review: Sara (C3).
+dataset_id = "nf-cse-cic-ids2018-v3"
+config_version = "nf-cse-cic-ids2018-v3-attack-v1"
+attack_version = "20.1"
+source = "UQ NetFlow v3 dataset page; CSE-CIC-IDS2018 page (attack scenarios)"
+
+[labels.BruteForce]
+covers = "FTP-Patator, SSH-Patator"
+techniques = [["T1110.001", "Password Guessing"]]
+tactics = ["TA0006"]
+stage = 2
+quality = "exact"
+
+[labels."Web Attacks"]
+covers = "DVWA brute force, XSS, SQL injection"
+techniques = [["T1190", "Exploit Public-Facing Application"]]
+tactics = ["TA0001"]
+stage = 2
+quality = "partial"
+
+[labels.Infiltration]
+covers = "malicious file from a download, then internal scanning"
+techniques = [["T1204.002", "Malicious File"], ["T1046", "Network Service Discovery"]]
+tactics = ["TA0002", "TA0007"]
+stage = 2
+quality = "partial"
+
+[labels.Bot]
+covers = "Zeus and Ares botnets"
+techniques = [["T1071", "Application Layer Protocol"]]
+tactics = ["TA0011"]
+stage = 3
+quality = "partial"
+
+[labels.DoS]
+covers = "Hulk, GoldenEye, Slowloris, Slowhttptest"
+techniques = [["T1499.002", "Service Exhaustion Flood"]]
+tactics = ["TA0040"]
+stage = 5
+quality = "partial"
+
+[labels.DDoS]
+covers = "LOIC (HTTP, UDP), HOIC"
+techniques = [["T1498", "Network Denial of Service"], ["T1499", "Endpoint Denial of Service"]]
+tactics = ["TA0040"]
+stage = 5
+quality = "partial"

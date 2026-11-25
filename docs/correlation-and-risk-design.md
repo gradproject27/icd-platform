@@ -436,7 +436,7 @@ Events from different datasets are never merged into one stream or one incident.
 
 ### 9A.5 ATT&CK mapping (RV1-D6)
 
-One reviewed table per dataset, pinned to ATT&CK v20: dataset label, technique ID(s), tactic, ICD stage, mapping quality (`exact`, `partial`, `category-only`), source and reviewer. Kill-chain stages (section 8) are derived from ATT&CK tactics. The UNSW ground-truth CVE references (dataset profile §7.3) may refine the table and the evaluation, never a per-event score input.
+One reviewed table per dataset, pinned to ATT&CK v20: dataset label, technique ID(s), tactic, ICD stage, mapping quality (`exact`, `partial`, `category-only`), source and reviewer. Kill-chain stages (section 8) are derived from ATT&CK tactics. Built in step 2: [attack-mapping.md](attack-mapping.md) (decisions RV1-D8 to RV1-D10). The UNSW ground-truth CVE references (dataset profile §7.3) may refine the table and the evaluation, never a per-event score input.
 
 ### 9A.6 Still open (RV1-D7)
 

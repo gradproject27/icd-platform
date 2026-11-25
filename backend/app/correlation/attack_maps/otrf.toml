@@ -1,0 +1,22 @@
+# OTRF Security Datasets -> MITRE ATT&CK (risk-v1 step 2, decision RV1-D9). The technique comes
+# from each dataset's own metadata (datasets/atomic/_metadata/*.yaml, as recorded in docs/dataset-profile.md), so the
+# quality is exact. APT29 day 1 and 2 are mapped per emulation-plan step with the OTRF parser
+# (step 3). Techniques checked in Enterprise ATT&CK 20.1. Review: Sara (C3).
+dataset_id = "otrf"
+config_version = "otrf-attack-v1"
+attack_version = "20.1"
+source = "OTRF dataset metadata YAML"
+
+[labels.SDWIN-201018195009]
+covers = "LSASS memory dump with comsvcs (psh_lsass_memory_dump_comsvcs)"
+techniques = [["T1003.001", "LSASS Memory"]]
+tactics = ["TA0006"]
+stage = 2
+quality = "exact"
+
+[labels.SDWIN-200806015757]
+covers = "Covenant copy over SMB (covenant_copy_smb_CreateRequest)"
+techniques = [["T1021.002", "SMB/Windows Admin Shares"]]
+tactics = ["TA0008"]
+stage = 4
+quality = "exact"

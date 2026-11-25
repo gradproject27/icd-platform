@@ -1,0 +1,71 @@
+# UNSW-NB15 attack_cat -> MITRE ATT&CK (risk-v1 step 2, decision RV1-D9). Also used for
+# NF-UNSW-NB15-v3, whose class names are the same (it has Backdoor only).
+# Tactics are those of P4's tactics.toml (a test keeps the two equal). Each technique was
+# checked in Enterprise ATT&CK 20.1 (mitre-attack/attack-stix-data, read 25 Nov 2026).
+# quality: exact = the label names one technique; partial = the label covers several, the main
+# one is given; category-only = the name implies no certain tactic, the stage is kept from
+# correlation.toml (decision of 25 Nov 2026). Review: Sara (C3).
+dataset_id = "unsw-nb15"
+config_version = "unsw-nb15-attack-v1"
+attack_version = "20.1"
+source = "UNSW-NB15 dataset page (category names only); P4 tactics.toml"
+
+[labels.Reconnaissance]
+techniques = [["T1595", "Active Scanning"]]
+tactics = ["TA0043"]
+stage = 1
+quality = "partial"
+
+[labels.Fuzzers]
+techniques = [["T1595.002", "Vulnerability Scanning"]]
+tactics = ["TA0043"]
+stage = 1
+quality = "partial"
+
+[labels.Analysis]
+techniques = []
+tactics = []
+stage = 1
+quality = "category-only"
+
+[labels.Generic]
+techniques = []
+tactics = []
+stage = 2
+quality = "category-only"
+
+[labels.Exploits]
+techniques = [["T1190", "Exploit Public-Facing Application"]]
+tactics = ["TA0001"]
+stage = 2
+quality = "partial"
+
+[labels.Shellcode]
+techniques = [["T1203", "Exploitation for Client Execution"]]
+tactics = ["TA0002"]
+stage = 2  # correlation.toml has 3 until risk-v1 (step 6) reads stages from here
+quality = "partial"
+
+[labels.Backdoors]
+techniques = [["T1505", "Server Software Component"], ["T1071", "Application Layer Protocol"]]
+tactics = ["TA0003", "TA0011"]
+stage = 3
+quality = "partial"
+
+[labels.Backdoor]
+techniques = [["T1505", "Server Software Component"], ["T1071", "Application Layer Protocol"]]
+tactics = ["TA0003", "TA0011"]
+stage = 3
+quality = "partial"
+
+[labels.Worms]
+techniques = [["T1210", "Exploitation of Remote Services"]]
+tactics = ["TA0008"]
+stage = 4
+quality = "partial"
+
+[labels.DoS]
+techniques = [["T1498", "Network Denial of Service"]]
+tactics = ["TA0040"]
+stage = 5
+quality = "partial"
