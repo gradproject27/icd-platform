@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { AnalysisReport, FindingCategory, GroundingCounts, Incident } from "../api/contracts";
 import { ApiError } from "../api/errors";
-import { getShownReport, requestAnalysis } from "../api/incidents";
+import { getKeyFacts, getShownReport, requestAnalysis } from "../api/incidents";
 import { getJob } from "../api/jobs";
 import { ANALYSIS_RERUNNERS } from "../auth/roles";
 import { useCurrentUser } from "../auth/useCurrentUser";
 import { PageState } from "../components/PageState";
 import { formatLocalDateTime } from "../countdown/clock";
 import { IncidentHeader } from "../incidents/IncidentHeader";
+import { KeyFacts } from "../incidents/KeyFacts";
 import { RiskAndConfidence } from "../incidents/RiskAndConfidence";
 import { STUB_BANNER } from "../incidents/format";
 import { useIncident } from "../incidents/useIncident";
@@ -32,7 +33,13 @@ export function AiReportPage() {
 }
 
 function ReportPanel({ incidentId }: { incidentId: string }) {
-  const { load, retry } = useIncident(incidentId, (signal) => getShownReport(incidentId, signal));
+  const { load, retry } = useIncident(incidentId, (signal) =>
+    Promise.all([
+      getShownReport(incidentId, signal),
+      // Key facts (P1) sit beside the AI's text for comparison; without them the report still shows.
+      getKeyFacts(incidentId, signal).catch(() => null),
+    ]).then(([shown, facts]) => ({ shown, facts })),
+  );
   const back = <Link to={`/incidents/${encodeURIComponent(incidentId)}`}>Back to incident</Link>;
 
   if (load.kind !== "ready") {
@@ -51,7 +58,8 @@ function ReportPanel({ incidentId }: { incidentId: string }) {
     );
   }
 
-  const { summary, stub, extra: shown } = load;
+  const { summary, stub, extra } = load;
+  const { shown, facts } = extra;
   const report = shown?.report;
   return (
     <section>
@@ -71,6 +79,7 @@ function ReportPanel({ incidentId }: { incidentId: string }) {
           to real values.
         </p>
       )}
+      <KeyFacts incidentId={incidentId} facts={facts} />
       {report ? (
         <Report incidentId={incidentId} report={report} />
       ) : (
