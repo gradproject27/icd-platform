@@ -183,6 +183,29 @@ def test_entity_risk_rolls_up_the_stored_incidents(client, stored):
     assert client.get(f"/incidents/{A.incident_id}").json()["incident"]["risk"]["score"] == 100
 
 
+def test_ecs_export_streams_one_ecs_document_per_event(client, stored):
+    # P7: an export view; the stored events stay as they are.
+    answer = client.get(f"/uploads/{stored}/ecs")
+    assert answer.status_code == 200
+    assert answer.headers["content-type"].startswith("application/x-ndjson")
+    assert f'filename="{stored}-ecs.ndjson"' in answer.headers["content-disposition"]
+    docs = [json.loads(line) for line in answer.text.splitlines()]
+    assert len(docs) == len(EVENTS)
+    times = [d["@timestamp"] for d in docs]
+    assert times == sorted(times)
+    by_id = {d["event"]["id"]: d for d in docs}
+    assert by_id["fx-007"]["event"]["kind"] == "alert"
+    assert by_id["fx-007"]["threat"]["tactic"]["id"] == ["TA0001"]
+    assert by_id["fx-003"]["event"]["kind"] == "event"
+    assert {d["ecs"]["version"] for d in docs} == {"9.5.0"}
+
+
+def test_ecs_export_of_an_unknown_upload_is_404(client):
+    answer = client.get("/uploads/upl-none/ecs")
+    assert answer.status_code == 404
+    assert error_code(answer) == "not_found"
+
+
 def test_entity_risk_of_an_upload_without_incidents_is_empty(client):
     answer = client.get("/entity-risk", params={"upload_id": "upl-none"}).json()
     assert answer["items"] == [] and answer["window_end"] is None
