@@ -1,5 +1,5 @@
 """C5 tables (migration 0003): lifecycle state, status history, response windows, simulated
-actions and the append-only audit trail.
+actions and the append-only audit trail; simulated timed containment (migration 0007).
 
 incident_lifecycle holds each incident's state until incidents themselves are stored (Week 3,
 decision D1); then its status column moves onto the incidents table.
@@ -17,6 +17,7 @@ from sqlalchemy import (
     ForeignKey,
     Identity,
     Index,
+    Integer,
     String,
     Text,
     text,
@@ -111,6 +112,56 @@ class ResponseActionRow(Base):
     simulated: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     data: Mapped[dict[str, Any]] = mapped_column(JSONB)
     updated_at: Mapped[datetime] = mapped_column(Timestamp)
+
+
+class SimulatedContainmentRow(Base):
+    """A simulated IP block that ends on its own (migration 0007; containment.py, decision D5).
+
+    At most one active block per target. `incident_id` and `action_id` started it; the `last_*`
+    columns name the latest action that extended it. Simulated only: nothing real is blocked.
+    """
+
+    __tablename__ = "simulated_containments"
+    __table_args__ = (
+        CheckConstraint("kind IN ('block_ip')", name="simulated_containments_kind"),
+        CheckConstraint("status IN ('active', 'reverted')", name="simulated_containments_status"),
+        CheckConstraint("ends_at > started_at", name="simulated_containments_ends"),
+        CheckConstraint("offence >= 1", name="simulated_containments_offence"),
+        CheckConstraint("simulated", name="simulated_containments_simulated"),
+        CheckConstraint(
+            "(status = 'reverted') = (reverted_at IS NOT NULL)",
+            name="simulated_containments_reverted_at",
+        ),
+        Index(
+            "simulated_containments_one_active",
+            "kind",
+            "target",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
+        ),
+        Index("simulated_containments_due", "status", "ends_at"),
+        Index("simulated_containments_by_target", "kind", "target", "reverted_at"),
+    )
+
+    containment_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    target: Mapped[str] = mapped_column(String(128))
+    incident_id: Mapped[str] = mapped_column(
+        ForeignKey("incident_lifecycle.incident_id"), index=True
+    )
+    action_id: Mapped[str] = mapped_column(ForeignKey("response_actions.action_id"))
+    last_incident_id: Mapped[str] = mapped_column(
+        ForeignKey("incident_lifecycle.incident_id"), index=True
+    )
+    last_action_id: Mapped[str] = mapped_column(ForeignKey("response_actions.action_id"))
+    offence: Mapped[int] = mapped_column(Integer)
+    extended: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    started_at: Mapped[datetime] = mapped_column(Timestamp)
+    ends_at: Mapped[datetime] = mapped_column(Timestamp)
+    status: Mapped[str] = mapped_column(String(16))
+    reverted_at: Mapped[datetime | None] = mapped_column(Timestamp)
+    config_version: Mapped[str] = mapped_column(String(64))
+    simulated: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 
 
 class AuditRow(Base):

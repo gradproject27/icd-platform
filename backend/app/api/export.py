@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.api.schemas import (
     AuditTrail,
+    ContainmentList,
     CurrentUser,
     DatasetList,
     DecisionRecord,
@@ -44,6 +45,7 @@ SHAPES: dict[str, type[BaseModel]] = {
     "original-record": OriginalRecord,
     "audit-trail": AuditTrail,
     "response-window": ResponseWindow,
+    "containment-list": ContainmentList,
     "decision-request": DecisionRequest,
     "decision-record": DecisionRecord,
     "notification-list": NotificationList,

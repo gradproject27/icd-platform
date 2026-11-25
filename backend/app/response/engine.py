@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import Engine, select, update
+from sqlalchemy import Engine, or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.contracts import (
@@ -34,6 +35,13 @@ from app.contracts.audit import SIMULATED_EVENT_TYPES
 from app.response.catalogue import lookup
 from app.response.clock import Clock
 from app.response.config import ResponseConfig, load_response_config
+from app.response.containment import (
+    BLOCK_IP,
+    REVERT_TRIGGER,
+    Containment,
+    ContainmentConfig,
+    load_containment_config,
+)
 from app.response.executor import (
     SIMULATED_LABEL,
     FailureRule,
@@ -50,6 +58,7 @@ from app.response.models import (
     IncidentLifecycleRow,
     ResponseActionRow,
     ResponseWindowRow,
+    SimulatedContainmentRow,
     StatusHistoryRow,
 )
 from app.response.targets import Targets, find_targets
@@ -175,10 +184,12 @@ class ResponseEngine:
         config: ResponseConfig | None = None,
         failure_rule: FailureRule = never_fail,
         ids: Callable[[str], str] = new_id,
+        containment: ContainmentConfig | None = None,
     ):
         self.engine, self.clock = engine, clock
         self.config = config or load_response_config()
         self.failure_rule, self.ids = failure_rule, ids
+        self.containment = containment or load_containment_config()
 
     # ---- audit and transitions -------------------------------------------------------------
 
@@ -849,6 +860,9 @@ class ResponseEngine:
                 result=AuditResult.SUCCESS if result.succeeded else AuditResult.FAILURE,
             )
             if result.succeeded:
+                timed = self.containment.enabled and done.scenario_id == ScenarioId.S2
+                if timed and done.target.ip:
+                    self._contain(session, done, now)
                 self._move(
                     session, row, Trigger.ACTION_SUCCEEDED, now, "simulated action succeeded"
                 )
@@ -862,6 +876,158 @@ class ResponseEngine:
                     {"recipients": "soc_analyst,soc_manager", "reason": "simulated_action_failed"},
                 )
             return IncidentStatus(row.status), done
+
+    # ---- timed simulated containment (P2, containment.py) -----------------------------------
+
+    def _active_block(self, session: Session, ip: str) -> SimulatedContainmentRow | None:
+        return session.scalars(
+            select(SimulatedContainmentRow)
+            .where(
+                SimulatedContainmentRow.kind == BLOCK_IP,
+                SimulatedContainmentRow.target == ip,
+                SimulatedContainmentRow.status == "active",
+            )
+            .with_for_update()
+        ).first()
+
+    def _extend(self, held: SimulatedContainmentRow, action: ResponseAction, now: datetime) -> None:
+        """The same IP blocked again while blocked: restart its time, never shorten it."""
+        held.ends_at = max(held.ends_at, now + self.containment.duration_for(held.offence))
+        held.extended += 1
+        held.last_incident_id, held.last_action_id = action.incident_id, action.action_id
+
+    def _contain(self, session: Session, action: ResponseAction, now: datetime) -> None:
+        """Record the planned end of a succeeded S2's simulated IP block, in the action's
+        transaction (rule TX). Writes no audit record: the action.simulated record of the action
+        is the start, and the existing trails stay exactly as they were."""
+        ip = action.target.ip
+        held = self._active_block(session, ip)
+        if held is not None:
+            self._extend(held, action, now)
+            session.flush()
+            return
+        previous = session.scalars(
+            select(SimulatedContainmentRow.offence)
+            .where(
+                SimulatedContainmentRow.kind == BLOCK_IP,
+                SimulatedContainmentRow.target == ip,
+                SimulatedContainmentRow.status == "reverted",
+                SimulatedContainmentRow.reverted_at >= now - self.containment.repeat_lookback,
+            )
+            .order_by(SimulatedContainmentRow.reverted_at.desc())
+            .limit(1)
+        ).first()
+        offence = previous + 1 if previous is not None else 1
+        try:
+            with session.begin_nested():  # a block of the same IP may be written concurrently
+                session.add(
+                    SimulatedContainmentRow(
+                        containment_id=self.ids("cnt"),
+                        kind=BLOCK_IP,
+                        target=ip,
+                        incident_id=action.incident_id,
+                        action_id=action.action_id,
+                        last_incident_id=action.incident_id,
+                        last_action_id=action.action_id,
+                        offence=offence,
+                        extended=0,
+                        started_at=now,
+                        ends_at=now + self.containment.duration_for(offence),
+                        status="active",
+                        config_version=self.containment.config_version,
+                    )
+                )
+        except IntegrityError:  # another process blocked the same IP first: extend that block
+            self._extend(self._active_block(session, ip), action, now)
+            session.flush()
+
+    def due_containments(self) -> list[str]:
+        """Active blocks whose planned end has passed, oldest end first."""
+        now = self.clock.now()
+        with Session(self.engine) as session:
+            return list(
+                session.scalars(
+                    select(SimulatedContainmentRow.containment_id)
+                    .where(
+                        SimulatedContainmentRow.status == "active",
+                        SimulatedContainmentRow.ends_at <= now,
+                    )
+                    .order_by(
+                        SimulatedContainmentRow.ends_at, SimulatedContainmentRow.containment_id
+                    )
+                )
+            )
+
+    def revert_due(self) -> list[str]:
+        """One revert pass of the expiry worker. Returns the reverted IDs. Safe to run twice or
+        from two workers at once: each block is reverted and audited exactly once."""
+        return [c for c in self.due_containments() if self.revert_containment(c)]
+
+    def revert_containment(self, containment_id: str) -> bool:
+        """End one due simulated block: the row and one action.simulated record, one transaction.
+        Returns False when it is not due or another process ended it first. Nothing real changes,
+        and the incident's status, isolation and actions stay as they are."""
+        with Session(self.engine) as session, session.begin():
+            now = self.clock.now()
+            table = SimulatedContainmentRow.__table__
+            ended = session.execute(
+                update(table)
+                .where(
+                    table.c.containment_id == containment_id,
+                    table.c.status == "active",
+                    table.c.ends_at <= now,
+                )
+                .values(status="reverted", reverted_at=now)
+                .returning(table)
+            ).first()
+            if ended is None:
+                return False
+            self._audit(
+                session,
+                now,
+                AuditEventType.ACTION_SIMULATED,
+                ended.last_incident_id,
+                {
+                    "containment_id": ended.containment_id,
+                    "reverts": ended.kind,
+                    "ip": ended.target,
+                    "reverted_action_id": ended.last_action_id,
+                    "started_by_action_id": ended.action_id,
+                    "started_by_incident_id": ended.incident_id,
+                    "offence": ended.offence,
+                    "extended": ended.extended,
+                    "started_at": _iso(ended.started_at),
+                    "ends_at": _iso(ended.ends_at),
+                    "config_version": ended.config_version,
+                    "trigger": REVERT_TRIGGER,
+                    "decided_by": SYSTEM,
+                    "statement": "the simulated IP block ended on schedule; nothing real changed",
+                    "label": SIMULATED_LABEL,
+                },
+            )
+            return True
+
+    def containments_of(self, incident_id: str) -> list[Containment]:
+        """Simulated blocks the incident started or last extended, oldest first."""
+        with Session(self.engine) as session:
+            rows = session.scalars(
+                select(SimulatedContainmentRow)
+                .where(
+                    or_(
+                        SimulatedContainmentRow.incident_id == incident_id,
+                        SimulatedContainmentRow.last_incident_id == incident_id,
+                    )
+                )
+                .order_by(
+                    SimulatedContainmentRow.started_at, SimulatedContainmentRow.containment_id
+                )
+            )
+            return [
+                Containment(
+                    **{c.name: getattr(row, c.name) for c in SimulatedContainmentRow.__table__.c}
+                )
+                for row in rows
+            ]
 
     # ---- reads -----------------------------------------------------------------------------
 

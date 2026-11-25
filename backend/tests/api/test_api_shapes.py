@@ -8,6 +8,7 @@ from app.api.export import SHAPES
 from app.api.schemas import (
     AnalysisOutcome,
     AuditTrail,
+    ContainmentList,
     CurrentUser,
     DatasetList,
     DatasetSource,
@@ -50,6 +51,7 @@ EXAMPLE_SHAPES: dict[str, type[BaseModel]] = {
     "original-record": OriginalRecord,
     "audit-trail": AuditTrail,
     "response-window": ResponseWindow,
+    "containment-list": ContainmentList,
     "decision-request": DecisionRequest,
     "decision-record": DecisionRecord,
     "notification-list": NotificationList,

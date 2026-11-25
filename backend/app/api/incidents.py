@@ -12,6 +12,7 @@ import asyncio
 import os
 from collections import defaultdict
 from collections.abc import Iterable
+from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
@@ -26,6 +27,7 @@ from app.analysis.store import latest_report
 from app.api.errors import ApiException
 from app.api.schemas import (
     AuditTrail,
+    ContainmentList,
     CurrentUser,
     DecisionRecord,
     DecisionRequest,
@@ -39,6 +41,7 @@ from app.api.schemas import (
     NotificationList,
     OriginalRecord,
     ResponseWindow,
+    SimulatedContainment,
 )
 from app.contracts import (
     AnalysisReport,
@@ -303,6 +306,19 @@ def response_window(incident_id: str, response: EngineDep) -> JSONResponse:
     body = view.as_json()
     ResponseWindow.model_validate(body)
     return JSONResponse(body)
+
+
+@router.get("/incidents/{incident_id}/containments", response_model=ContainmentList)
+def incident_containments(incident_id: str, response: EngineDep) -> ContainmentList:
+    """Simulated IP blocks the incident started or extended, with their planned end (P2)."""
+    with Session(get_engine()) as session:
+        _incident_row(session, incident_id)
+    return ContainmentList(
+        items=[
+            SimulatedContainment.model_validate(asdict(c))
+            for c in response.containments_of(incident_id)
+        ]
+    )
 
 
 # ---- decisions -------------------------------------------------------------------------------

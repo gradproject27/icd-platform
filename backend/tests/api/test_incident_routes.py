@@ -163,7 +163,7 @@ def test_list_by_upload(client, stored):
 
 
 def test_unknown_incident_is_404_in_the_error_shape(client):
-    for path in ("", "/events", "/report", "/audit", "/decision"):
+    for path in ("", "/events", "/report", "/audit", "/decision", "/containments"):
         answer = client.get(f"/incidents/inc-unknown{path}")
         assert answer.status_code == 404, path
         assert error_code(answer) == "not_found"
@@ -316,6 +316,31 @@ def test_approve_records_the_decision_and_the_simulated_action(client, response,
     ]
     assert "decision.recorded" in types
     assert "action.simulated" in types
+
+
+def test_containments_show_the_simulated_ip_block_and_its_end(client, response, clock, analyst):
+    # P2: approving S2 blocks the external source IP (simulated) for 60 minutes (D5).
+    assert client.get(f"/incidents/{A.incident_id}/containments").json() == {"items": []}
+    freeze(response)
+    window = client.get(f"/response-windows/{A.incident_id}").json()
+    client.post(
+        f"/incidents/{A.incident_id}/decisions",
+        json={"decision": "approve", "window_id": window["window_id"]},
+    )
+    [held] = client.get(f"/incidents/{A.incident_id}/containments").json()["items"]
+    assert (held["kind"], held["target"], held["status"]) == ("block_ip", "203.0.113.10", "active")
+    assert (held["offence"], held["simulated"], held["reverted_at"]) == (1, True, None)
+    started = datetime.fromisoformat(held["started_at"])
+    assert datetime.fromisoformat(held["ends_at"]) - started == timedelta(minutes=60)
+
+    clock.advance(60 * 60)
+    assert len(response.revert_due()) == 1
+    [held] = client.get(f"/incidents/{A.incident_id}/containments").json()["items"]
+    assert held["status"] == "reverted" and held["reverted_at"] is not None
+    trail = client.get(f"/incidents/{A.incident_id}/audit").json()["items"]
+    reverted = [r for r in trail if r["details"].get("trigger") == "containment_expiry"]
+    assert [r["event_type"] for r in reverted] == ["action.simulated"]
+    assert len(reverted) == 1 and reverted[0]["simulated"] is True
 
 
 def test_reject_keeps_the_incident_awaiting_and_releases_isolation(client, response, analyst):

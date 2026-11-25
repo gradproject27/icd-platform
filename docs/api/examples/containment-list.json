@@ -1,0 +1,21 @@
+{
+  "items": [
+    {
+      "containment_id": "cnt-example-0012",
+      "kind": "block_ip",
+      "target": "203.0.113.10",
+      "incident_id": "inc-e8d1f72159481bee",
+      "action_id": "act-example-0008",
+      "last_incident_id": "inc-e8d1f72159481bee",
+      "last_action_id": "act-example-0008",
+      "offence": 1,
+      "extended": 0,
+      "started_at": "2026-01-15T20:21:12Z",
+      "ends_at": "2026-01-15T21:21:12Z",
+      "status": "active",
+      "reverted_at": null,
+      "config_version": "containment-v1",
+      "simulated": true
+    }
+  ]
+}

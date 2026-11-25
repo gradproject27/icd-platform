@@ -376,6 +376,32 @@ class ResponseWindow(_Contract):
     recommended_scenario_id: ScenarioId | None
 
 
+class SimulatedContainment(_Contract):
+    """A simulated IP block that ends on its own (P2, containment.toml). Nothing real is blocked."""
+
+    containment_id: Id
+    kind: Literal["block_ip"] = Field(description="Only S2's simulated IP block is timed.")
+    target: NonEmptyStr = Field(description="The blocked (simulated) source IP.")
+    incident_id: Id = Field(description="The incident whose action started the block.")
+    action_id: Id = Field(description="The action that started the block.")
+    last_incident_id: Id = Field(description="The incident whose action set the current end.")
+    last_action_id: Id = Field(description="The action that set the current end.")
+    offence: int = Field(ge=1, description="1 for a first block; n for the n-th repeat in a row.")
+    extended: Count = Field(description="How often the same IP was blocked again while blocked.")
+    started_at: UtcDatetime
+    ends_at: UtcDatetime = Field(description="Planned end; the worker reverts the block then.")
+    status: Literal["active", "reverted"]
+    reverted_at: UtcDatetime | None = Field(description="When the block ended; null while active.")
+    config_version: NonEmptyStr = Field(description="containment.toml config_version used.")
+    simulated: Literal[True] = Field(description="Always true: nothing real is blocked.")
+
+
+class ContainmentList(_Contract):
+    """GET /incidents/{incident_id}/containments: blocks it started or extended, oldest first."""
+
+    items: list[SimulatedContainment]
+
+
 class DecisionType(StrEnum):
     APPROVE = "approve"
     REJECT = "reject"

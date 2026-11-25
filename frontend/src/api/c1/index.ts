@@ -8,6 +8,10 @@ export type {
   UserRole,
 } from "./audit-trail";
 export type {
+  ContainmentList,
+  SimulatedContainment,
+} from "./containment-list";
+export type {
   CurrentUser,
 } from "./current-user";
 export type {
