@@ -174,6 +174,14 @@ describe("UploadPage", () => {
     ]);
     expect(screen.getByRole("link", { name: "View incidents" })).toHaveAttribute("href", "/incidents");
     expect(screen.getByText("Each incident's AI report appears on its page once its analysis is done.")).toBeInTheDocument();
+    // P3 and P7: the upload's entity risk and its events as ECS.
+    expect(screen.getByRole("link", { name: "Entity risk of this upload" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/entities\?upload_id=upl-/),
+    );
+    const ecs = screen.getByRole("link", { name: "Download its events as ECS (NDJSON)" });
+    expect(ecs).toHaveAttribute("href", expect.stringMatching(/^\/api\/uploads\/upl-[^/]+\/ecs$/));
+    expect(ecs).toHaveAttribute("download");
   });
 
   it("shows a failed job with the message and code from C1", async () => {

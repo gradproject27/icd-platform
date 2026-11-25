@@ -126,6 +126,14 @@ A simulated IP block now ends on its own, the way Wazuh's stateful active respon
 - **End:** the expiry loop (section 7) also reverts every active block whose `ends_at` has passed, exactly once even with two workers or after a restart (conditional `UPDATE … WHERE status = 'active'`). Each revert writes one `action.simulated` record (`simulated = true`, actor `system`) on the incident that set the current end, with `trigger: containment_expiry`, `reverts: block_ip`, `ip`, `containment_id`, `reverted_action_id`, `offence`, `started_at`, `ends_at` and `label: SIMULATED`. The incident's status, isolation, window and actions do not change. Nothing real is ever blocked or unblocked.
 - **Read:** `GET /incidents/{id}/containments` ([api-incidents.md](api-incidents.md)); the pending-decision page shows each block and its planned end.
 
+## 7b. Scenario metadata and recent decisions (P6)
+
+From the competitor feature study (PR #51, section F-E: the `impact` and `reversible` metadata and the "closed actions of the last 72 hours" list of Elastic's AlertZero), re-implemented. **Display only**: the catalogue lookup, the freeze gate and the executor never read it, so `response-v1` and OD-17 are unchanged.
+
+- `backend/app/response/scenario_meta.toml` (`scenario-meta-v1`): impact and how each simulated scenario is reverted. S1 medium (an analyst ends the isolation); S2 high (the IP block ends on its own, section 7a; an analyst ends the isolation); S3 high (an analyst ends the isolation and re-enables the account); S4 low (an analyst can isolate again). Every scenario must have an entry.
+- `GET /scenarios` serves the catalogue with this metadata; the configuration page shows it, and the pending-decision page shows the recommended scenario's impact and revert.
+- `GET /decisions/recent?hours=72` lists analyst decisions and system selections from the audit trail, newest first; the review page shows them.
+
 ## 8. Handoff to C4 (state names and deadline field)
 
 **Incident states** (`IncidentStatus`, values as sent): `new`, `under_analysis`, `awaiting_human_decision`, `response_in_progress`, `escalated`, `resolved`, `closed`. Display labels are in `IncidentStatus.label`.

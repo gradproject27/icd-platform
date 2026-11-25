@@ -33,3 +33,18 @@ Each change that adds third-party material adds its entry below, in the same pul
 > ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN "AS IS" BASIS AND THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
 MITRE ATT&CK and ATT&CK are registered trademarks of The MITRE Corporation.
+
+### Elastic Common Schema (field names)
+
+- **What:** the 18 ECS field names in `backend/app/ingest/ecs_export.py` (`ECS_FIELDS`) used by the ECS export (`GET /uploads/{id}/ecs`). No ECS schema files, descriptions or code are reproduced; ICD's Event contract keeps its own names.
+- **Source:** `elastic/ecs` tag `v9.5.0` (commit `401807e`), `generated/csv/fields.csv`, where each name was checked.
+- **Licence:** Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0). The upstream NOTICE, reproduced as section 4(d) of the licence asks:
+
+> Elastic Common Schema
+> Copyright 2018-2021 Elasticsearch B.V.
+>
+> Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+>
+> http://www.apache.org/licenses/LICENSE-2.0
+>
+> Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

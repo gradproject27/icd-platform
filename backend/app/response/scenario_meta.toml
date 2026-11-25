@@ -1,0 +1,25 @@
+# Scenario metadata (P6 of the competitor feature study, section F-E: the impact and reversible
+# metadata Elastic's AlertZero declares per action, re-implemented). Read by scenario_meta.py.
+# Any change must change config_version. Display only: nothing here selects, approves or runs a
+# scenario, so response.toml (response-v1) and the catalogue rules stay as they are.
+config_version = "scenario-meta-v1"
+
+[scenarios.S1]
+impact = "medium"
+reversible = true
+revert = "Only an analyst ends the isolation (S4, response spec section 9)."
+
+[scenarios.S2]
+impact = "high"
+reversible = true
+revert = "The simulated IP block ends on its own after 60, 120 or 240 minutes (containment.toml); only an analyst ends the isolation (S4)."
+
+[scenarios.S3]
+impact = "high"
+reversible = true
+revert = "Only an analyst ends the isolation (S4) and re-enables the account; nothing ends on its own."
+
+[scenarios.S4]
+impact = "low"
+reversible = true
+revert = "An analyst can isolate the host again with S1, S2 or S3."

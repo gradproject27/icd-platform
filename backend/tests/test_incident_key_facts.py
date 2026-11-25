@@ -184,6 +184,17 @@ def test_tactics_come_from_the_table_with_their_events(facts_a):
     assert facts_a.tactics[0].event_ids == ["fx-002", "fx-004"]
 
 
+def test_patterns_mark_the_kill_chain_progression(facts_a):
+    # P5: markers over the flagged events only; nothing is flagged or scored by them.
+    assert facts_a.patterns_config_version == "patterns-v1"
+    assert [(p.pattern_id, p.key, p.event_ids) for p in facts_a.patterns] == [
+        ("recon-then-exploitation", "web-01", ["fx-002", "fx-007"]),
+        ("exploitation-then-installation", "web-01", ["fx-007", "fx-008"]),
+        # db-01: Exploits fx-009 (09:30), then Backdoors fx-012 (09:55).
+        ("exploitation-then-installation", "db-01", ["fx-009", "fx-012"]),
+    ]
+
+
 def test_an_attack_type_without_a_tactic_gives_none():
     # fx-005 is labelled Generic, which the table leaves unmapped.
     assert key_facts(incident_starting("fx-005"), EVENTS, CONFIG).tactics == []

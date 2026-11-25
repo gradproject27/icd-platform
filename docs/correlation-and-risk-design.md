@@ -598,3 +598,15 @@ A read-only view **beside** the incident score, added from the competitor featur
 | No asset criticality | Entities are mostly sources (attackers), where FIPS 199 asset impact does not apply; incident scores already carry the impact of their assets |
 
 Fixture result (`backend/tests/correlation/test_entity_risk.py`): `203.0.113.10` scores 50 (incident A at 100, tactics TA0001 and TA0043); `ws-80` scores 19 (incidents at 32, 10 and 10) and reaches the tactic threshold with TA0001, TA0003, TA0011 and TA0043. Read with `GET /entity-risk` ([api-incidents.md](api-incidents.md)) and the dashboard's Entities page.
+
+## 18. Count and order markers (P5)
+
+Markers shown in an incident's key facts, added from the competitor feature study (PR #51, sections F-A and F-D: Wazuh's `frequency`/`timeframe`/`same_source_ip` rules and Elastic's EQL `sequence by … with maxspan`, re-implemented clean-room). They read only the incident's **flagged** events, never flag an event, never infer a label and never change a score, so Rule 1 (D2) and Rule 2 (OD-04) hold. Time is the dataset clock (Wazuh compares with wall-clock time, which would be wrong for uploaded history).
+
+| Rule (`backend/app/correlation/patterns.py`, `patterns.toml`, `patterns-v1`) | Meaning |
+|---|---|
+| `repeat-from-source` (count) | At least 3 flagged events of one attack type from one source-side entity, first to last within 15 min (inclusive) |
+| `recon-then-exploitation` (order) | On one host, a stage-1 event, then a later stage-2 event within 60 min (stages: section 8, `correlation.toml`) |
+| `exploitation-then-installation` (order) | On one host, a stage-2 event, then a later stage-3 event within 60 min |
+
+Each rule reports its earliest match per source and attack type (count) or per host (order), with the cited event IDs. Fixture incident A: recon → exploitation on `web-01` (fx-002 → fx-007), exploitation → installation on `web-01` (fx-007 → fx-008) and on `db-01` (fx-009 → fx-012). Changing incident grouping or the score from a marker would need a team decision first.

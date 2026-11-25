@@ -13,6 +13,7 @@ import os
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
@@ -44,7 +45,11 @@ from app.api.schemas import (
     JobAccepted,
     NotificationList,
     OriginalRecord,
+    RecentDecision,
+    RecentDecisionList,
     ResponseWindow,
+    ScenarioCatalogue,
+    ScenarioItem,
     SimulatedContainment,
 )
 from app.contracts import (
@@ -76,6 +81,7 @@ from app.response.engine import DecisionRefused, RefusalReason, ResponseEngine, 
 from app.response.engine import DecisionType as EngineDecision
 from app.response.lifecycle import TransitionRefused
 from app.response.models import AuditRow, IncidentLifecycleRow
+from app.response.scenario_meta import load_scenario_meta
 from app.settings import get_settings
 
 router = APIRouter()
@@ -404,6 +410,71 @@ def incident_containments(incident_id: str, response: EngineDep) -> ContainmentL
             for c in response.containments_of(incident_id)
         ]
     )
+
+
+@router.get("/scenarios", response_model=ScenarioCatalogue)
+def scenario_catalogue(response: EngineDep) -> ScenarioCatalogue:
+    """P6: the simulated catalogue v0 with impact and how each scenario is reverted (display)."""
+    meta = load_scenario_meta()
+    return ScenarioCatalogue(
+        config_version=response.config.config_version,
+        meta_version=meta.config_version,
+        items=[
+            ScenarioItem(
+                scenario_id=scenario.scenario_id,
+                title=scenario.title,
+                automatic=scenario.automatic,
+                needs=sorted(scenario.needs),
+                impact=meta.scenarios[scenario.scenario_id].impact,
+                reversible=meta.scenarios[scenario.scenario_id].reversible,
+                revert=meta.scenarios[scenario.scenario_id].revert,
+            )
+            for scenario in sorted(response.config.scenarios.values(), key=lambda s: s.scenario_id)
+        ],
+    )
+
+
+RECENT_LIMIT = 200
+
+
+@router.get("/decisions/recent", response_model=RecentDecisionList)
+def recent_decisions(
+    response: EngineDep, hours: Annotated[int, Query(ge=1, le=168)] = 72
+) -> RecentDecisionList:
+    """P6: analyst decisions and system selections of the last hours, newest first (audit)."""
+    until = response.clock.now()
+    since = until - timedelta(hours=hours)
+    with Session(get_engine()) as session:
+        rows = session.scalars(
+            select(AuditRow)
+            .where(
+                AuditRow.event_type.in_(
+                    [AuditEventType.DECISION_RECORDED.value, AuditEventType.SCENARIO_SELECTED.value]
+                ),
+                AuditRow.occurred_at >= since,
+                AuditRow.occurred_at <= until,
+            )
+            .order_by(AuditRow.seq.desc())
+            .limit(RECENT_LIMIT)
+        ).all()
+    items = []
+    for row in rows:
+        details = row.details or {}
+        system = row.event_type == AuditEventType.SCENARIO_SELECTED.value
+        items.append(
+            RecentDecision(
+                record_id=row.record_id,
+                incident_id=row.incident_id,
+                occurred_at=row.occurred_at,
+                by="system" if system else "analyst",
+                actor=row.actor,
+                actor_role=row.actor_role,
+                decision="system_selection" if system else details.get("decision"),
+                scenario_id=details.get("scenario_id"),
+                comment=None if system else details.get("comment"),
+            )
+        )
+    return RecentDecisionList(hours=hours, since=since, until=until, items=items)
 
 
 # ---- decisions -------------------------------------------------------------------------------

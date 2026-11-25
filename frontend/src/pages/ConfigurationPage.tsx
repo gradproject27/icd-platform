@@ -7,6 +7,7 @@ import { CONFIGURATION_VIEWERS } from "../auth/roles";
 import { useCurrentUser } from "../auth/useCurrentUser";
 import { PageState } from "../components/PageState";
 import { RoleGate } from "../components/RoleGate";
+import { ScenarioMetaTable } from "../incidents/ScenarioMeta";
 import { STUB_BANNER } from "../incidents/format";
 import { SCENARIO_LABELS } from "../labels";
 
@@ -138,6 +139,7 @@ function Configuration() {
           </tbody>
         </table>
       </section>
+      <ScenarioMetaTable />
     </>
   );
 }

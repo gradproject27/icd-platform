@@ -19,6 +19,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from app.contracts import Event, EventRole, Incident
+from app.correlation.config import CorrelationConfig, load_config
+from app.correlation.patterns import (
+    PatternMatch,
+    PatternsConfig,
+    load_patterns_config,
+    match_patterns,
+)
 from app.correlation.tactics import TacticsConfig, load_tactics_config
 from app.response.config import ResponseConfig
 from app.response.targets import flagged_events
@@ -41,6 +48,7 @@ class KeyFacts:
     incident_id: str
     network_config_version: str
     tactics_config_version: str
+    patterns_config_version: str
     first_flagged_event_id: str
     started_at: datetime
     last_flagged_event_id: str
@@ -56,6 +64,7 @@ class KeyFacts:
     external_ips: list[KeyFactItem] = field(default_factory=list)
     destination_ports: list[KeyFactItem] = field(default_factory=list)
     accounts: list[KeyFactItem] = field(default_factory=list)
+    patterns: list[PatternMatch] = field(default_factory=list)
     truncated: bool = False
 
 
@@ -89,13 +98,18 @@ def key_facts(
     events: Iterable[Event],
     config: ResponseConfig,
     tactics: TacticsConfig | None = None,
+    patterns: PatternsConfig | None = None,
+    correlation: CorrelationConfig | None = None,
 ) -> KeyFacts:
     """Key facts of one incident. Raises ValueError if an event of the incident is missing.
 
     Tactics come from the reviewed table (tactics.toml, P4) through each flagged event's dataset
-    attack type; an attack type the table leaves empty gives no tactic.
+    attack type; an attack type the table leaves empty gives no tactic. Patterns (patterns.toml,
+    P5) are count and order markers over the same flagged events.
     """
     tactics = tactics or load_tactics_config()
+    patterns = patterns or load_patterns_config()
+    correlation = correlation or load_config()
     flagged = sorted(flagged_events(incident, events), key=_order)
     if not flagged:
         # The Incident contract requires a flagged event; this keeps the error explicit.
@@ -138,6 +152,7 @@ def key_facts(
         incident_id=incident.incident_id,
         network_config_version=config.config_version,
         tactics_config_version=tactics.config_version,
+        patterns_config_version=patterns.config_version,
         first_flagged_event_id=first.event_id,
         started_at=first.timestamp,
         last_flagged_event_id=last.event_id,
@@ -147,5 +162,6 @@ def key_facts(
         flagged_event_count=len(flagged),
         context_event_count=sum(1 for link in incident.events if link.role == EventRole.CONTEXT),
         truncated=any(cut for _, cut in lists.values()),
+        patterns=match_patterns(flagged, correlation, patterns),
         **{name: items for name, (items, _) in lists.items()},
     )
