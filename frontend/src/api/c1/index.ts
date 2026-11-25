@@ -47,6 +47,10 @@ export type {
   LinkKey,
 } from "./incident-event-list";
 export type {
+  IncidentKeyFacts,
+  KeyFactItem,
+} from "./incident-key-facts";
+export type {
   AnalysisStatus,
   Incident,
   IncidentEntities,

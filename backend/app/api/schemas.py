@@ -24,6 +24,7 @@ from app.contracts import (
     UserRole,
 )
 from app.contracts.common import Id, NonEmptyStr, UtcDatetime, _Contract
+from app.incidents.key_facts import MAX_CITED
 
 Count = Annotated[int, Field(ge=0)]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
@@ -335,6 +336,52 @@ class IncidentEventList(_Contract):
     """GET /incidents/{incident_id}/events: the incident's events, oldest first."""
 
     items: list[IncidentEventItem]
+
+
+class KeyFactItem(_Contract):
+    """One distinct value among the incident's flagged events, with the events it comes from."""
+
+    value: NonEmptyStr = Field(description="The value: an attack type, host, IP, port or user.")
+    event_count: int = Field(ge=1, description="Flagged events that carry the value.")
+    first_seen: UtcDatetime = Field(description="Time of the first of those events, UTC.")
+    event_ids: list[Id] = Field(
+        min_length=1,
+        max_length=MAX_CITED,
+        description=f"The first of those events (at most {MAX_CITED}), oldest first.",
+    )
+
+
+class IncidentKeyFacts(_Contract):
+    """GET /incidents/{incident_id}/key-facts: computed by code, never by the model.
+
+    Only flagged events count (OD-02). Internal and external addresses follow response.toml
+    [network] (decision D3). Each list is ordered by first appearance, then value, and holds at
+    most 20 items; `truncated` says a list was cut.
+    """
+
+    incident_id: Id
+    network_config_version: NonEmptyStr = Field(
+        description="response.toml config_version that split internal from external addresses."
+    )
+    first_flagged_event_id: Id = Field(description="The earliest flagged event.")
+    started_at: UtcDatetime = Field(description="Time of the earliest flagged event, UTC.")
+    last_flagged_event_id: Id = Field(description="The latest flagged event.")
+    last_flagged_at: UtcDatetime = Field(description="Time of the latest flagged event, UTC.")
+    started_on: NonEmptyStr | None = Field(
+        description="Host of the earliest flagged event, else its internal destination IP."
+    )
+    origin_ip: NonEmptyStr | None = Field(
+        description="Source IP of the earliest flagged event when it is external; else null."
+    )
+    flagged_event_count: int = Field(ge=1)
+    context_event_count: Count
+    attack_types: list[KeyFactItem] = Field(description="Dataset attack types (labels).")
+    hosts: list[KeyFactItem]
+    internal_ips: list[KeyFactItem] = Field(description="Source or destination IPs, internal.")
+    external_ips: list[KeyFactItem] = Field(description="Source or destination IPs, external.")
+    destination_ports: list[KeyFactItem]
+    accounts: list[KeyFactItem] = Field(description="User names on flagged events.")
+    truncated: bool = Field(description="True when a list held more than 20 values and was cut.")
 
 
 class OriginalRecord(_Contract):

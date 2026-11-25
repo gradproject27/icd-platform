@@ -2,7 +2,14 @@ import type { JobAccepted } from "./c1";
 import { request } from "./client";
 import { ApiError } from "./errors";
 import type { AnalysisReport, AuditRecord } from "./contracts";
-import type { AuditTrail, IncidentEventList, IncidentList, IncidentSummary, OriginalRecord } from "./proposed";
+import type {
+  AuditTrail,
+  IncidentEventList,
+  IncidentKeyFacts,
+  IncidentList,
+  IncidentSummary,
+  OriginalRecord,
+} from "./proposed";
 
 /**
  * Header the dev-only stub server (dev/stub-server.mjs) sets on every incident answer. The real
@@ -46,6 +53,15 @@ export async function getIncidentEvents(incidentId: string, signal?: AbortSignal
   const data = await request<IncidentEventList>(`/incidents/${encodeURIComponent(incidentId)}/events`, { signal });
   if (!Array.isArray((data as Partial<IncidentEventList> | null)?.items)) {
     throw new ApiError("parse", "The ICD API sent an unexpected event list.");
+  }
+  return data;
+}
+
+/** GET /incidents/{incident_id}/key-facts: start, assets and indicators computed by code (P1). */
+export async function getKeyFacts(incidentId: string, signal?: AbortSignal): Promise<IncidentKeyFacts> {
+  const data = await request<IncidentKeyFacts>(`/incidents/${encodeURIComponent(incidentId)}/key-facts`, { signal });
+  if (!Array.isArray((data as Partial<IncidentKeyFacts> | null)?.attack_types)) {
+    throw new ApiError("parse", "The ICD API sent unexpected key facts.");
   }
   return data;
 }
