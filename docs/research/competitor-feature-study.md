@@ -1,11 +1,11 @@
-# Competitor feature study (Phase 1)
+# Competitor feature study
 
 | | |
 |---|---|
 | Project | ICD (Intelligent Cyber Defense) |
 | Scope | How open-source and commercial SOC products implement ten features ICD lacks or does differently (F-A to F-J) |
-| Status | Draft for team review, 25 Nov 2026. Read-only study: no ICD code changed |
-| Next | Phase 2 proposal (ranked features, designs, decisions). Nothing here is a decision |
+| Status | Sections 1 to 14: the read-only study (Phase 1, 25 Nov 2026, PR #51). Section 15: the outcome, meaning the decisions, what was built and what was rejected (Phase 4, 25 Nov 2026) |
+| Built | P1 incident key facts (PR #52, merged); P2 timed simulated containment (PR #53, open) |
 
 ## 1. Method and rules
 
@@ -349,6 +349,74 @@ Done because the brief names it ("auditing ICD's own frontend build"), and becau
 | IBM QRadar | Not part of features F-A to F-J; public docs not studied in this phase |
 | Licence of securityonion-docs text | `license.rst` describes the product, not the docs |
 
-## 15. Next step
+## 15. Outcome (Phases 2 to 4)
 
-Phase 2: rank candidate features from F-A to F-J by value to ICD's objectives, effort, risk and licence status. For each, give a design sketch, the files to touch, the tests, and what must not change. Mark the decisions that only the team can make: ICD's licence, LLM hosting, and any change to OD-04, OD-16, OD-17 or D2.
+### 15.1 Decisions (Phase 2, 25 Nov 2026)
+
+Seven candidates (P1 to P7) were proposed from sections 3 to 12. The project lead chose **D1: P1 and P2** and the recommendation for every other decision.
+
+| ID | Decision | Outcome |
+|---|---|---|
+| D1 | Which features, in what order | **P1, then P2.** P3 to P7 deferred (15.4) |
+| D2 | ICD's licence | **Deferred.** Not needed: P1 and P2 are clean-room and copy nothing, so no `THIRD_PARTY_NOTICES.md` was needed. Must be decided before any code is copied from GPL, AGPL or ELv2 sources |
+| D3 | Shared contract changes | **Avoided.** P1 and P2 add API shapes only (`docs/api/schemas/`); the six contracts are unchanged |
+| D4 | Scope against the approved specification | **Inform the supervisor first.** Both features are enhancements beyond the specification (`scope-change-note.md` says the roadmap adds none). **Open:** pending with the team (15.5) |
+| D5 | P2 durations | **60, then 120 and 240 min** for repeats of S2's simulated IP block; S1 and S3 never end on their own |
+| D6, D7 | P3 formula, P4 mapping owner | Not needed yet (P3 and P4 deferred) |
+| D8 | Branch naming | `claude/<slug>` as requested, not CONTRIBUTING's `<type>/<workstream>-<topic>`; each PR says so |
+| D9 | LLM hosting | **No feature depends on it.** Neither P1 nor P2 sends anything to a model, and no model was run |
+
+### 15.2 What was added
+
+| | P1 incident key facts | P2 timed simulated containment |
+|---|---|---|
+| From | F-I: the fields of Microsoft's incident summary (public docs) | F-B: Wazuh's stateful active response with revert after a timeout (v4.14.10, GPL-2.0, read only) |
+| Reuse mode | Clean-room | Clean-room |
+| PR | [#52](https://github.com/gradproject27/icd-platform/pull/52), **merged** 25 Nov 2026 (`8992488`) | [#53](https://github.com/gradproject27/icd-platform/pull/53), **open** (draft), CI green |
+| What it does | `GET /incidents/{id}/key-facts`: start, end, origin and six lists (attack types, hosts, internal and external IPs, ports, accounts), each with counts and cited event IDs, computed by code from the **flagged events only**. Shown on the incident detail and AI report pages | A succeeded S2's simulated IP block ends on its own after 60/120/240 min (`containment.toml`, `containment-v1`); the same IP while blocked extends it; the expiry loop reverts each block once and writes one `action.simulated` record (`trigger: containment_expiry`, SIMULATED). `GET /incidents/{id}/containments` and a box on the decision page |
+| Not changed | Contracts, evidence package, prompts, grounding checks, risk score, freeze gate, response engine; nothing sent to the model | Contracts, `response-v1`, 60 s window, freeze gate, catalogue, executor, every existing audit sequence (starting a block writes no audit record) |
+| Storage | None (a read) | Migration **0007** `simulated_containments` |
+| Tests (backend / frontend) | 1059 / 228 passed (+17 / +8) | 1087 / 234 passed on `main` + P2 (+28 / +6) |
+| Deviations from the Phase 2 sketch | Served by a new endpoint instead of inside `IncidentSummary`, so the existing shape and the incident list stay unchanged | Durations live in `containment.toml` instead of `response.toml`, so `response-v1` did not need a new version. `.github/workflows/ci.yml` now expects migration `0007` (one line, C1's file) |
+
+Both PRs were checked against a running stack (isolated Compose project, `stub` analysis backend, separate volumes, removed afterwards), with screenshots listed in each PR.
+
+### 15.3 What was rejected, and why
+
+| Idea | Source | Why rejected |
+|---|---|---|
+| Sigma rules via ElastAlert, Suricata or Zeek alerts | Security Onion (F-G) | A detection layer: breaks D2 (Rule 1). Sigma rules are also DRL 1.1, not a permissive licence |
+| pcap import | Security Onion (F-G) | ICD's datasets are CSV; tshark and Zeek are not installed (Phase 0); no `.pcap` in the repo |
+| Replacing ICD's risk formula with Elastic's | Elastic (F-C) | Overturns the team's method of 29 Oct and OD-04. The two scores answer different questions (section 5); an entity view would sit beside the incident score (P3) |
+| Renaming the Event contract to ECS names | ECS (F-J) | Breaks six contracts, the frontend types and the tests; an export view (P7) gives the same interoperability |
+| A BOTS v1–v3 parser | Splunk BOTS | C2-D21: no extra parsers before the Week 5 plan; the data format was not verified (data not downloaded) |
+| Copying any competitor code | All | ICD has no licence yet (D2), and the GPL, AGPL and ELv2 sources may not be copied; everything was re-implemented from the description |
+| Changing the 60 s window to AlertZero-style 72 h approvals | Elastic AlertZero (F-E) | Would reopen OD-17; only metadata and a "recent decisions" list were proposed (P6) |
+
+### 15.4 Deferred proposals (not built)
+
+| ID | Proposal | Effort | Waits for |
+|---|---|---|---|
+| P3 | Entity risk roll-up across incidents (rank-weighted sum, criticality odds update; never feeds the freeze gate) | M–L | D6: C3 agrees the formula, window and thresholds |
+| P4 | Attack-type → ATT&CK tactic table (deterministic, never given to the model, G3 unchanged) | S–M | D7: C3 writes it, AI1 reviews it; **MITRE ATT&CK terms of use not yet checked** |
+| P5 | Count and order markers on incidents (flagged events only) | M | A contract change (`Incident.patterns`, C3 review) and a team view on D2 |
+| P6 | Scenario metadata (impact, reversible) and a "decisions in the last 72 h" list | S–M | Team priority |
+| P7 | ECS export of events | S | Pinning a released ECS tag (the study read 9.6.0-dev) |
+
+### 15.5 Open items
+
+1. **D4:** inform the supervisor that P1 and P2 are enhancements beyond the approved specification, before #53 merges.
+2. **#53:** review and merge (team), then attach the three screenshots named in the PR. #52's two screenshots are also still to be attached.
+3. **D2:** choose ICD's licence before any reuse of competitor code is proposed.
+4. **README:** its status table and test counts (874/994) predate the study; with P1 and P2 the suite has 1087 backend and 234 frontend tests. Updating the README is C1's call.
+5. **MITRE ATT&CK terms** (for P4) and an **ECS release tag** (for P7): check before either is built.
+6. **Not verified** (section 14) stays open: REA's stars badge, Wazuh's exact frequency count, AlertZero's default confidence, Fusion and Defender internals.
+
+### 15.6 Every PR of this work
+
+| PR | Branch | Phase | Content | State |
+|---|---|---|---|---|
+| [#51](https://github.com/gradproject27/icd-platform/pull/51) | `claude/competitor-feature-study` | 1 | This study, sections 1 to 14 (docs only) | Merged (`8c95c24`) |
+| [#52](https://github.com/gradproject27/icd-platform/pull/52) | `claude/incident-key-facts` | 3 | P1 incident key facts | Merged (`8992488`) |
+| [#53](https://github.com/gradproject27/icd-platform/pull/53) | `claude/timed-containment` | 3 | P2 timed simulated containment; `main` merged in (`db658e0`), no force-push | Open (draft), CI green |
+| [#54](https://github.com/gradproject27/icd-platform/pull/54) | `claude/competitor-study-wrap-up` | 4 | Section 15 and the header (docs only) | Draft |
