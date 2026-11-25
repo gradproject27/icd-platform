@@ -8,6 +8,10 @@ export type {
   UserRole,
 } from "./audit-trail";
 export type {
+  ContainmentList,
+  SimulatedContainment,
+} from "./containment-list";
+export type {
   CurrentUser,
 } from "./current-user";
 export type {
@@ -29,6 +33,12 @@ export type {
   DecisionRequest,
 } from "./decision-request";
 export type {
+  EntityRiskIncident,
+  EntityRiskItem,
+  EntityRiskList,
+  RiskLevel,
+} from "./entity-risk-list";
+export type {
   ApiError,
   ErrorCode,
   ErrorResponse,
@@ -49,6 +59,7 @@ export type {
 export type {
   IncidentKeyFacts,
   KeyFactItem,
+  KeyFactPattern,
 } from "./incident-key-facts";
 export type {
   AnalysisStatus,
@@ -62,7 +73,6 @@ export type {
   RiskContributor,
   RiskFactor,
   RiskFlag,
-  RiskLevel,
   SplitReason,
 } from "./incident-list";
 export type {
@@ -87,9 +97,17 @@ export type {
   QuarantinedRecord,
 } from "./quarantine-page";
 export type {
+  RecentDecision,
+  RecentDecisionList,
+} from "./recent-decision-list";
+export type {
   ResponseWindow,
   ResponseWindowStatus,
 } from "./response-window";
+export type {
+  ScenarioCatalogue,
+  ScenarioItem,
+} from "./scenario-catalogue";
 export type {
   Upload,
 } from "./upload";

@@ -11,14 +11,21 @@
 //   GET  /incidents/{id}/audit                          AuditTrail
 //   GET  /incidents/{id}/decision                       DecisionRecord, or 404 when none
 //   POST /incidents/{id}/decisions                      DecisionRequest -> 201 DecisionRecord
+//   GET  /incidents/{id}/containments                   ContainmentList (P2, simulated IP blocks)
+//   GET  /entity-risk?upload_id=                     EntityRiskList (P3, read-only roll-up)
+//   GET  /scenarios                                     ScenarioCatalogue (P6, display metadata)
+//   GET  /decisions/recent?hours=                       RecentDecisionList (P6, from the audit trail)
 //   GET  /me                                            CurrentUser, or 401 not_authenticated (S8-D9)
 //   GET  /notifications?after=&limit=                   NotificationList (S8-D8)
 
 export type {
   AuditTrail,
+  ContainmentList,
   CurrentUser,
   DecisionRecord,
   DecisionRequest,
+  EntityRiskItem,
+  EntityRiskList,
   IncidentEntities,
   IncidentEventItem,
   IncidentEventList,
@@ -28,6 +35,11 @@ export type {
   KeyFactItem,
   NotificationList,
   OriginalRecord,
+  RecentDecision,
+  RecentDecisionList,
+  ScenarioCatalogue,
+  ScenarioItem,
+  SimulatedContainment,
 } from "./c1";
 
 /** The analyst's three options (spec section 8), and "no response needed" (T16, S8-D10). */

@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import containments from "../../../docs/api/examples/containment-list.json";
 import stubData from "../../dev/stub-data/incidents.json";
 import type { ResponseAction, UserRole } from "../api/contracts";
 import type { DecisionRecord, IncidentSummary } from "../api/proposed";
@@ -459,6 +460,20 @@ describe("PendingDecisionPage", () => {
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.queryByText(/No incident with ID/)).not.toBeInTheDocument();
+  });
+
+  it("shows the incident's simulated IP blocks with their planned end (P2)", async () => {
+    const fetchMock = serve("inc-stub-03");
+    const answer = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (url, init) =>
+      String(url) === "/api/incidents/inc-stub-03/containments" ? jsonResponse(containments) : answer(url, init),
+    );
+    renderPage("inc-stub-03");
+    await advance(0);
+
+    const box = screen.getByRole("region", { name: "Simulated IP blocks" });
+    expect(box).toHaveTextContent(/203\.0\.113\.10 until .* then it ends on its own/);
+    expect(screen.getByRole("group", { name: "Your decision" })).toBeInTheDocument();
   });
 
   it("reports a submit that cannot reach the API, keeps the choice, and records nothing", async () => {

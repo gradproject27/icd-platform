@@ -1,0 +1,25 @@
+# Entity risk roll-up across incidents (P3 of the competitor feature study, sections F-C and F-H;
+# values: decision D6). Read by entity_risk.py with tomllib. Any change must change config_version.
+#
+# A read-only view beside the incident score: it never changes an incident's score or level and
+# never reaches the freeze gate (OD-04, OD-16).
+config_version = "entity-risk-v1"
+
+# Incidents count when their last event is at most window_hours before the latest last event of
+# the incidents read (the dataset clock, like correlation; ingestion time is never used).
+window_hours = 24
+
+[score]
+# Rank-weighted sum of the entity's incident scores, highest first: sum(score_i / i^exponent) over
+# the top sample_size, divided by sum(1 / i^exponent) over 1..sample_size, so the result is 0-100.
+# The same shape as Elastic's entity risk score (p-series, exponent 1.5), re-implemented; the
+# smaller sample (10, not 500) lets one incident at 100 show as 50 and ten as 100.
+exponent = 1.5
+sample_size = 10
+
+[thresholds]
+# Flags only; nothing acts on them. score: at or above (ICD's High band starts at 70).
+# tactics: distinct ATT&CK tactics (tactics.toml) of the entity's flagged events, at or above
+# (Splunk ES's finding-based detection uses mitre_tactic_id_count >= 3 over 7 days).
+score = 70
+tactics = 3

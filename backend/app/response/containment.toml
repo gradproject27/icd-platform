@@ -1,0 +1,14 @@
+# Timed simulated containment (P2 of the competitor feature study, PR #51, section F-B; values:
+# decision D5). Read by containment.py with tomllib. Any change to a value must change
+# config_version. Kept apart from response.toml so response-v1 and its behaviour stay as they are.
+#
+# Only the simulated IP block of S2 ends on its own. Isolation (S1, S2) and a disabled account (S3)
+# never end on their own: only an analyst releases isolation (S4, response spec section 9).
+# Everything is simulated: the revert is a record, nothing real is blocked or unblocked.
+config_version = "containment-v1"
+
+[block_ip]
+# Minutes a simulated IP block lasts: the first block, then each repeat of the same IP. A block is a
+# repeat when the previous block of that IP ended at most the largest value before it starts; past
+# the end of the list the last value stays. An empty list turns timed blocks off.
+minutes = [60, 120, 240]

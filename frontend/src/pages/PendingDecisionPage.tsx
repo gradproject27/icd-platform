@@ -12,6 +12,8 @@ import { PageState } from "../components/PageState";
 import { formatLocalDateTime, formatRemaining } from "../countdown/clock";
 import { useResponseWindow, type ResponseWindowView } from "../hooks/useResponseWindow";
 import { IncidentHeader } from "../incidents/IncidentHeader";
+import { ScenarioImpactLine } from "../incidents/ScenarioMeta";
+import { SimulatedBlocks } from "../incidents/SimulatedBlocks";
 import { STUB_BANNER } from "../incidents/format";
 import { INCIDENT_STATUS_LABELS, SCENARIO_LABELS } from "../labels";
 
@@ -209,6 +211,10 @@ function DecisionPanel({ incidentId }: { incidentId: string }) {
 
       {decision && <DecisionRecorded decision={decision} />}
       {expiredUndecided && <SystemSelection outcome={systemOutcome} />}
+      <SimulatedBlocks
+        incidentId={incidentId}
+        refreshKey={`${decision?.action?.state ?? ""}|${systemOutcome?.status ?? ""}`}
+      />
       {(!decision || escalated) && (
         <DecisionChoice
           incidentId={incidentId}
@@ -434,6 +440,7 @@ function DecisionChoice({ incidentId, summary, view, canDecide, onDecided }: Dec
               <strong>{recommended}</strong> {SCENARIO_LABELS[recommended]}.
             </p>
             <p className="note">Chosen by the catalogue lookup, not by the AI.</p>
+            <ScenarioImpactLine scenarioId={recommended} />
           </>
         ) : (
           <p>No catalogue scenario matches this incident.</p>

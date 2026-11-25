@@ -352,6 +352,15 @@ function JobPanel({ jobId, acceptedUploadId, onStartOver }: JobPanelProps) {
           <p>
             <Link to="/incidents">View incidents</Link>
           </p>
+          {uploadId && (
+            <p>
+              <Link to={`/entities?upload_id=${encodeURIComponent(uploadId)}`}>Entity risk of this upload</Link>
+              {" · "}
+              <a href={`/api/uploads/${encodeURIComponent(uploadId)}/ecs`} download>
+                Download its events as ECS (NDJSON)
+              </a>
+            </p>
+          )}
           <p className="note">Each incident&apos;s AI report appears on its page once its analysis is done.</p>
           <button type="button" onClick={onStartOver}>
             Upload another file

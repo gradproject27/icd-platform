@@ -106,6 +106,7 @@ The demo of the two freeze outcomes (analyst decides, system selects at expiry) 
 | `response_windows` | `window_id`, `incident_id`, `status` (`open`, `decided`, `expired`), `started_at`, `deadline_at`, `recommended_scenario_id`, `closed_at` | One open window per incident (partial unique index) |
 | `response_actions` | Each simulated action as the ResponseAction contract JSON | A check constraint forces `simulated = true` |
 | `audit_records` | Each AuditRecord | A trigger refuses UPDATE and DELETE (C-14, decision D7) |
+| `simulated_containments` (migration 0007) | Each simulated IP block with a planned end: target, the action and incident that started it and that last extended it, `offence`, `extended`, `started_at`, `ends_at`, `status` (`active`, `reverted`), `reverted_at`, `config_version` | At most one active block per IP (partial unique index); `simulated = true` and `ends_at > started_at` by check constraints. See section 7a |
 
 ## 7. Clock and expiry (decisions D4 and D5)
 
@@ -113,6 +114,25 @@ The demo of the two freeze outcomes (analyst decides, system selects at expiry) 
 - The conditional updates compare against that time: a decision only closes a window whose `deadline_at` is still in the future; the expiry only closes one whose `deadline_at` has passed. Whichever commits first wins. No grace period.
 - Tests use `FakeClock` and move it by hand (`clock.advance(59.999)`), so no test waits.
 - The expiry loop polls every 0.5 s on its own thread in the `worker` container, so a long ingest job never delays an expiry. After a restart it processes every overdue window once; the audit record keeps the real `deadline_at` and the delay (`late_ms`).
+
+## 7a. Timed simulated containment (P2, decision D5)
+
+A simulated IP block now ends on its own, the way Wazuh's stateful active response reverts an action when its timeout expires. This is a clean-room re-implementation from the competitor feature study (PR #51, section F-B); no Wazuh code was used.
+
+- **What is timed:** only the IP block of a **succeeded S2** (analyst approval or system selection at the deadline). Isolation (S1, S2) and a disabled account (S3) never end on their own; only an analyst ends isolation (S4, spec section 9).
+- **How long:** `backend/app/response/containment.toml` (`containment-v1`), kept apart from `response.toml` so `response-v1` stays as it is. The first block of an IP lasts 60 min; a **repeat** (the IP's previous block ended at most 240 min, the largest value, before) lasts 120 min, then 240 min, and stays at 240. An empty list turns timed blocks off.
+- **Same IP while blocked:** another S2 on that IP extends the active block to `now + its duration`, never shortening it, and counts the extension (`extended`, `last_action_id`, `last_incident_id`).
+- **Start:** the row is written in the action's transaction (rule TX). **No audit record is added at the start**: the action's own `action.simulated` record is the start, so every existing audit trail is unchanged.
+- **End:** the expiry loop (section 7) also reverts every active block whose `ends_at` has passed, exactly once even with two workers or after a restart (conditional `UPDATE … WHERE status = 'active'`). Each revert writes one `action.simulated` record (`simulated = true`, actor `system`) on the incident that set the current end, with `trigger: containment_expiry`, `reverts: block_ip`, `ip`, `containment_id`, `reverted_action_id`, `offence`, `started_at`, `ends_at` and `label: SIMULATED`. The incident's status, isolation, window and actions do not change. Nothing real is ever blocked or unblocked.
+- **Read:** `GET /incidents/{id}/containments` ([api-incidents.md](api-incidents.md)); the pending-decision page shows each block and its planned end.
+
+## 7b. Scenario metadata and recent decisions (P6)
+
+From the competitor feature study (PR #51, section F-E: the `impact` and `reversible` metadata and the "closed actions of the last 72 hours" list of Elastic's AlertZero), re-implemented. **Display only**: the catalogue lookup, the freeze gate and the executor never read it, so `response-v1` and OD-17 are unchanged.
+
+- `backend/app/response/scenario_meta.toml` (`scenario-meta-v1`): impact and how each simulated scenario is reverted. S1 medium (an analyst ends the isolation); S2 high (the IP block ends on its own, section 7a; an analyst ends the isolation); S3 high (an analyst ends the isolation and re-enables the account); S4 low (an analyst can isolate again). Every scenario must have an entry.
+- `GET /scenarios` serves the catalogue with this metadata; the configuration page shows it, and the pending-decision page shows the recommended scenario's impact and revert.
+- `GET /decisions/recent?hours=72` lists analyst decisions and system selections from the audit trail, newest first; the review page shows them.
 
 ## 8. Handoff to C4 (state names and deadline field)
 

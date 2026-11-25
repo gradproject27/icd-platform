@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { AiReportPage } from "./pages/AiReportPage";
 import { AuditTrailPage } from "./pages/AuditTrailPage";
 import { ConfigurationPage } from "./pages/ConfigurationPage";
+import { EntityRiskPage } from "./pages/EntityRiskPage";
 import { EntityGraphPage } from "./pages/EntityGraphPage";
 import { ExplanationPage } from "./pages/ExplanationPage";
 import { IncidentDetailPage } from "./pages/IncidentDetailPage";
@@ -24,6 +25,7 @@ export function App() {
         <Route path="upload" element={<UploadPage />} />
         <Route path="incidents" element={<IncidentListPage />} />
         <Route path="review" element={<ReviewQueuePage />} />
+        <Route path="entities" element={<EntityRiskPage />} />
         <Route path="configuration" element={<ConfigurationPage />} />
         <Route path="incidents/:incidentId" element={<IncidentDetailPage />} />
         <Route path="incidents/:incidentId/report" element={<AiReportPage />} />

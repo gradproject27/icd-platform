@@ -4,11 +4,15 @@ import { ApiError } from "./errors";
 import type { AnalysisReport, AuditRecord } from "./contracts";
 import type {
   AuditTrail,
+  ContainmentList,
+  EntityRiskList,
   IncidentEventList,
   IncidentKeyFacts,
   IncidentList,
   IncidentSummary,
   OriginalRecord,
+  RecentDecisionList,
+  ScenarioCatalogue,
 } from "./proposed";
 
 /**
@@ -62,6 +66,43 @@ export async function getKeyFacts(incidentId: string, signal?: AbortSignal): Pro
   const data = await request<IncidentKeyFacts>(`/incidents/${encodeURIComponent(incidentId)}/key-facts`, { signal });
   if (!Array.isArray((data as Partial<IncidentKeyFacts> | null)?.attack_types)) {
     throw new ApiError("parse", "The ICD API sent unexpected key facts.");
+  }
+  return data;
+}
+
+/** GET /incidents/{incident_id}/containments: simulated IP blocks and their planned end (P2). */
+export async function getContainments(incidentId: string, signal?: AbortSignal): Promise<ContainmentList> {
+  const data = await request<ContainmentList>(`/incidents/${encodeURIComponent(incidentId)}/containments`, { signal });
+  if (!Array.isArray((data as Partial<ContainmentList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected containment list.");
+  }
+  return data;
+}
+
+/** GET /entity-risk: the read-only entity roll-up across incidents (P3), of one upload if given. */
+export async function getEntityRisk(uploadId?: string, signal?: AbortSignal): Promise<EntityRiskList> {
+  const query = uploadId ? `?upload_id=${encodeURIComponent(uploadId)}` : "";
+  const data = await request<EntityRiskList>(`/entity-risk${query}`, { signal });
+  if (!Array.isArray((data as Partial<EntityRiskList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected entity risk list.");
+  }
+  return data;
+}
+
+/** GET /scenarios: the simulated catalogue with impact and how each scenario is reverted (P6). */
+export async function getScenarios(signal?: AbortSignal): Promise<ScenarioCatalogue> {
+  const data = await request<ScenarioCatalogue>("/scenarios", { signal });
+  if (!Array.isArray((data as Partial<ScenarioCatalogue> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected scenario catalogue.");
+  }
+  return data;
+}
+
+/** GET /decisions/recent?hours=: analyst decisions and system selections, newest first (P6). */
+export async function getRecentDecisions(hours = 72, signal?: AbortSignal): Promise<RecentDecisionList> {
+  const data = await request<RecentDecisionList>(`/decisions/recent?hours=${hours}`, { signal });
+  if (!Array.isArray((data as Partial<RecentDecisionList> | null)?.items)) {
+    throw new ApiError("parse", "The ICD API sent an unexpected decision list.");
   }
   return data;
 }

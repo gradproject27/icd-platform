@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "SimulatedContainment": {
+      "additionalProperties": false,
+      "description": "A simulated IP block that ends on its own (P2, containment.toml). Nothing real is blocked.",
+      "properties": {
+        "action_id": {
+          "description": "The action that started the block.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "config_version": {
+          "description": "containment.toml config_version used.",
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "containment_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Containment Id",
+          "type": "string"
+        },
+        "ends_at": {
+          "description": "Planned end; the worker reverts the block then.",
+          "format": "date-time",
+          "title": "Ends At",
+          "type": "string"
+        },
+        "extended": {
+          "description": "How often the same IP was blocked again while blocked.",
+          "minimum": 0,
+          "title": "Extended",
+          "type": "integer"
+        },
+        "incident_id": {
+          "description": "The incident whose action started the block.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "block_ip",
+          "description": "Only S2's simulated IP block is timed.",
+          "title": "Kind",
+          "type": "string"
+        },
+        "last_action_id": {
+          "description": "The action that set the current end.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Last Action Id",
+          "type": "string"
+        },
+        "last_incident_id": {
+          "description": "The incident whose action set the current end.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "title": "Last Incident Id",
+          "type": "string"
+        },
+        "offence": {
+          "description": "1 for a first block; n for the n-th repeat in a row.",
+          "minimum": 1,
+          "title": "Offence",
+          "type": "integer"
+        },
+        "reverted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "When the block ended; null while active.",
+          "title": "Reverted At"
+        },
+        "simulated": {
+          "const": true,
+          "description": "Always true: nothing real is blocked.",
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "reverted"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "target": {
+          "description": "The blocked (simulated) source IP.",
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "containment_id",
+        "kind",
+        "target",
+        "incident_id",
+        "action_id",
+        "last_incident_id",
+        "last_action_id",
+        "offence",
+        "extended",
+        "started_at",
+        "ends_at",
+        "status",
+        "reverted_at",
+        "config_version",
+        "simulated"
+      ],
+      "title": "SimulatedContainment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /incidents/{incident_id}/containments: blocks it started or extended, oldest first.",
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/SimulatedContainment"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "title": "ContainmentList",
+  "type": "object"
+}

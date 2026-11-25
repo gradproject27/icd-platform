@@ -13,6 +13,7 @@ import os
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response, WebSocket, WebSocketDisconnect
@@ -27,9 +28,13 @@ from app.analysis.store import latest_report
 from app.api.errors import ApiException
 from app.api.schemas import (
     AuditTrail,
+    ContainmentList,
     CurrentUser,
     DecisionRecord,
     DecisionRequest,
+    EntityRiskIncident,
+    EntityRiskItem,
+    EntityRiskList,
     ErrorCode,
     IncidentEntities,
     IncidentEventItem,
@@ -40,7 +45,12 @@ from app.api.schemas import (
     JobAccepted,
     NotificationList,
     OriginalRecord,
+    RecentDecision,
+    RecentDecisionList,
     ResponseWindow,
+    ScenarioCatalogue,
+    ScenarioItem,
+    SimulatedContainment,
 )
 from app.contracts import (
     AnalysisReport,
@@ -51,6 +61,12 @@ from app.contracts import (
     IncidentStatus,
     ScenarioId,
     UserRole,
+)
+from app.correlation.entity_risk import (
+    EntityRiskConfig,
+    EntityRiskReport,
+    entity_risk,
+    load_entity_risk_config,
 )
 from app.db import get_engine
 from app.evidence.store import load_masking_map, unmask_report
@@ -65,6 +81,7 @@ from app.response.engine import DecisionRefused, RefusalReason, ResponseEngine, 
 from app.response.engine import DecisionType as EngineDecision
 from app.response.lifecycle import TransitionRefused
 from app.response.models import AuditRow, IncidentLifecycleRow
+from app.response.scenario_meta import load_scenario_meta
 from app.settings import get_settings
 
 router = APIRouter()
@@ -168,6 +185,57 @@ def list_incidents(
             query = query.where(IncidentRow.upload_id == upload_id)
         rows = list(session.scalars(query.limit(MAX_INCIDENTS)))
     return IncidentList(items=_summaries(engine, rows))
+
+
+@router.get("/entity-risk", response_model=EntityRiskList)
+def entity_risk_list(
+    upload_id: Annotated[str | None, Query(max_length=128)] = None,
+) -> EntityRiskList:
+    """P3: the entity roll-up over the stored incidents (of one upload, if given). A read."""
+    config = load_entity_risk_config()
+    with Session(get_engine()) as session:
+        query = select(IncidentRow).order_by(IncidentRow.last_event_at.desc())
+        if upload_id is not None:
+            query = query.where(IncidentRow.upload_id == upload_id)
+        rows = list(session.scalars(query.limit(MAX_INCIDENTS)))
+        events = [
+            Event.model_validate(data)
+            for data in session.scalars(
+                select(EventRow.data)
+                .join(
+                    IncidentEventRow,
+                    (EventRow.upload_id == IncidentEventRow.upload_id)
+                    & (EventRow.event_id == IncidentEventRow.event_id),
+                )
+                .where(IncidentEventRow.incident_id.in_([r.incident_id for r in rows]))
+            )
+        ]
+    report = entity_risk([Incident.model_validate(r.data) for r in rows], events, config)
+    return entity_risk_answer(report, config)
+
+
+def entity_risk_answer(report: EntityRiskReport, config: EntityRiskConfig) -> EntityRiskList:
+    """The API shape of an entity roll-up report (also writes the docs/api example)."""
+    return EntityRiskList(
+        config_version=report.config_version,
+        tactics_config_version=report.tactics_config_version,
+        window_start=report.window_start,
+        window_end=report.window_end,
+        score_threshold=config.score_threshold,
+        tactics_threshold=config.tactics_threshold,
+        items=[
+            EntityRiskItem(
+                entity=item.entity,
+                score=item.score,
+                level=item.level,
+                incident_count=item.incident_count,
+                incidents=[EntityRiskIncident(incident_id=i, score=s) for i, s in item.incidents],
+                tactics=item.tactics,
+                flags=item.flags,
+            )
+            for item in report.items
+        ],
+    )
 
 
 @router.get("/incidents/{incident_id}", response_model=IncidentSummary)
@@ -329,6 +397,84 @@ def response_window(incident_id: str, response: EngineDep) -> JSONResponse:
     body = view.as_json()
     ResponseWindow.model_validate(body)
     return JSONResponse(body)
+
+
+@router.get("/incidents/{incident_id}/containments", response_model=ContainmentList)
+def incident_containments(incident_id: str, response: EngineDep) -> ContainmentList:
+    """Simulated IP blocks the incident started or extended, with their planned end (P2)."""
+    with Session(get_engine()) as session:
+        _incident_row(session, incident_id)
+    return ContainmentList(
+        items=[
+            SimulatedContainment.model_validate(asdict(c))
+            for c in response.containments_of(incident_id)
+        ]
+    )
+
+
+@router.get("/scenarios", response_model=ScenarioCatalogue)
+def scenario_catalogue(response: EngineDep) -> ScenarioCatalogue:
+    """P6: the simulated catalogue v0 with impact and how each scenario is reverted (display)."""
+    meta = load_scenario_meta()
+    return ScenarioCatalogue(
+        config_version=response.config.config_version,
+        meta_version=meta.config_version,
+        items=[
+            ScenarioItem(
+                scenario_id=scenario.scenario_id,
+                title=scenario.title,
+                automatic=scenario.automatic,
+                needs=sorted(scenario.needs),
+                impact=meta.scenarios[scenario.scenario_id].impact,
+                reversible=meta.scenarios[scenario.scenario_id].reversible,
+                revert=meta.scenarios[scenario.scenario_id].revert,
+            )
+            for scenario in sorted(response.config.scenarios.values(), key=lambda s: s.scenario_id)
+        ],
+    )
+
+
+RECENT_LIMIT = 200
+
+
+@router.get("/decisions/recent", response_model=RecentDecisionList)
+def recent_decisions(
+    response: EngineDep, hours: Annotated[int, Query(ge=1, le=168)] = 72
+) -> RecentDecisionList:
+    """P6: analyst decisions and system selections of the last hours, newest first (audit)."""
+    until = response.clock.now()
+    since = until - timedelta(hours=hours)
+    with Session(get_engine()) as session:
+        rows = session.scalars(
+            select(AuditRow)
+            .where(
+                AuditRow.event_type.in_(
+                    [AuditEventType.DECISION_RECORDED.value, AuditEventType.SCENARIO_SELECTED.value]
+                ),
+                AuditRow.occurred_at >= since,
+                AuditRow.occurred_at <= until,
+            )
+            .order_by(AuditRow.seq.desc())
+            .limit(RECENT_LIMIT)
+        ).all()
+    items = []
+    for row in rows:
+        details = row.details or {}
+        system = row.event_type == AuditEventType.SCENARIO_SELECTED.value
+        items.append(
+            RecentDecision(
+                record_id=row.record_id,
+                incident_id=row.incident_id,
+                occurred_at=row.occurred_at,
+                by="system" if system else "analyst",
+                actor=row.actor,
+                actor_role=row.actor_role,
+                decision="system_selection" if system else details.get("decision"),
+                scenario_id=details.get("scenario_id"),
+                comment=None if system else details.get("comment"),
+            )
+        )
+    return RecentDecisionList(hours=hours, since=since, until=until, items=items)
 
 
 # ---- decisions -------------------------------------------------------------------------------

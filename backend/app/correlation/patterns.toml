@@ -1,0 +1,32 @@
+# Count and order markers over an incident's flagged events (P5 of the competitor feature study,
+# sections F-A and F-D). Read by patterns.py with tomllib. Any change must change config_version.
+#
+# Markers only (Rule 1, D2): they run over events the dataset already flagged, never flag an
+# event, never infer a label and never change a score (OD-04). Time is the dataset clock.
+config_version = "patterns-v1"
+
+# Count rule, the idea of Wazuh's frequency / timeframe / same_source_ip (v4.14.10, read only):
+# at least min_events flagged events of one attack type from one source-side entity, the first
+# and the last at most within_minutes apart (inclusive, like the correlation window).
+[[count]]
+id = "repeat-from-source"
+title = "The same attack type from the same source, repeated"
+min_events = 3
+within_minutes = 15
+
+# Order rules, the idea of Elastic's EQL "sequence by ... with maxspan" (read only): on one host,
+# a flagged event of kill-chain stage first_stage, then a later one of then_stage, at most
+# within_minutes after it. Stages come from correlation.toml [kill_chain].
+[[sequence]]
+id = "recon-then-exploitation"
+title = "Reconnaissance, then exploitation, on the same host"
+first_stage = 1
+then_stage = 2
+within_minutes = 60
+
+[[sequence]]
+id = "exploitation-then-installation"
+title = "Exploitation, then installation, on the same host"
+first_stage = 2
+then_stage = 3
+within_minutes = 60
