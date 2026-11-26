@@ -397,7 +397,7 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 
 Steps 1 and 2 are built in `backend/app/confidence/` (step 4); features, split and runbook: [confidence-classifier.md](confidence-classifier.md). Step 3 is built in the same package (step 5); groups, prompt, calibration and runbook: [confidence-llm.md](confidence-llm.md). Steps 4 to 6 are built in step 6a: `app/confidence/stack.py` (stacker, split conformal, clamp; fitted on real groups by `app.confidence.stack_fit`) and `EventConfidences` in `correlation/risk.py`; a flagged event without a model value keeps its dataset's fixed `C` with flag `confidence_fixed` (RV1-D16).
 
-**Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark.
+**Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark. Checked by `python -m app.confidence.validate` at the end of the single pipeline job (`tools/confidence/risk_v1_pipeline.sbatch`, runbook [risk-v1-hpc-runbook.md](risk-v1-hpc-runbook.md), RV1-D18); conformal coverage is checked at 0.95 ± 0.02.
 
 ### 9A.3 When the score is computed (RV1-D3)
 
