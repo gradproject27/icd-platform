@@ -249,6 +249,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 |---|---|---|---|
 | [docs/how-to-run-prototype.md](docs/how-to-run-prototype.md) | C1 | Week 4 | How to run the prototype: start the stack, reset, demo paths A and B, the UNSW demo slice, troubleshooting |
 | [docs/demo-runs/2026-11-24-paths-a-b.md](docs/demo-runs/2026-11-24-paths-a-b.md) | All | Week 4 (task 25) | Rehearsal record of demo paths A and B through the browser, with the audit rows |
+| [docs/demo-runs/2026-11-26-workstation-replay.md](docs/demo-runs/2026-11-26-workstation-replay.md) | AI1 | Week 4 (tasks 25, 31) | Prototype run on the faculty workstation (rootless Podman) with the 27B model's replayed answers: fixture 13 of 13 analysed, incident A freezes, path B completes; UNSW demo slice 6 of 6 analysed, none freezes |
 | [docs/contracts-v1.md](docs/contracts-v1.md) | C3 | T1-07 | Shared data contracts v1: every field of the six contracts, decisions applied, review questions |
 | [docs/correlation-and-risk-design.md](docs/correlation-and-risk-design.md) | C3 | T1-08 | Correlation and risk score design: relatedness keys, time window, grouping, risk formula, evaluation |
 | [docs/response-workflow-spec.md](docs/response-workflow-spec.md) | C5 | T1-13 | Response workflow specification: lifecycle states, transitions, freeze, 60-second window, simulated catalogue |
