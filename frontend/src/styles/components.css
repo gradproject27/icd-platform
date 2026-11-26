@@ -124,7 +124,7 @@
 
 .table thead th {
   position: sticky;
-  top: 0;
+  top: var(--sticky-offset, 0px);
   z-index: var(--z-sticky);
   background: var(--raised);
   color: var(--muted);

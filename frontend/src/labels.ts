@@ -119,3 +119,27 @@ export const NO_FREEZE_REASON_LABELS: Record<string, string> = {
   window_already_open: "A response window is already open",
   no_target_host: "No host to isolate",
 };
+
+// Page names for the app shell: sidebar links and breadcrumbs (SOC UI phase 2). The sidebar link
+// names are the accessible names the tests query; do not change them.
+export const PAGE_LABELS = {
+  overview: "Overview",
+  incidents: "Incidents",
+  review: "Review",
+  entities: "Entities",
+  upload: "Upload",
+  configuration: "Configuration",
+  notFound: "Page not found",
+} as const;
+
+// Incident sub-pages, the same names as the links on the incident detail page.
+export const INCIDENT_SUBPAGE_LABELS = {
+  report: "AI report",
+  decision: "Pending decision",
+  explanation: "Explanation",
+  graph: "Entity graph",
+  audit: "Audit trail",
+} as const;
+
+// The shell's SIMULATED strip (decision D5, wireframes section 2.4).
+export const SIMULATED_BANNER_TEXT = "Responses in ICD are SIMULATED. No real system is changed.";
