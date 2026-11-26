@@ -96,6 +96,11 @@ class RiskFlag(StrEnum):
     ASSET_UNKNOWN = "asset_unknown"
     OUTCOME_UNKNOWN = "outcome_unknown"
     SEVERITY_DEFAULT = "severity_default"
+    # contracts 1.4 (risk-v1, design 9A.2 and 9A.3)
+    CONFIDENCE_FIXED = "confidence_fixed"  # a flagged event had no model value: fixed C used
+    NEEDS_REVIEW = "needs_review"  # conformal 95%: attack and not attack both stay possible
+    LLM_PENDING = "llm_pending"  # initial score: the LLM opinion has not run yet
+    LLM_UNAVAILABLE = "llm_unavailable"  # the LLM step failed: the initial score stays current
 
 
 class RiskContributor(_Contract):
@@ -134,6 +139,16 @@ class RiskAssessment(_Contract):
         default_factory=list,
         max_length=3,
         description="The strongest evidence groups, strongest first (contracts 1.1).",
+    )
+    phase: Literal["initial", "final"] | None = Field(
+        default=None,
+        description="risk-v1 scoring phase (contracts 1.4): initial before the LLM opinion, "
+        "final after it; null for a risk-v0 score.",
+    )
+    confidence_versions: dict[str, str] = Field(
+        default_factory=dict,
+        description="Versions behind the event confidence C (contracts 1.4): classifier, "
+        "calibrators, stacker, LLM model and prompt; empty for a risk-v0 score.",
     )
 
 

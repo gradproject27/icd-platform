@@ -15,6 +15,7 @@ from sqlalchemy import Engine, func, insert, select
 from sqlalchemy.orm import Session
 
 from app.api.schemas import DatasetSource, ErrorCode, IntakeCounts, JobStage
+from app.confidence.handoff import pending
 from app.contracts import Event
 from app.incidents.store import IncidentConflict, MissingEvents, correlate_upload
 from app.ingest.interface import IntakeContext, ParseError, Parser, Quarantined
@@ -144,6 +145,7 @@ def run_ingest(
     settings: Settings,
     clock: Callable[[], datetime],
     parsers: dict[DatasetSource, Parser] = PARSERS,
+    confidence_pending: bool = False,
 ) -> dict[str, Any]:
     """Process one upload. Returns the final counts, or raises JobFailure or JobLost."""
     assert job.upload_id is not None
@@ -211,7 +213,10 @@ def run_ingest(
     # Decision D3 (docs/incident-storage.md): the job is done only once its incidents are stored.
     progress(JobStage.CORRELATING, counts)
     try:
-        correlate_upload(engine, upload.upload_id, clock(), owner=(job.job_id, worker_id))
+        correlate_upload(
+            engine, upload.upload_id, clock(), owner=(job.job_id, worker_id),
+            confidences=pending() if confidence_pending else None,
+        )  # fmt: skip
     except (IncidentConflict, MissingEvents, ValueError) as exc:
         raise JobFailure(ErrorCode.CORRELATION_FAILED, f"Correlation failed: {exc}") from exc
     return counts

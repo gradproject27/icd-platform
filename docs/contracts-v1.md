@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Owner | C3 (Detection & Correlation) |
-| Version | 1.3 (`SCHEMA_VERSION` = `"1.0"`: 1.1 to 1.3 are additive) |
+| Version | 1.4 (`SCHEMA_VERSION` = `"1.0"`: 1.1 to 1.4 are additive) |
 | Status | **Frozen at M1 (25 Nov 2026).** Agreed by the team (section 7, decision M1-D1). Later changes follow the change rule in [contracts/README.md](../contracts/README.md) |
 | Tasks | T1-07, and the contract side of T1-09 |
 | Reviewers | C2 (Event, EvidencePackage), AI1 (EvidencePackage, AnalysisReport), C5 (ResponseAction, AuditRecord, Incident), C1 (Incident) |
@@ -151,8 +151,10 @@ In the tables below, **Required** means the key must be present. "default" means
 | `computed_at` | UTC datetime | yes | n/a | OD-04 |
 | `likelihood` | number 0 to 1 | no (1.1) | `null` = not given. Combined evidence strength `L` | Team, 29 Oct 2026 |
 | `impact` | number 0 to 1 | no (1.1) | `null` = not given. Asset impact `I` (FIPS 199) | Team, 29 Oct 2026 |
-| `flags` | list of `asset_unknown` \| `outcome_unknown` \| `severity_default` | no (1.1) | `[]` | Team, 29 Oct 2026 |
+| `flags` | list of `asset_unknown` \| `outcome_unknown` \| `severity_default`; since 1.4 also `confidence_fixed` \| `needs_review` \| `llm_pending` \| `llm_unavailable` (risk-v1, design §9A.2 and §9A.3) | no (1.1) | `[]` | Team, 29 Oct 2026; 1.4: RV1-D16 |
 | `top_contributors` | list of RiskContributor, max 3 | no (1.1) | `[]` | Team, 29 Oct 2026 |
+| `phase` | `initial` \| `final` | no (1.4) | `null` = a risk-v0 score. risk-v1 phase: before or after the LLM opinion (design §9A.3) | RV1-D3, RV1-D17 |
+| `confidence_versions` | object, string to string | no (1.4) | `{}` = a risk-v0 score. Versions behind `C`: classifier, calibrators, stacker, LLM model and prompt | RV1-D17 |
 
 **RiskFactor**: `name` (string, min 1), `value` (number 0 to 1, the normalized factor), `weight` (number ≥ 0), `contribution` (number, the points the factor adds to the score), `reason` (string or `null`, the plain-language reason; added in 1.1).
 
@@ -440,7 +442,7 @@ The provisional models in `backend/app/llm/contracts.py` are deleted. The adapte
 | AuditRecord | C5 | agreed, 25 Nov 2026 (team; recorded by AI1) |
 | Incident | C5, C1 | agreed, 25 Nov 2026 (team; recorded by AI1) |
 
-Frozen at version 1.3 on 25 Nov 2026 (M1 gate). The agreement was reported by AI1 for the team; each owner can confirm on the PR that records it.
+Frozen at version 1.4 on 26 Nov 2026 (M1 gate; agreed at 1.3 on 25 Nov 2026, then set to 1.4 by the user on 26 Nov 2026 so the freeze includes risk-v1's additive fields: `RiskFlag` values `confidence_fixed`, `needs_review`, `llm_pending`, `llm_unavailable` and `RiskAssessment.phase` / `confidence_versions`, RV1-D16 and RV1-D17). The agreement was reported by AI1 for the team; each owner can confirm on the PR that records it.
 
 ## 8. Review questions for AI1 (T1-09)
 

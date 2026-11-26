@@ -327,7 +327,7 @@ def test_demo_prints_the_fixture_incidents(capsys):
 
     assert main([str(FIXTURES / "events.json")]) == 0
     out = capsys.readouterr().out
-    assert "43 events -> 13 incidents (correlation-v1, risk-v0)" in out
+    assert "43 events -> 13 incidents (correlation-v2, risk-v0)" in out
     assert incident_id_for("fx-002") in out
 
 

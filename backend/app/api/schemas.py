@@ -57,6 +57,7 @@ class DatasetSource(StrEnum):
 class JobKind(StrEnum):
     INGEST = "ingest"
     ANALYSIS = "analysis"
+    CONFIDENCE = "confidence"  # risk-v1 phase 2 on HPC (design 9A.3, RV1-D17)
 
 
 class JobState(StrEnum):

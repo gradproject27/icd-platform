@@ -103,6 +103,10 @@ export const RISK_FLAG_LABELS: Record<RiskFlag, string> = {
   asset_unknown: "Asset not in the inventory: worst-case impact assumed",
   outcome_unknown: "Outcome not in the data: treated as succeeded",
   severity_default: "No severity in the data: default severity used",
+  confidence_fixed: "No model confidence for an event: fixed dataset value used",
+  needs_review: "Confidence uncertain at 95%: review the evidence",
+  llm_pending: "Initial score: the LLM opinion has not run yet",
+  llm_unavailable: "LLM opinion unavailable: initial score kept",
 };
 
 export const LINK_KEY_LABELS: Record<LinkKey, string> = {

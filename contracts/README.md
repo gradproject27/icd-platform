@@ -1,6 +1,6 @@
 # Shared contracts
 
-Owner: **C3**. **Frozen at the M1 gate on 25 Nov 2026** at contracts **1.3** (`schema_version` stays `"1.0"`: 1.1 to 1.3 only added optional fields; decision M1-D1). Every field is documented in [docs/contracts-v1.md](../docs/contracts-v1.md).
+Owner: **C3**. **Frozen at the M1 gate on 25 Nov 2026** at contracts **1.4** (`schema_version` stays `"1.0"`: 1.1 to 1.4 only added optional fields; decision M1-D1). Every field is documented in [docs/contracts-v1.md](../docs/contracts-v1.md).
 
 The six contracts are Event, Incident, EvidencePackage, AnalysisReport, ResponseAction and AuditRecord.
 
@@ -35,4 +35,4 @@ After the freeze, any change to a contract:
 2. lists the affected contracts in the PR description;
 3. regenerates the schemas (and updates the examples and `docs/contracts-v1.md`);
 4. bumps `SCHEMA_VERSION` in `backend/app/contracts/common.py`, and the `schema_version` literal of each top-level model, if the change is not backward compatible;
-5. gets a decision-log entry and a dated version note in `docs/contracts-v1.md` (1.4, 1.5, ...). A change that only adds optional fields with a default keeps `schema_version` `"1.0"`; any other change needs the team's agreement first, because every component reads these contracts.
+5. gets a decision-log entry and a dated version note in `docs/contracts-v1.md` (1.5, 1.6, ...). A change that only adds optional fields with a default keeps `schema_version` `"1.0"`; any other change needs the team's agreement first, because every component reads these contracts.
