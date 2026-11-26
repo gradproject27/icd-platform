@@ -180,7 +180,7 @@ Parsers exist for `fixture` and `unsw-nb15` (C2, [docs/ingestion.md](docs/ingest
 
 ## Shared contracts
 
-ICD's components exchange six contracts: **Event**, **Incident**, **EvidencePackage**, **AnalysisReport**, **ResponseAction** and **AuditRecord**. C3 owns them. They are version `1.0` (`SCHEMA_VERSION` in `backend/app/contracts/common.py`) and are a **draft until frozen at M1**.
+ICD's components exchange six contracts: **Event**, **Incident**, **EvidencePackage**, **AnalysisReport**, **ResponseAction** and **AuditRecord**. C3 owns them. They are **frozen at M1 (25 Nov 2026)** at version 1.3 (`SCHEMA_VERSION` `"1.0"` in `backend/app/contracts/common.py`; 1.1 to 1.3 only added optional fields). Changes follow the change rule in [contracts/README.md](contracts/README.md).
 
 | What | Where | Edited by hand |
 |---|---|---|
@@ -266,6 +266,7 @@ Files written inside the container are not on your disk, so you can also run Ale
 | [docs/ai1-week3-analysis.md](docs/ai1-week3-analysis.md) | AI1 | Week 3 | Report schema v2 (AnalysisReport 1.3 with grounding counts), prompt v2 and injection hardening, schema retry and failure handling, the 20-incident grounding validation, the report cache, evaluation and ablation design, decisions AI1-W3-D1 to D9 |
 | [docs/ai1-runbook.md](docs/ai1-runbook.md) | AI1, for C2 | Week 3 | How to run the AI analysis without AI1: backend, model, package, run, schema check, grounding review, dry-run record |
 | [docs/ai1-demo-replay.md](docs/ai1-demo-replay.md) | AI1 + C2 | Week 4 (task 31) | Demo fallback without the cluster: record the 27B model's answers for the demo files, replay them through the normal checks; decisions AI1-W4-D1 to D4 |
+| [docs/ai1-llm-opinion.md](docs/ai1-llm-opinion.md) | AI1, for C3 | risk-v1 | LLM opinion `p_llm` per evidence group for C3's event confidence: label-blind view, samples or logprob, Platt calibration, output format, decisions AI1-OP-D1 to D6 |
 | [docs/ai1-runs/README.md](docs/ai1-runs/README.md) | AI1 | | Model-run records, failures included, with the raw answers and what each run showed: seven local runs (`llama3.2:3b`, Qwen3-4B-Instruct; runs 6 and 7 are the Week 2 evaluation), the 27B model on the faculty cluster with prompts v0 and v1 (runs 8 and 9), and Qwen3-4B with prompt v1 (run 10) |
 | [docs/ingestion.md](docs/ingestion.md) | C2 | Week 2 | Ingestion: UNSW-NB15 parser, field mapping, normalizer rules, event types, quarantine reason codes, intake summary, original-record link |
 | [contracts/event-types.json](contracts/event-types.json) | C2 | Week 2 | `event_type` vocabulary and the source column each dataset maps it from |

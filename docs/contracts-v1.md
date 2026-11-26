@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | Owner | C3 (Detection & Correlation) |
-| Version | 1.0 (`SCHEMA_VERSION`) |
-| Status | **Draft until frozen at M1.** Every contract is pending agreement (section 7) |
+| Version | 1.4 (`SCHEMA_VERSION` = `"1.0"`: 1.1 to 1.4 are additive) |
+| Status | **Frozen at M1 (25 Nov 2026).** Agreed by the team (section 7, decision M1-D1). Later changes follow the change rule in [contracts/README.md](../contracts/README.md) |
 | Tasks | T1-07, and the contract side of T1-09 |
 | Reviewers | C2 (Event, EvidencePackage), AI1 (EvidencePackage, AnalysisReport), C5 (ResponseAction, AuditRecord, Incident), C1 (Incident) |
 
@@ -435,12 +435,14 @@ The provisional models in `backend/app/llm/contracts.py` are deleted. The adapte
 
 | Contract | Agree with | Status |
 |---|---|---|
-| Event | C2 | pending |
-| EvidencePackage | AI1 (T1-09), C2 | pending |
-| AnalysisReport | AI1 (T1-09) | pending |
-| ResponseAction | C5 | pending |
-| AuditRecord | C5 | pending |
-| Incident | C5, C1 | pending |
+| Event | C2 | agreed, 25 Nov 2026 (team; recorded by AI1) |
+| EvidencePackage | AI1 (T1-09), C2 | agreed, 25 Nov 2026 (team; recorded by AI1) |
+| AnalysisReport | AI1 (T1-09) | agreed, 25 Nov 2026 (team; recorded by AI1) |
+| ResponseAction | C5 | agreed, 25 Nov 2026 (team; recorded by AI1) |
+| AuditRecord | C5 | agreed, 25 Nov 2026 (team; recorded by AI1) |
+| Incident | C5, C1 | agreed, 25 Nov 2026 (team; recorded by AI1) |
+
+Frozen at version 1.4 on 26 Nov 2026 (M1 gate; agreed at 1.3 on 25 Nov 2026, then set to 1.4 by the user on 26 Nov 2026 so the freeze includes risk-v1's additive fields: `RiskFlag` values `confidence_fixed`, `needs_review`, `llm_pending`, `llm_unavailable` and `RiskAssessment.phase` / `confidence_versions`, RV1-D16 and RV1-D17). The agreement was reported by AI1 for the team; each owner can confirm on the PR that records it.
 
 ## 8. Review questions for AI1 (T1-09)
 
