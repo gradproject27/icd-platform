@@ -151,7 +151,7 @@ In the tables below, **Required** means the key must be present. "default" means
 | `computed_at` | UTC datetime | yes | n/a | OD-04 |
 | `likelihood` | number 0 to 1 | no (1.1) | `null` = not given. Combined evidence strength `L` | Team, 29 Oct 2026 |
 | `impact` | number 0 to 1 | no (1.1) | `null` = not given. Asset impact `I` (FIPS 199) | Team, 29 Oct 2026 |
-| `flags` | list of `asset_unknown` \| `outcome_unknown` \| `severity_default` | no (1.1) | `[]` | Team, 29 Oct 2026 |
+| `flags` | list of `asset_unknown` \| `outcome_unknown` \| `severity_default`; since 1.4 also `confidence_fixed` \| `needs_review` \| `llm_pending` \| `llm_unavailable` (risk-v1, design §9A.2 and §9A.3) | no (1.1) | `[]` | Team, 29 Oct 2026; 1.4: RV1-D16 |
 | `top_contributors` | list of RiskContributor, max 3 | no (1.1) | `[]` | Team, 29 Oct 2026 |
 
 **RiskFactor**: `name` (string, min 1), `value` (number 0 to 1, the normalized factor), `weight` (number ≥ 0), `contribution` (number, the points the factor adds to the score), `reason` (string or `null`, the plain-language reason; added in 1.1).

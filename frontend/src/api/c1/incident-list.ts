@@ -27,7 +27,14 @@ export type EventRole = "flagged" | "context";
  * This interface was referenced by `IncidentList`'s JSON-Schema
  * via the `definition` "RiskFlag".
  */
-export type RiskFlag = "asset_unknown" | "outcome_unknown" | "severity_default";
+export type RiskFlag =
+  | "asset_unknown"
+  | "outcome_unknown"
+  | "severity_default"
+  | "confidence_fixed"
+  | "needs_review"
+  | "llm_pending"
+  | "llm_unavailable";
 /**
  * Risk level derived from the score by C3's configurable thresholds (FR-20).
  *

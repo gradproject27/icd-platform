@@ -85,3 +85,17 @@ Keep `groups-*.manifest.json` next to each groups file: the calibrator reads the
 - The negatives are benign traffic with a wrong claim. They do not cover an attack labelled with the wrong attack class; that case is not part of the label's confidence in risk-v1 (the technique comes from the dataset, RV1-D4).
 - A group at run time is all flagged events of one technique and entity in an incident, which can span more than one hour; the calibration groups are one hour. The description uses at most 50 flows either way.
 - The labels come from the dataset producers; agreement with them is not proof they are right (as in step 4).
+
+## 7. Step 6a: combining p_clf and p_llm
+
+`backend/app/confidence/stack.py` combines the two values into the event confidence `C` (design §9A.2 steps 4 to 6, decision RV1-D16), and `python -m app.confidence.stack_fit` fits it on the real groups:
+
+```
+python -m app.confidence.stack_fit --out run-stack \
+    --model <step 4 run>/both/model.joblib --llm-calibrator run-llm/llm_calibrator.json \
+    --calibration groups-calibration.jsonl opinions-calibration.jsonl \
+    --test groups-test.jsonl opinions-test.jsonl \
+    --input nf-unsw-nb15-v3=<path> --input nf-cse-cic-ids2018-v3=<path>
+```
+
+It reads the CSVs again for the 47 features of each group's flows, gives each flow its calibrated `p_clf` and its group's `p_llm`, fits the stacker on one half of the calibration groups and the conformal threshold on the other, and reports on the test groups: AUC, Brier score, ECE, conformal coverage (target 95%) and the share of events that would get `needs_review`. Output `stacker.json` (plain JSON) and `stack_report.json` (counts and measures only).

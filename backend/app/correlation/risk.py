@@ -24,6 +24,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fnmatch import fnmatchcase
 from pathlib import Path
 
+from app.confidence.values import Confidence
 from app.contracts import (
     Event,
     EventRole,
@@ -38,6 +39,20 @@ from app.correlation.config import CorrelationConfig, load_config
 from app.correlation.levels import DEFAULT_RISK_CONFIG_PATH, RiskThresholds, load_thresholds
 
 TOP_CONTRIBUTORS = 3
+
+
+@dataclass(frozen=True)
+class EventConfidences:
+    """risk-v1 C per flagged event (design 9A.2), computed by app.confidence before scoring.
+
+    version names the classifier, calibrators and stacker behind the values; it is appended to
+    config_version, so a score with model C never shares a version with a risk-v0 score. A
+    flagged event missing from values keeps its dataset's fixed C and the incident gets the
+    flag confidence_fixed (user, 26 Nov 2026).
+    """
+
+    values: Mapping[str, Confidence]
+    version: str
 
 
 @dataclass(frozen=True)
@@ -123,6 +138,8 @@ class EventStrength:
     outcome: float
     outcome_known: bool
     decay: float
+    confidence_source: str = "dataset"  # dataset (fixed value) or model (risk-v1 C)
+    confidence_flags: tuple[str, ...] = ()
 
     @property
     def strength(self) -> float:
@@ -148,7 +165,11 @@ def entity_of(event: Event) -> str:
 
 
 def event_strength(
-    event: Event, reference: datetime, config: RiskConfig, correlation: CorrelationConfig
+    event: Event,
+    reference: datetime,
+    config: RiskConfig,
+    correlation: CorrelationConfig,
+    model: Confidence | None = None,
 ) -> EventStrength:
     attack_type = event.label.attack_type
     source = _text(event, "severity")
@@ -180,12 +201,14 @@ def event_strength(
         entity=entity_of(event),
         severity=severity,
         severity_source=severity_source,
-        confidence=config.dataset_confidence.get(
-            event.provenance.dataset_id, config.default_confidence
-        ),
+        confidence=model.c
+        if model is not None
+        else config.dataset_confidence.get(event.provenance.dataset_id, config.default_confidence),
         outcome=outcome,
         outcome_known=known,
         decay=decay,
+        confidence_source="dataset" if model is None else "model",
+        confidence_flags=() if model is None else model.flags,
     )
 
 
@@ -223,8 +246,11 @@ def score_incident(
     evaluated_at: datetime,
     config: RiskConfig,
     correlation: CorrelationConfig,
+    confidences: EventConfidences | None = None,
 ) -> RiskAssessment:
-    """Score one incident. reference is the dataset clock W; evaluated_at is only stored."""
+    """Score one incident. reference is the dataset clock W; evaluated_at is only stored.
+
+    Without confidences the score is risk-v0 exactly; with them, C is the model's (risk-v1)."""
     flagged = sorted(
         (events[link.event_id] for link in incident.events if link.role == EventRole.FLAGGED),
         key=lambda e: (e.timestamp, e.event_id),
@@ -232,7 +258,10 @@ def score_incident(
     if not flagged:
         # The contract already requires a flagged event; this keeps the error explicit.
         raise ValueError(f"{incident.incident_id}: no flagged event to score")
-    strengths = [event_strength(e, reference, config, correlation) for e in flagged]
+    models = confidences.values if confidences is not None else {}
+    strengths = [
+        event_strength(e, reference, config, correlation, models.get(e.event_id)) for e in flagged
+    ]
 
     # Strongest event per (technique, entity); ties keep the earliest event.
     groups: dict[tuple[str, str], EventStrength] = {}
@@ -261,6 +290,13 @@ def score_incident(
         flags.append(RiskFlag.OUTCOME_UNKNOWN)
     if any(s.severity_source == "default" for s in strengths):
         flags.append(RiskFlag.SEVERITY_DEFAULT)
+    if confidences is not None:
+        if any(s.confidence_source == "dataset" for s in strengths):
+            flags.append(RiskFlag.CONFIDENCE_FIXED)
+        raised = {f for s in strengths for f in s.confidence_flags}
+        for flag in (RiskFlag.NEEDS_REVIEW, RiskFlag.LLM_PENDING, RiskFlag.LLM_UNAVAILABLE):
+            if flag.value in raised:
+                flags.append(flag)
 
     top = ranked[0]
     likelihood_reason = (
@@ -297,7 +333,9 @@ def score_incident(
                 reason=impact_reason,
             ),
         ],
-        config_version=config.config_version,
+        config_version=config.config_version
+        if confidences is None
+        else f"{config.config_version}+{confidences.version}",
         computed_at=evaluated_at,
         likelihood=likelihood,
         impact=impact,
@@ -310,13 +348,23 @@ def score_incident(
                 event_id=s.event_id,
                 reason=(
                     f"severity {_fmt(s.severity)} ({s.severity_source}) x confidence "
-                    f"{_fmt(s.confidence)} x outcome {_fmt(s.outcome)}"
+                    f"{_fmt(s.confidence)}{_confidence_note(s, models)} x outcome {_fmt(s.outcome)}"
                     f"{'' if s.outcome_known else ' (unknown)'} x decay {_fmt(s.decay)}"
                 ),
             )
             for s in ranked[:TOP_CONTRIBUTORS]
         ],
     )
+
+
+def _confidence_note(s: EventStrength, models: Mapping[str, Confidence]) -> str:
+    """The inputs behind a model C (design 9A.3: p_clf, p_llm and C of the strongest event)."""
+    model = models.get(s.event_id)
+    if model is None:
+        return " (dataset value)" if models else ""
+    parts = [f"p_clf {_fmt(model.p_clf)}" if model.p_clf is not None else "no p_clf"]
+    parts.append(f"p_llm {_fmt(model.p_llm)}" if model.p_llm is not None else "no p_llm")
+    return f" ({', '.join(parts)})"
 
 
 def dataset_clock(events: Iterable[Event]) -> datetime:
@@ -331,6 +379,7 @@ def score_incidents(
     config: RiskConfig | None = None,
     correlation: CorrelationConfig | None = None,
     reference: datetime | None = None,
+    confidences: EventConfidences | None = None,
 ) -> tuple[Incident, ...]:
     """Score every incident of a batch against the same dataset clock W.
 
@@ -352,7 +401,9 @@ def score_incidents(
             raise ValueError(
                 f"{incident.incident_id}: a flagged link points to a non-flagged event"
             )
-        risk = score_incident(incident, by_id, reference, evaluated_at, config, correlation)
+        risk = score_incident(
+            incident, by_id, reference, evaluated_at, config, correlation, confidences
+        )
         # Re-validated, so a scored incident is checked by the contract like any other.
         scored.append(Incident.model_validate({**incident.model_dump(), "risk": risk.model_dump()}))
     return tuple(scored)

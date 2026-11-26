@@ -38,15 +38,15 @@ def test_unsw_covers_every_attack_type_of_correlation_config():
     assert set(load_config().attack_type_stages) == set(MAPS["unsw-nb15"].labels)
 
 
-def test_only_shellcode_changes_stage_against_correlation_config():
-    # Decision of 25 Nov 2026: follow ATT&CK for Shellcode (3 -> 2); risk-v1 (step 6) applies it.
+def test_correlation_config_follows_the_attack_map_stages():
+    # Decision of 25 Nov 2026: follow ATT&CK for Shellcode (3 -> 2), applied in step 6a.
     today = load_config().attack_type_stages
     changed = {
         label: (today[label], row.stage)
         for label, row in MAPS["unsw-nb15"].labels.items()
         if today[label] != row.stage
     }
-    assert changed == {"Shellcode": (3, 2)}
+    assert changed == {}
 
 
 def test_generic_and_analysis_keep_their_stage_as_category_only():
