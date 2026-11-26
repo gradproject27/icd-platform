@@ -342,7 +342,11 @@
       "enum": [
         "asset_unknown",
         "outcome_unknown",
-        "severity_default"
+        "severity_default",
+        "confidence_fixed",
+        "needs_review",
+        "llm_pending",
+        "llm_unavailable"
       ],
       "title": "RiskFlag",
       "type": "string"

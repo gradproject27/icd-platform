@@ -96,6 +96,11 @@ class RiskFlag(StrEnum):
     ASSET_UNKNOWN = "asset_unknown"
     OUTCOME_UNKNOWN = "outcome_unknown"
     SEVERITY_DEFAULT = "severity_default"
+    # contracts 1.4 (risk-v1, design 9A.2 and 9A.3)
+    CONFIDENCE_FIXED = "confidence_fixed"  # a flagged event had no model value: fixed C used
+    NEEDS_REVIEW = "needs_review"  # conformal 95%: attack and not attack both stay possible
+    LLM_PENDING = "llm_pending"  # initial score: the LLM opinion has not run yet
+    LLM_UNAVAILABLE = "llm_unavailable"  # the LLM step failed: the initial score stays current
 
 
 class RiskContributor(_Contract):
