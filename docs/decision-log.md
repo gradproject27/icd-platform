@@ -41,6 +41,11 @@ Status: **proposed** = written down, waiting for the team; **approved** = agreed
 | AI1-W3-D7 | 19 Nov 2026 | Re-analysis with `force`; the newest report under a key is the one the cache returns. | approved (AI1, 25 Nov 2026) | §8 |
 | AI1-W3-D8 | 19 Nov 2026 | Backends are chosen with `ICD_ANALYSIS_BACKEND` and `ICD_LLM_*`; the cluster key is read from the environment only, never stored or logged. | approved (AI1, 25 Nov 2026) | `backend/app/analysis/backends.py` |
 | AI1-W3-D9 | 19 Nov 2026 | The 20-incident grounding set is synthetic (13 fixture incidents + 7 injection copies); real UNSW-NB15 incidents are validated with `--from-db`, counts only. | approved (AI1, 25 Nov 2026) | §6 |
+| AI1-W4-D1 | 25 Nov 2026 | Demo fallback = `replay` backend (task 31): the 27B model's answers recorded per incident, keyed by the masked package without `incident_id`, `package_id`, `created_at` (plus prompt version), so they match after the demo reset and a re-upload; the report cache cannot (reset empties it, IDs are upload-scoped, key holds the model). | proposed | [ai1-demo-replay.md](ai1-demo-replay.md) §1, §2 |
+| AI1-W4-D2 | 25 Nov 2026 | A replayed report is labelled: model `replay:<recorded model>` (shown on the report page); `generated_by` = the site that really ran it. Replayed answers pass the same checks and freeze gate as live ones. | proposed | §2 |
+| AI1-W4-D3 | 25 Nov 2026 | Failures are recorded as they happened: a failed answer fails again on replay, a missing answer is a backend error; no recording means a failed analysis. The stub never stands in for the model. | proposed | §2 |
+| AI1-W4-D4 | 25 Nov 2026 | Recording runs offline (`replay record`: no Docker, only the venv and the cluster tunnel), building packages as the worker does; a Postgres test in CI proves the platform finds every recorded answer. `replay export` records from a running platform. | proposed | §3 |
+| AI1-W4-D5 | 26 Nov 2026 | The app's output cap (`ICD_LLM_MAX_TOKENS`, analysis backend) goes from 4,900 to 8,000 tokens: recording the UNSW demo slice, the 27B answer for the largest incident (DoS, risk 99) was cut off mid-JSON at 4,900 on both tries (P1). The model's context is 32K. The evaluation tools in `tools/ai1/` keep 4,900 so recorded runs stay repeatable. | proposed | [ai1-demo-replay.md](ai1-demo-replay.md) §3 |
 | Measurement | 19 Nov 2026 | Re-check of the 81 recorded real answers (runs 6 to 10): factual claims supported 0.982 (Qwen3-4B, v0), 0.898 (llama3.2 3B, v0), 0.962 (27B, v0), **1.000 (27B, v1)**, 0.972 (Qwen3-4B, v1); no answer followed the canary. | measured | §6 |
 
 ## C3: Correlation & Risk
@@ -73,5 +78,5 @@ Owner-approved decisions, to be confirmed by the whole team in one meeting and t
 
 - **To ratify (35):** W3-D15 (C2 part), C2-D1 to C2-D4, C2-D5, C2-D6, C2-D7, W3-D16 (C2 part), C2-D12, C2-D13, C2-D14, C2-D15, C2-D16, C2-D17, C2-D18, C2-D19, C2-D20, C2-D21, AI1-W3-D1, AI1-W3-D2, AI1-W3-D3, AI1-W3-D5, AI1-W3-D7, AI1-W3-D8, AI1-W3-D9, RV1-D1, RV1-D2, RV1-D3, RV1-D4, RV1-D5, RV1-D6, RV1-D8, RV1-D9, RV1-D10, RV1-D11, RV1-D12, RV1-D13.
 - **Measurements to acknowledge (3):** W3-D14 (C2 part), TD-5 measurement, and 1 unnumbered measurement row in the AI1 section.
-- **To decide first, still proposed (3):** TD-5 budget (C2, for team approval); AI1-W3-D4 (C3 to approve); AI1-W3-D6 (C1 to approve).
+- **To decide first, still proposed (8):** TD-5 budget (C2, for team approval); AI1-W3-D4 (C3 to approve); AI1-W3-D6 (C1 to approve); AI1-W4-D1 to D5 (demo replay fallback and output cap, AI1).
 - **Open (1):** RV1-D7 (risk inputs R2 to R6).

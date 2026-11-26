@@ -80,6 +80,7 @@ Set `ICD_ANALYSIS_BACKEND` in `.env` and restart the worker (`docker compose up 
 | `stub` (default) | No compute; demos and CI | none |
 | `openai_http` | Ollama on a laptop, or the faculty cluster's model service through its SSH tunnel ([ai1-runbook.md](ai1-runbook.md) §3) | `ICD_LLM_ENDPOINT` (from the container use `host.docker.internal`), `ICD_LLM_MODEL`, `ICD_LLM_API_KEY` if needed |
 | `hpc_batch` | Slurm cluster over ssh (`tools/c1/icd_analyze.sbatch`) | `ICD_HPC_*`; built and tested against a fake cluster only, not yet run on a real HPC |
+| `replay` | The demo without the cluster: the 27B model's recorded answers for the fixture and the demo slice ([ai1-demo-replay.md](ai1-demo-replay.md)) | `ICD_REPLAY_FILES` (optional; default every file in `backend/app/analysis/replay_data/`) |
 
 Real-model runs have not been made inside the app yet because no compute is available; the AI1 model runs in `docs/ai1-runs/` were made with AI1's tools.
 
