@@ -1,0 +1,8 @@
+# For the risk-v1 confidence classifier (backend/app/confidence) on HPC or a laptop.
+# Not used by the API image. Python 3.12 or newer.
+numpy
+pydantic==2.14.1   # the scripts import backend/app (the NetFlow v3 header)
+pyarrow==21.0.0
+scikit-learn==1.7.2
+# optional, for --model lightgbm:
+# lightgbm
