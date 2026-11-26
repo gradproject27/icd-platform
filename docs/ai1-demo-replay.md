@@ -53,13 +53,26 @@ Build the demo slice first ([fixtures/demo/README.md](../fixtures/demo/README.md
 
 It then calls the model through the analysis service with the same tries as the analysis job (prompt v2, one schema retry). `test_offline_recording_is_replayed_by_the_platform` proves this in CI: it records offline, uploads the same file to the platform, and every incident finds its recording. With a running platform, `python -m app.analysis.replay export --upload <id>` records the stored valid reports instead.
 
+**Output cap.** Record with the app default of 8,000 tokens (AI1-W4-D5). At 4,900 the answer for the slice's largest incident was cut off mid-JSON.
+
 **What to commit.** The two JSON files. They hold masked answers only (tokens such as `ip-01`, no real IP, host or user), the same kind of text as `docs/ai1-runs/`. Note the result line ("N incidents: V valid, F failed") in the PR.
 
-## 4. Use in the demo
+## 4. Recorded on 26 Nov 2026
+
+The 27B model `qwen3.8-27b-awq-int4` on the faculty's GPUStack service, prompt v2, temperature 0, thinking off. Recorded on the workstation `csit-csc`; the files hold masked answers only (no IP, host or user values).
+
+| File | Incidents | Valid | Freezes in the demo |
+|---|---|---|---|
+| `fixture.json` (C3's fixture, output cap 4,900) | 13 | 13, all on the first try | **1**: Backdoors, risk 100 High, confidence 0.93 (paths A and B) |
+| `unsw-nb15-demo-slice.json` (C2's slice, checksum matches; output cap 8,000) | 6 | 6, all on the first try | **0**: the two High incidents (DoS 99 and DoS 70) have confidence 0.73 and 0.0, under the 0.75 gate |
+
+The first slice recording at 4,900 tokens cut the DoS 99 answer off mid-JSON (P1, both tries); the slice was recorded again at 8,000 (AI1-W4-D5). On UNSW data the real model, like the stub, does not reach the freeze threshold: paths A and B are shown with the fixture, and the UNSW slice shows real-data incidents with real-model reports that wait for a human.
+
+## 5. Use in the demo
 
 `.env`: `ICD_ANALYSIS_BACKEND=replay`, then `docker compose up -d --build worker` (the recordings are in the image) and the demo reset. Steps: [demo-script.md](demo-script.md) §0.
 
-## 5. Limits
+## 6. Limits
 
 - Only the recorded files have answers.
 - A recording is tied to the prompt version, the risk configuration and the masking. A change to any of them changes the keys, and the worker then fails those incidents: record again.

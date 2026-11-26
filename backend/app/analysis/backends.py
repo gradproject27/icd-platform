@@ -16,7 +16,7 @@ The platform picks one from environment variables (`generator_from_env`, runbook
     ICD_LLM_SITE           local (default) | hpc   -> AnalysisReport.generated_by
     ICD_LLM_API_KEY        optional bearer key (the cluster's); read here, never stored or logged
     ICD_LLM_TIMEOUT_SECONDS  default 600
-    ICD_LLM_MAX_TOKENS     default 4900
+    ICD_LLM_MAX_TOKENS     default 8000 (AI1-W4-D5; 4900 cut the longest answers off)
     ICD_LLM_NO_THINKING    1 = ask Qwen3-style servers to answer without thinking
     ICD_LLM_JSON_SCHEMA    1 = send the output schema as response_format (not on the cluster)
 
@@ -67,7 +67,7 @@ class OpenAIHttpGenerator:
         revision: str | None = None,
         api_key: str | None = None,
         timeout_seconds: float = 600,
-        max_tokens: int = 4900,
+        max_tokens: int = 8000,
         temperature: float = 0.0,
         no_thinking: bool = False,
         json_schema: bool = False,
@@ -159,7 +159,7 @@ def generator_from_env(env: Mapping[str, str] | None = None) -> Generator:
             revision=env.get("ICD_LLM_REVISION") or None,
             api_key=env.get("ICD_LLM_API_KEY") or None,
             timeout_seconds=float(env.get("ICD_LLM_TIMEOUT_SECONDS", "600")),
-            max_tokens=int(env.get("ICD_LLM_MAX_TOKENS", "4900")),
+            max_tokens=int(env.get("ICD_LLM_MAX_TOKENS", "8000")),
             no_thinking=_flag(env, "ICD_LLM_NO_THINKING"),
             json_schema=_flag(env, "ICD_LLM_JSON_SCHEMA"),
         )
