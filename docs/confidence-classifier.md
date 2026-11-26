@@ -34,6 +34,8 @@ Pass marks (design 9A.2, proposal): ECE ≤ 0.05 and AUC ≥ 0.95 on held-out bl
 
 ## 4. Running it
 
+To run all risk-v1 steps on the real data in one job, with the validation report at the end, use [risk-v1-hpc-runbook.md](risk-v1-hpc-runbook.md). The steps below run this part alone.
+
 ### On HPC (Slurm)
 
 1. Copy the two CSVs to the cluster, for example `/scratch/$USER/icd-data/NF-UNSW-NB15-v3.csv` and `NF-CSE-CIC-IDS2018-v3.csv` (never into the repo).
