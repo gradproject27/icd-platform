@@ -68,4 +68,4 @@ python -m app.confidence.train --prepared ../runs/conf/prepared --out ../runs/co
 
 - Only NetFlow v3 events can be scored. Events from the original UNSW-NB15 CSVs, OTRF and Precinct6 have other fields, so in step 6 they get a flagged fallback `C` instead of a classifier value.
 - The labels themselves come from the dataset producers; a model that agrees with them is not proof that they are right. Step 7 checks calibration and agreement, not the truth of the labels.
-- Conformal `needs_review` (9A.2 step 5) and stacking with the LLM (9A.2 step 4) need `p_llm`, so they come in step 6 of the plan.
+- Conformal `needs_review` (9A.2 step 5) and stacking with the LLM (9A.2 step 4) need `p_llm` ([confidence-llm.md](confidence-llm.md), step 5 of the plan), so they come in step 6.

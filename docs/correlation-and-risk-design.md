@@ -395,7 +395,7 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 | 5. Uncertainty | Split conformal prediction at 95%: when both "attack" and "not attack" stay possible, the event gets flag `needs_review` | flag |
 | 6. Range and fallback | `C` is clamped to 0.05 to 1, so one uncertain event never erases an attack. Without `p_llm`, `C` = calibrated `p_clf` and the incident carries `llm_pending` (phase 1) or `llm_unavailable` (the LLM step failed) | `C`, flags |
 
-Steps 1 and 2 are built in `backend/app/confidence/` (step 4); features, split and runbook: [confidence-classifier.md](confidence-classifier.md).
+Steps 1 and 2 are built in `backend/app/confidence/` (step 4); features, split and runbook: [confidence-classifier.md](confidence-classifier.md). Step 3 is built in the same package (step 5); groups, prompt, calibration and runbook: [confidence-llm.md](confidence-llm.md).
 
 **Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark.
 
