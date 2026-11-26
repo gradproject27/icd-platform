@@ -4,17 +4,19 @@
     openai_http   any OpenAI-compatible chat endpoint: Ollama on a laptop (site "local") or the
                   faculty cluster's model service through its SSH tunnel (site "hpc")
     hpc_batch     C1's Slurm batch handoff (app/hpc/batch.py, ICD_HPC_* variables there)
+    replay        recorded real-model answers for the demo (app/analysis/replay.py, task 31)
 
 The platform picks one from environment variables (`generator_from_env`, runbook section 2):
 
-    ICD_ANALYSIS_BACKEND   stub (default) | openai_http | hpc_batch
+    ICD_ANALYSIS_BACKEND   stub (default) | openai_http | hpc_batch | replay
+    ICD_REPLAY_FILES       replay only: comma-separated recordings (default: replay_data/)
     ICD_LLM_ENDPOINT       for example http://127.0.0.1:11434/v1/chat/completions
     ICD_LLM_MODEL          the served model name, for example qwen3.8-27b-awq-int4
     ICD_LLM_REVISION       optional weights commit; the model pin becomes <model>@<revision>
     ICD_LLM_SITE           local (default) | hpc   -> AnalysisReport.generated_by
     ICD_LLM_API_KEY        optional bearer key (the cluster's); read here, never stored or logged
     ICD_LLM_TIMEOUT_SECONDS  default 600
-    ICD_LLM_MAX_TOKENS     default 4900
+    ICD_LLM_MAX_TOKENS     default 8000 (AI1-W4-D5; 4900 cut the longest answers off)
     ICD_LLM_NO_THINKING    1 = ask Qwen3-style servers to answer without thinking
     ICD_LLM_JSON_SCHEMA    1 = send the output schema as response_format (not on the cluster)
 
@@ -65,7 +67,7 @@ class OpenAIHttpGenerator:
         revision: str | None = None,
         api_key: str | None = None,
         timeout_seconds: float = 600,
-        max_tokens: int = 4900,
+        max_tokens: int = 8000,
         temperature: float = 0.0,
         no_thinking: bool = False,
         json_schema: bool = False,
@@ -157,14 +159,18 @@ def generator_from_env(env: Mapping[str, str] | None = None) -> Generator:
             revision=env.get("ICD_LLM_REVISION") or None,
             api_key=env.get("ICD_LLM_API_KEY") or None,
             timeout_seconds=float(env.get("ICD_LLM_TIMEOUT_SECONDS", "600")),
-            max_tokens=int(env.get("ICD_LLM_MAX_TOKENS", "4900")),
+            max_tokens=int(env.get("ICD_LLM_MAX_TOKENS", "8000")),
             no_thinking=_flag(env, "ICD_LLM_NO_THINKING"),
             json_schema=_flag(env, "ICD_LLM_JSON_SCHEMA"),
         )
+    if backend == "replay":  # task 31: recorded real-model answers, app/analysis/replay.py
+        from app.analysis.replay import generator_from_env as replay_from_env
+
+        return replay_from_env(env)  # type: ignore[return-value]
     if backend == "hpc_batch":  # C1 decision F4: Slurm batch handoff, app/hpc/batch.py
         from app.hpc.batch import HpcBatchConfig, HpcBatchGenerator
 
         return HpcBatchGenerator(HpcBatchConfig.from_env(env))  # type: ignore[return-value]
     raise ValueError(
-        f"unknown ICD_ANALYSIS_BACKEND {backend!r}; use stub, openai_http or hpc_batch"
+        f"unknown ICD_ANALYSIS_BACKEND {backend!r}; use stub, openai_http, hpc_batch or replay"
     )

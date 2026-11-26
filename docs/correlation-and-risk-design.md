@@ -395,7 +395,9 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 | 5. Uncertainty | Split conformal prediction at 95%: when both "attack" and "not attack" stay possible, the event gets flag `needs_review` | flag |
 | 6. Range and fallback | `C` is clamped to 0.05 to 1, so one uncertain event never erases an attack. Without `p_llm`, `C` = calibrated `p_clf` and the incident carries `llm_pending` (phase 1) or `llm_unavailable` (the LLM step failed) | `C`, flags |
 
-**Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark.
+Steps 1 and 2 are built in `backend/app/confidence/` (step 4); features, split and runbook: [confidence-classifier.md](confidence-classifier.md). Step 3 is built in the same package (step 5); groups, prompt, calibration and runbook: [confidence-llm.md](confidence-llm.md). Steps 4 to 6 are built in step 6a: `app/confidence/stack.py` (stacker, split conformal, clamp; fitted on real groups by `app.confidence.stack_fit`) and `EventConfidences` in `correlation/risk.py`; a flagged event without a model value keeps its dataset's fixed `C` with flag `confidence_fixed` (RV1-D16).
+
+**Pass marks (proposal, checked in step 7):** on held-out files, expected calibration error ≤ 0.05 and AUC ≥ 0.95, with the Brier score and a reliability diagram reported; cross-dataset results (train on one dataset, test on the other) reported without a pass mark. Checked by `python -m app.confidence.validate` at the end of the single pipeline job (`tools/confidence/risk_v1_pipeline.sbatch`, runbook [risk-v1-hpc-runbook.md](risk-v1-hpc-runbook.md), RV1-D18); conformal coverage is checked at 0.95 ± 0.02.
 
 ### 9A.3 When the score is computed (RV1-D3)
 
@@ -407,7 +409,7 @@ The score is computed **before and independent of** AI analysis. Re-analysis use
 | Failure | The LLM fails or is unavailable | Calibrated `p_clf` | The initial score stays the current score, with flag `llm_unavailable`. It is never shown or used as an LLM-informed final score. The step can be retried; a later success writes the final score |
 | Re-score | `risk.toml` or a model version changes | Stored `p_clf` and `p_llm`, re-computed only when their own version changed | A new record; earlier records stay |
 
-C5's freeze precondition (`is_high`) reads the current score; whether a phase 1 score may start a freeze is a C5 question to settle in step 6.
+C5's freeze precondition (`is_high`) reads the current score. Decided 26 Nov 2026 (user): a phase 1 (initial) High score may start a freeze; the incident keeps `llm_pending`, so the decision panel shows that the LLM opinion has not run, and a person still approves the freeze. Built in step 6b: table `risk_assessments` (migration 0008, append-only) and `RiskAssessment.phase` / `confidence_versions` (RV1-D17).
 
 **Audit.** Every scoring writes one record that is never changed: incident ID, phase, score, level, `L`, `I`, flags, `computed_at`, and every version behind it (`risk.toml`, classifier, calibrator, stacker, conformal threshold, LLM model and prompt). `Incident.risk` shows the newest record.
 

@@ -19,6 +19,7 @@ from sqlalchemy import Engine
 
 from app.api.schemas import ErrorCode, JobKind
 from app.jobs.analysis import analysis_jobs_for_upload, run_analysis_job
+from app.jobs.confidence import confidence_job_for_upload, run_confidence_job
 from app.jobs.errors import JobFailure, JobLost, JobRetry
 from app.jobs.ingest import run_ingest
 from app.jobs.queue import (
@@ -43,17 +44,45 @@ Runner = Callable[[Engine, JobRow, str, Settings, Callable[[], datetime]], dict[
 
 
 def _ingest(engine, job, worker_id, settings, clock) -> dict[str, Any]:
-    counts = run_ingest(engine, job, worker_id, settings, clock)
-    # Decision F1: one analysis job per stored incident, queued when the upload is done.
-    follow_up = analysis_jobs_for_upload(engine, job.upload_id, clock(), settings.job_max_attempts)
+    confidence = uses_confidence_job(job.upload_id, engine)
+    counts = run_ingest(engine, job, worker_id, settings, clock, confidence_pending=confidence)
+    if confidence:  # risk-v1 (RV1-D17): phase 2 on HPC first; it queues the analysis jobs
+        follow_up = [confidence_job_for_upload(job.upload_id, clock(), settings.job_max_attempts)]
+    else:  # Decision F1: one analysis job per stored incident, queued when the upload is done.
+        follow_up = analysis_jobs_for_upload(
+            engine, job.upload_id, clock(), settings.job_max_attempts
+        )
     return {"counts": counts, "follow_up": follow_up}
+
+
+def uses_confidence_job(upload_id: str | None, engine) -> bool:
+    """The confidence job runs for NetFlow v3 uploads when ICD_CONFIDENCE_BACKEND=hpc_batch."""
+    from sqlalchemy.orm import Session
+
+    from app.confidence.features import DATASETS
+    from app.confidence.hpc import enabled
+    from app.models import UploadRow
+
+    if upload_id is None or not enabled(os.environ):
+        return False
+    with Session(engine) as session:
+        upload = session.get(UploadRow, upload_id)
+    return upload is not None and upload.dataset_id in DATASETS
+
+
+def _confidence(engine, job, worker_id, settings, clock) -> dict[str, Any]:
+    return run_confidence_job(engine, job, worker_id, settings, clock)
 
 
 def _analysis(engine, job, worker_id, settings, clock) -> dict[str, Any]:
     return run_analysis_job(engine, job, worker_id, settings, clock)
 
 
-RUNNERS: dict[JobKind, Runner] = {JobKind.INGEST: _ingest, JobKind.ANALYSIS: _analysis}
+RUNNERS: dict[JobKind, Runner] = {
+    JobKind.INGEST: _ingest,
+    JobKind.ANALYSIS: _analysis,
+    JobKind.CONFIDENCE: _confidence,
+}
 
 
 def new_worker_id() -> str:

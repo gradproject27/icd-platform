@@ -2,7 +2,8 @@
 
 Run from backend/: python -m app.analysis.export
 These are AI1's own formats, not shared contracts: the LLM output the model returns, the HPC
-output file, and the expected-incident file of the evaluation (docs/ai1-report-schema.md).
+output file, the expected-incident file of the evaluation (docs/ai1-report-schema.md), and the
+LLM opinion and its calibrator for C3's event confidence (docs/ai1-llm-opinion.md).
 """
 
 from pathlib import Path
@@ -13,11 +14,15 @@ from app.analysis.handoff import HpcOutput
 from app.analysis.metrics import ExpectedIncident
 from app.analysis.output import LlmOutput
 from app.contracts.export import schema_text
+from app.opinion.calibration import Calibrator
+from app.opinion.models import GroupOpinion
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "llm-output-v0": LlmOutput,
     "hpc-output-v1": HpcOutput,
     "expected-incident-v1": ExpectedIncident,
+    "llm-opinion-v1": GroupOpinion,
+    "opinion-calibrator-v1": Calibrator,
 }
 
 # Works from a repo checkout, not inside the api container.

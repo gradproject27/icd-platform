@@ -113,10 +113,10 @@ def test_every_part_fits_or_cannot_be_cut(seed):
 def test_the_shared_fixture_is_under_the_production_cap():
     config = load_config()
     assert config.max_incident_events == 500
-    assert config.config_version == "correlation-v1"
+    assert config.config_version == "correlation-v2"
     result = correlate(EVENTS, config, NOW)
     assert all(inc.split is None for inc in result.incidents)
-    assert {inc.correlation_config_version for inc in result.incidents} == {"correlation-v1"}
+    assert {inc.correlation_config_version for inc in result.incidents} == {"correlation-v2"}
 
 
 def test_a_group_over_the_cap_becomes_parts():

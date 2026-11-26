@@ -32,7 +32,7 @@ def test_fixture_report_matches_the_expected_risk(tmp_path):
     )
     expected = json.loads((FIXTURES / "expected-risk.json").read_text(encoding="utf-8"))
     assert report["incidents"] == len(expected["incidents"]) == len(rows)
-    assert report["correlation_config_version"] == "correlation-v1"
+    assert report["correlation_config_version"] == "correlation-v2"
     assert report["input"]["events"] == 43 and report["input"]["flagged"] == 24
     levels = {}
     for item in expected["incidents"]:

@@ -153,6 +153,14 @@
           "title": "Computed At",
           "type": "string"
         },
+        "confidence_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Versions behind the event confidence C (contracts 1.4): classifier, calibrators, stacker, LLM model and prompt; empty for a risk-v0 score.",
+          "title": "Confidence Versions",
+          "type": "object"
+        },
         "config_version": {
           "description": "Version of the weights and thresholds file used.",
           "minLength": 1,
@@ -209,6 +217,23 @@
           "default": null,
           "description": "Combined evidence strength L, 0 to 1 (contracts 1.1).",
           "title": "Likelihood"
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "enum": [
+                "initial",
+                "final"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "risk-v1 scoring phase (contracts 1.4): initial before the LLM opinion, final after it; null for a risk-v0 score.",
+          "title": "Phase"
         },
         "score": {
           "description": "Risk score as a percentage (FR-18).",
@@ -342,7 +367,11 @@
       "enum": [
         "asset_unknown",
         "outcome_unknown",
-        "severity_default"
+        "severity_default",
+        "confidence_fixed",
+        "needs_review",
+        "llm_pending",
+        "llm_unavailable"
       ],
       "title": "RiskFlag",
       "type": "string"

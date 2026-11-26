@@ -18,7 +18,9 @@ def engine():
     with engine.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE incident_events, incidents, quarantined_records, events, jobs, uploads "
+                "TRUNCATE risk_assessments, incident_events, incidents, quarantined_records, "
+                "events, "
+                "jobs, uploads "
                 "RESTART IDENTITY CASCADE"
             )
         )
