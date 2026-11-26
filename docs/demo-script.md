@@ -13,8 +13,10 @@ The demo shows the one thing that makes ICD different: a High, confidently analy
 
 1. `cp .env.example .env` and check `ICD_DEV_USER=analyst-dev`, `ICD_DEV_ROLE=soc_analyst` (until login exists, decisions are made as this identity; without it every decision is refused with 403).
 2. Choose the model:
-   - **HPC/cluster available:** set the backend the runbook names ([ai1-runbook.md](ai1-runbook.md) §2 and §3).
-   - **HPC fallback (default for the demo):** keep `LLM_BACKEND=mock`. The stub model gives schema-valid reports with computed confidence; reports already made on the cluster are served from the report cache (`analysis_reports`, [ai1-runbook.md](ai1-runbook.md)) when the evidence is unchanged. Say this out loud: the analysis is real code, the model is the stand-in.
+   - **HPC/cluster available:** `ICD_ANALYSIS_BACKEND=openai_http` and the variables the runbook names ([ai1-runbook.md](ai1-runbook.md) §2 and §3).
+   - **HPC fallback (default for the demo):** `ICD_ANALYSIS_BACKEND=replay`. Each incident is answered with the 27B model's answer recorded for it on the cluster, and the answer goes through the same checks (schema, grounding, confidence, freeze gate). The report page shows the model as `replay:<model>`. Say this out loud: the answers were written by the real model earlier and are replayed because the cluster is not reachable from the room. Only the recorded files (the fixture and C2's demo slice) have answers; any other file's analysis fails and nothing freezes ([ai1-demo-replay.md](ai1-demo-replay.md)).
+   - **No recording either:** `ICD_ANALYSIS_BACKEND=stub` (the default): schema-valid `[STUB]` reports with computed confidence. The analysis is real code, the model is the stand-in.
+   - The analysis model is set by `ICD_ANALYSIS_BACKEND`, not `LLM_BACKEND` (an older setting that stays `mock`). The report cache does **not** help here: the reset empties it and incident IDs change with every upload.
 3. Start the stack (`docker compose up -d --build --wait`), then reset with C1's command: `python tools/c1/demo_reset.py --no-upload` (empties every app table and stored upload; the schema stays). Use `--no-upload` for the live demo: without it the reset uploads the fixture itself and incident A's 60-second window opens at once, before the audience sees the upload. Without C1's tool (before PR #47 is merged): `docker compose down --volumes && docker compose up --build`.
 4. Open http://localhost:8080 in one window and keep a terminal open.
 
@@ -72,7 +74,7 @@ Say: the system only selects automatically after the deadline, only from the app
 
 | Problem | Fallback |
 |---|---|
-| Model/HPC unreachable | `LLM_BACKEND=mock` (step 0.2). The incident still freezes; the report says it came from the stub |
+| Model/HPC unreachable | `ICD_ANALYSIS_BACKEND=replay` in `.env` (step 0.2), then `docker compose up -d worker` and reset. Without recordings, `stub`: incident A still freezes and the report says it came from the stub |
 | Decision refused with 403 | `ICD_DEV_USER`/`ICD_DEV_ROLE` missing in `.env`; restart `api` |
 | No countdown on incident A | In the incident's audit trail, the `status_changed` record with cause "analysed, no freeze" lists the failed preconditions in `reasons` (e.g. `analysis_not_valid`, `confidence_below_threshold`, `no_target_host`) |
 | Browser shows a stale countdown | Refresh: the page reads the deadline from the server again |
