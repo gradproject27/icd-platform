@@ -143,3 +143,12 @@ export const INCIDENT_SUBPAGE_LABELS = {
 
 // The shell's SIMULATED strip (decision D5, wireframes section 2.4).
 export const SIMULATED_BANNER_TEXT = "Responses in ICD are SIMULATED. No real system is changed.";
+
+// Recent decisions (GET /decisions/recent, P6). Moved unchanged from ScenarioMeta.tsx.
+export const DECISION_LABELS: Record<string, string> = {
+  approve: "Approved",
+  reject: "Rejected",
+  select: "Selected another scenario",
+  no_action: "No response needed",
+  system_selection: "Selected by the system at the deadline",
+};

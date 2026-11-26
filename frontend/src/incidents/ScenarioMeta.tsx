@@ -4,6 +4,7 @@ import type { ScenarioId } from "../api/contracts";
 import { getRecentDecisions, getScenarios } from "../api/incidents";
 import type { RecentDecisionList, ScenarioCatalogue } from "../api/proposed";
 import { formatLocalDateTime } from "../countdown/clock";
+import { DECISION_LABELS } from "../labels";
 
 // P6 of the competitor feature study: each simulated scenario's impact and how it is reverted
 // (GET /scenarios, scenario_meta.toml), and the decisions of the last 72 hours from the audit trail
@@ -11,13 +12,6 @@ import { formatLocalDateTime } from "../countdown/clock";
 // part shows nothing when the server cannot answer, so it never hides the page it sits on.
 
 const IMPACT_LABELS = { low: "Low", medium: "Medium", high: "High" } as const;
-const DECISION_LABELS: Record<string, string> = {
-  approve: "Approved",
-  reject: "Rejected",
-  select: "Selected another scenario",
-  no_action: "No response needed",
-  system_selection: "Selected by the system at the deadline",
-};
 
 function useScenarios(): ScenarioCatalogue | null {
   const [catalogue, setCatalogue] = useState<ScenarioCatalogue | null>(null);

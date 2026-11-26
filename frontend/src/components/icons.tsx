@@ -85,6 +85,12 @@ export const IconMenu = () => (
   </Icon>
 );
 
+export const IconClose = () => (
+  <Icon>
+    <path d="M5 5l10 10M15 5L5 15" />
+  </Icon>
+);
+
 /** Two chevrons pointing left; CSS turns them right when the sidebar is collapsed. */
 export const IconCollapse = () => (
   <Icon>

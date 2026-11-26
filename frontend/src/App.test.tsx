@@ -29,10 +29,10 @@ describe("routing", () => {
     mockWebSocket();
   });
 
-  it("redirects / to the incident list", async () => {
+  it("redirects / to the Overview page (decision D2)", async () => {
     renderAt("/");
 
-    expect(await screen.findByRole("heading", { name: "Incidents" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
     await screen.findByText("API online");
   });
 

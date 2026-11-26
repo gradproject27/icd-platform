@@ -542,3 +542,352 @@
   fill: var(--text);
   font-size: 13px;
 }
+
+/* Utilities */
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Risk chip: text first, the shape and colour are extra (design spec section 2). */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.chip__shape {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: none;
+}
+
+.chip--high {
+  color: var(--sev-high);
+  background: color-mix(in srgb, var(--sev-high) 12%, transparent);
+}
+
+.chip--medium {
+  color: var(--sev-medium);
+  background: color-mix(in srgb, var(--sev-medium) 12%, transparent);
+}
+
+.chip--low {
+  color: var(--sev-low);
+  background: color-mix(in srgb, var(--sev-low) 12%, transparent);
+}
+
+.chip--none {
+  color: var(--muted);
+}
+
+/* Tones for charts and legends: risk levels and incident states. Text always sits next to them. */
+
+.tone--risk-high { --tone: var(--sev-high); }
+.tone--risk-medium { --tone: var(--sev-medium); }
+.tone--risk-low { --tone: var(--sev-low); }
+.tone--risk-none { --tone: var(--idle); }
+.tone--status-new { --tone: var(--idle); }
+.tone--status-under_analysis { --tone: var(--sev-low); }
+.tone--status-awaiting_human_decision { --tone: var(--accent); }
+.tone--status-response_in_progress { --tone: var(--warn); }
+.tone--status-escalated { --tone: var(--bad); }
+.tone--status-resolved { --tone: var(--ok); }
+.tone--status-closed { --tone: var(--muted); }
+
+/* Panels with a small header (Overview and later pages) */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.panel__header h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.panel__header a {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.panel__body {
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+.panel__body > .page-state {
+  margin: 0;
+}
+
+.panel__note {
+  margin: var(--sp-3) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.table--compact th,
+.table--compact td {
+  padding: var(--sp-1) var(--sp-2);
+}
+
+/* KPI tiles: the whole tile is a link to the filtered list. */
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.kpi:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.kpi__label {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.kpi__value {
+  font-size: var(--fs-kpi);
+  font-weight: 650;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi__note {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+/* Bar table (incidents by level): a real table, the bar is decoration. */
+
+.bar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.bar-table th,
+.bar-table td {
+  padding: var(--sp-1) 0;
+  vertical-align: middle;
+}
+
+.bar-table th {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-3);
+  color: var(--text);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.bar-table th .chip__shape {
+  color: var(--tone);
+}
+
+.bar-table__count {
+  width: 3rem;
+  padding-right: var(--sp-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.bar-table td.bar-table__count {
+  padding-right: var(--sp-3);
+}
+
+.bar-table__bar {
+  width: 60%;
+}
+
+.bar-table__bar svg {
+  display: block;
+  width: 100%;
+  height: 0.75rem;
+}
+
+.bar-table__track,
+.stacked__track {
+  fill: var(--raised);
+}
+
+.bar-table__fill {
+  fill: var(--tone);
+}
+
+/* Stacked bar + legend (incidents by state) */
+
+.stacked__bar {
+  display: block;
+  width: 100%;
+  height: 0.875rem;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.stacked__part {
+  fill: var(--tone);
+  stroke: var(--surface);
+  stroke-width: 0.4;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--sp-1) var(--sp-4);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.legend__swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: var(--tone);
+  flex: none;
+}
+
+.legend__label {
+  flex: 1;
+}
+
+.legend__count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend__item--zero {
+  color: var(--muted);
+}
+
+.legend__item--zero .legend__swatch {
+  background: transparent;
+  border: 1px solid var(--tone);
+}
+
+/* Columns over time */
+
+.columns {
+  margin: 0;
+}
+
+.columns__chart {
+  display: block;
+  width: 100%;
+  height: 7rem;
+}
+
+.columns__bar {
+  fill: var(--accent);
+}
+
+.columns__axis {
+  stroke: var(--divider);
+  stroke-width: 1;
+}
+
+.columns__axis-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.columns__table {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.columns__table summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+/* Feeds: decisions and notifications */
+
+.feed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.feed__item {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.feed__item:last-child {
+  border-bottom: none;
+}
+
+.feed__time {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}

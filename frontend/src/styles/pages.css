@@ -117,3 +117,104 @@
   margin: var(--sp-3) 0 var(--sp-1);
   font-size: var(--fs-lg);
 }
+
+/* Overview (SOC UI phase 3) */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--sp-4);
+  margin: var(--sp-4) 0;
+}
+
+.overview,
+.overview-grid,
+.overview-stack,
+.overview .panel {
+  min-width: 0;
+}
+
+.overview-grid--lower {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+}
+
+.overview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+@media (max-width: 1023px) {
+  .overview-grid--lower {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .kpi-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.decision-queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.decision-queue__item {
+  padding: var(--sp-3);
+  background: var(--bg);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+}
+
+.decision-queue__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.decision-queue__head > a {
+  font-weight: 600;
+}
+
+/* A compact countdown inside the list: same component and text, smaller type. */
+.decision-queue .countdown {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  box-shadow: none;
+}
+
+.decision-queue .countdown h2 {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.decision-queue .countdown__time {
+  font-size: var(--fs-kpi);
+}
+
+.decision-queue .countdown__deadline,
+.decision-queue .countdown__status p {
+  font-size: var(--fs-sm);
+}
+
+.decision-queue .page-state {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2);
+}

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { formatLocalDateTime, formatRemaining } from "../countdown/clock";
 import { useResponseWindow, type ResponseWindowView } from "../hooks/useResponseWindow";
 import { PageState } from "./PageState";
@@ -13,6 +13,8 @@ export function Countdown({ incidentId }: { incidentId: string }) {
 
 /** The countdown for a window the caller already follows, so a page needs only one socket. */
 export function CountdownView({ view }: { view: ResponseWindowView }) {
+  // Unique per countdown, so a page can show several (Overview, SOC UI phase 3).
+  const headingId = useId();
   if (view.state === "loading") return <PageState kind="loading" message="Loading response window…" />;
   if (view.state === "error") {
     return <PageState kind="error" message={`Could not load the response window. ${view.error ?? ""}`.trim()} />;
@@ -41,8 +43,8 @@ export function CountdownView({ view }: { view: ResponseWindowView }) {
   }
 
   return (
-    <section className={`countdown${view.reminder ? " countdown--reminder" : ""}`} aria-labelledby="countdown-heading">
-      <h2 id="countdown-heading">Response window</h2>
+    <section className={`countdown${view.reminder ? " countdown--reminder" : ""}`} aria-labelledby={headingId}>
+      <h2 id={headingId}>Response window</h2>
       {view.state === "open" && view.remainingMs !== null && (
         <>
           {/* Off: a screen reader must not read every second. State changes use the region below. */}

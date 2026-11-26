@@ -10,6 +10,7 @@ import { IncidentDetailPage } from "./pages/IncidentDetailPage";
 import { IncidentListPage } from "./pages/IncidentListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { OverviewPage } from "./pages/OverviewPage";
 import { PendingDecisionPage } from "./pages/PendingDecisionPage";
 import { ReviewQueuePage } from "./pages/ReviewQueuePage";
 import { UploadPage } from "./pages/UploadPage";
@@ -21,7 +22,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/incidents" replace />} />
+        <Route index element={<Navigate to="/overview" replace />} />
+        <Route path="overview" element={<OverviewPage />} />
         <Route path="upload" element={<UploadPage />} />
         <Route path="incidents" element={<IncidentListPage />} />
         <Route path="review" element={<ReviewQueuePage />} />

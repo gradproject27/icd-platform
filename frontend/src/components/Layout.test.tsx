@@ -51,13 +51,14 @@ beforeEach(() => mockApi());
 afterEach(() => window.localStorage.clear());
 
 describe("Layout: sidebar", () => {
-  it("has one Main navigation with the five page links, names unchanged", async () => {
+  it("has one Main navigation: Overview plus the five page links, names unchanged", async () => {
     renderShell();
     const nav = screen.getByRole("navigation", { name: "Main" });
     const names = within(nav)
       .getAllByRole("link")
       .map((link) => link.textContent);
-    expect(names).toEqual(["Incidents", "Review", "Entities", "Upload", "Configuration"]);
+    expect(names).toEqual(["Overview", "Incidents", "Review", "Entities", "Upload", "Configuration"]);
+    expect(within(nav).getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/overview");
     expect(within(nav).getByRole("link", { name: "Upload" })).toHaveAttribute("href", "/upload");
     await screen.findByText("API online");
   });
@@ -98,7 +99,7 @@ describe("Layout: mobile drawer", () => {
 
     fireEvent.click(menu);
     expect(menu).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Incidents" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Close menu" })).toHaveFocus();
     expect(screen.getByRole("main", { hidden: true })).toHaveAttribute("inert");
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -115,6 +116,16 @@ describe("Layout: mobile drawer", () => {
     fireEvent.click(screen.getByRole("link", { name: "Upload" }));
     expect(menu).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByTestId("where")).toHaveTextContent("/upload");
+    await screen.findByText("API online");
+  });
+
+  it("closes with the Close menu button and returns focus to Menu (D16)", async () => {
+    renderShell();
+    const menu = screen.getByRole("button", { name: "Menu" });
+    fireEvent.click(menu);
+    fireEvent.click(screen.getByRole("button", { name: "Close menu" }));
+    expect(menu).toHaveAttribute("aria-expanded", "false");
+    expect(menu).toHaveFocus();
     await screen.findByText("API online");
   });
 
@@ -191,6 +202,7 @@ describe("Layout: top bar", () => {
 
 describe("Layout: SIMULATED banner", () => {
   const routes = [
+    "/overview",
     "/incidents",
     "/upload",
     "/review",

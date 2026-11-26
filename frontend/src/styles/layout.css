@@ -399,6 +399,8 @@
   }
 
   .topbar {
+    min-width: 0;
+    width: 100vw;
     flex-wrap: wrap;
     gap: var(--sp-2) var(--sp-3);
   }
@@ -407,7 +409,15 @@
     display: inline-flex;
   }
 
+  .sim-banner {
+    flex-wrap: wrap;
+  }
+
   .topbar__tools {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 100%;
+    margin-left: 0;
     flex-wrap: wrap;
     gap: var(--sp-2);
   }
@@ -486,7 +496,22 @@
   }
 
   .app-main {
+    flex: 0 0 100vw;
+    min-width: 0;
+    width: 100vw;
+    max-width: 100vw;
     padding: var(--sp-4);
+  }
+
+  .shell,
+  .shell__body {
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+  }
+
+  .shell {
+    overflow-x: clip;
   }
 }
 
@@ -618,4 +643,21 @@
 
 .login__form input {
   background: var(--bg);
+}
+
+/* Drawer close button (D16): only inside the mobile drawer. */
+.sidebar__close {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .sidebar__close {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    align-self: flex-end;
+    margin-bottom: var(--sp-2);
+    padding: var(--sp-1) var(--sp-3);
+    font-size: var(--fs-sm);
+  }
 }

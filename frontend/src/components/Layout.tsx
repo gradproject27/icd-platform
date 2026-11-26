@@ -11,7 +11,9 @@ import {
   IconConfiguration,
   IconEntities,
   IconIncidents,
+  IconClose,
   IconMenu,
+  IconOverview,
   IconReview,
   IconSimulated,
   IconUpload,
@@ -24,11 +26,11 @@ type NavItem = { to: string; label: string; icon: ReactNode };
 type NavGroup = { title: string; items: NavItem[] };
 
 // Sidebar groups (design spec section 3). Link names are the accessible names the tests use.
-// Overview joins Monitor with its page in phase 3 (decision D2).
 const NAV_GROUPS: NavGroup[] = [
   {
     title: "Monitor",
     items: [
+      { to: "/overview", label: PAGE_LABELS.overview, icon: <IconOverview /> },
       { to: "/incidents", label: PAGE_LABELS.incidents, icon: <IconIncidents /> },
       { to: "/review", label: PAGE_LABELS.review, icon: <IconReview /> },
     ],
@@ -121,6 +123,18 @@ export function Layout() {
 
       <div className="shell__body">
         <aside id="sidebar" ref={sidebar} className="sidebar">
+          {/* Drawer only (hidden by CSS at 768 px and wider), decision D16. */}
+          <button
+            type="button"
+            className="sidebar__close"
+            onClick={() => {
+              closeDrawer();
+              menuButton.current?.focus();
+            }}
+          >
+            <IconClose />
+            Close menu
+          </button>
           <nav aria-label="Main">
             {NAV_GROUPS.map((group) => (
               <div key={group.title} className="sidebar__group">
