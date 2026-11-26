@@ -41,6 +41,8 @@ No new package: the HTTP client uses the standard library, and the fit uses scik
 
 ## 4. Running it
 
+To run all risk-v1 steps on the real data in one job, with the validation report at the end, use [risk-v1-hpc-runbook.md](risk-v1-hpc-runbook.md). The steps below run this part alone.
+
 ### 4.1 On HPC (Slurm)
 
 1. The two CSVs and the step 4 virtual environment as in [confidence-classifier.md](confidence-classifier.md) §4.
