@@ -140,6 +140,16 @@ class RiskAssessment(_Contract):
         max_length=3,
         description="The strongest evidence groups, strongest first (contracts 1.1).",
     )
+    phase: Literal["initial", "final"] | None = Field(
+        default=None,
+        description="risk-v1 scoring phase (contracts 1.4): initial before the LLM opinion, "
+        "final after it; null for a risk-v0 score.",
+    )
+    confidence_versions: dict[str, str] = Field(
+        default_factory=dict,
+        description="Versions behind the event confidence C (contracts 1.4): classifier, "
+        "calibrators, stacker, LLM model and prompt; empty for a risk-v0 score.",
+    )
 
 
 class SplitReason(StrEnum):

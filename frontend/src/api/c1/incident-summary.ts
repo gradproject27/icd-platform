@@ -197,6 +197,12 @@ export interface RiskAssessment {
    */
   computed_at: string;
   /**
+   * Versions behind the event confidence C (contracts 1.4): classifier, calibrators, stacker, LLM model and prompt; empty for a risk-v0 score.
+   */
+  confidence_versions?: {
+    [k: string]: string | undefined;
+  };
+  /**
    * Version of the weights and thresholds file used.
    */
   config_version: string;
@@ -219,6 +225,10 @@ export interface RiskAssessment {
    * Combined evidence strength L, 0 to 1 (contracts 1.1).
    */
   likelihood?: number | null;
+  /**
+   * risk-v1 scoring phase (contracts 1.4): initial before the LLM opinion, final after it; null for a risk-v0 score.
+   */
+  phase?: ("initial" | "final") | null;
   /**
    * Risk score as a percentage (FR-18).
    */

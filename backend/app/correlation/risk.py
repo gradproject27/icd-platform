@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from fnmatch import fnmatchcase
 from pathlib import Path
+from typing import Literal
 
 from app.confidence.values import Confidence
 from app.contracts import (
@@ -53,6 +54,8 @@ class EventConfidences:
 
     values: Mapping[str, Confidence]
     version: str
+    phase: Literal["initial", "final"] = "initial"
+    versions: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -337,6 +340,8 @@ def score_incident(
         if confidences is None
         else f"{config.config_version}+{confidences.version}",
         computed_at=evaluated_at,
+        phase=None if confidences is None else confidences.phase,
+        confidence_versions={} if confidences is None else dict(confidences.versions),
         likelihood=likelihood,
         impact=impact,
         flags=flags,
