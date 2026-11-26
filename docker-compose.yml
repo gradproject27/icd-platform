@@ -56,6 +56,8 @@ services:
       ICD_LLM_SITE: ${ICD_LLM_SITE:-local}
       ICD_LLM_API_KEY: ${ICD_LLM_API_KEY:-}
       ICD_LLM_NO_THINKING: ${ICD_LLM_NO_THINKING:-}
+      # replay (task 31): recorded real-model answers; empty = every file in app/analysis/replay_data
+      ICD_REPLAY_FILES: ${ICD_REPLAY_FILES:-}
       ICD_HPC_SSH_TARGET: ${ICD_HPC_SSH_TARGET:-}
       ICD_HPC_SSH_KEY: ${ICD_HPC_SSH_KEY:-}
       ICD_HPC_REMOTE_DIR: ${ICD_HPC_REMOTE_DIR:-}
