@@ -1,4 +1,4 @@
-"""Append-only risk score records (risk-v1 step 6b, design 9A.3, decision RV1-D17)
+"""Append-only risk score records and the confidence job (risk-v1 step 6b, RV1-D17)
 
 Revision ID: 0008
 Revises: 0007
@@ -54,9 +54,15 @@ def upgrade() -> None:
     )
     op.execute(APPEND_ONLY_FUNCTION)
     op.execute(APPEND_ONLY_TRIGGER)
+    # The confidence job (risk-v1 phase 2 on HPC).
+    op.drop_constraint("jobs_kind", "jobs", type_="check")
+    op.create_check_constraint("jobs_kind", "jobs", "kind IN ('ingest', 'analysis', 'confidence')")
 
 
 def downgrade() -> None:
+    op.execute("DELETE FROM jobs WHERE kind = 'confidence'")
+    op.drop_constraint("jobs_kind", "jobs", type_="check")
+    op.create_check_constraint("jobs_kind", "jobs", "kind IN ('ingest', 'analysis')")
     op.execute("DROP TRIGGER IF EXISTS risk_assessments_append_only ON risk_assessments")
     op.execute("DROP FUNCTION IF EXISTS risk_assessments_append_only()")
     op.drop_index("risk_assessments_by_incident", table_name="risk_assessments")

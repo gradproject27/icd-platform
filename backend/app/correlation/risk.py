@@ -56,6 +56,9 @@ class EventConfidences:
     version: str
     phase: Literal["initial", "final"] = "initial"
     versions: Mapping[str, str] = field(default_factory=dict)
+    # A flag every incident scored with these values carries: llm_pending before the HPC
+    # answer, llm_unavailable after it failed (design 9A.3).
+    incident_flag: str | None = None
 
 
 @dataclass(frozen=True)
@@ -297,6 +300,8 @@ def score_incident(
         if any(s.confidence_source == "dataset" for s in strengths):
             flags.append(RiskFlag.CONFIDENCE_FIXED)
         raised = {f for s in strengths for f in s.confidence_flags}
+        if confidences.incident_flag is not None:
+            raised.add(confidences.incident_flag)
         for flag in (RiskFlag.NEEDS_REVIEW, RiskFlag.LLM_PENDING, RiskFlag.LLM_UNAVAILABLE):
             if flag.value in raised:
                 flags.append(flag)

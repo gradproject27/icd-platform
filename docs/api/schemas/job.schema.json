@@ -203,7 +203,8 @@
     "JobKind": {
       "enum": [
         "ingest",
-        "analysis"
+        "analysis",
+        "confidence"
       ],
       "title": "JobKind",
       "type": "string"

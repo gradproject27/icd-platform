@@ -65,6 +65,9 @@ services:
       ICD_HPC_REMOTE_DIR: ${ICD_HPC_REMOTE_DIR:-}
       ICD_HPC_SBATCH_SCRIPT: ${ICD_HPC_SBATCH_SCRIPT:-}
       ICD_HPC_MODEL: ${ICD_HPC_MODEL:-}
+      # risk-v1 confidence job on HPC (off | hpc_batch); docs/confidence-llm.md section 8
+      ICD_CONFIDENCE_BACKEND: ${ICD_CONFIDENCE_BACKEND:-off}
+      ICD_CONFIDENCE_SBATCH_SCRIPT: ${ICD_CONFIDENCE_SBATCH_SCRIPT:-}
     volumes:
       - uploads:/data/uploads
     depends_on:
