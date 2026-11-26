@@ -1,0 +1,115 @@
+/* Base elements: type, links, form controls, focus. Tokens come from tokens.css. */
+
+:root {
+  font-family: var(--font-sans);
+  font-size: 100%;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-size: var(--fs-md);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+h1 {
+  font-size: var(--fs-xl);
+  font-weight: 650;
+  line-height: 1.4;
+  margin: 0 0 var(--sp-2);
+}
+
+h2 {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  margin: 0 0 var(--sp-1);
+}
+
+h3 {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
+button {
+  font: inherit;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--text);
+}
+
+input:not([type="radio"], [type="checkbox"], [type="file"]),
+select,
+textarea {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+/* One visible focus ring for every interactive element (keyboard only). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

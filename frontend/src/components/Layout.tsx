@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router";
 import { useCurrentUser } from "../auth/useCurrentUser";
 import { HealthIndicator } from "./HealthIndicator";
 import { NotificationCenter } from "./NotificationCenter";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Layout() {
   const current = useCurrentUser();
@@ -16,6 +17,7 @@ export function Layout() {
           <NavLink to="/entities">Entities</NavLink>
           <NavLink to="/configuration">Configuration</NavLink>
         </nav>
+        <ThemeToggle />
         <NotificationCenter current={current} />
         <HealthIndicator />
       </header>

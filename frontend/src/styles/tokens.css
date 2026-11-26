@@ -1,0 +1,117 @@
+/*
+ * ICD design tokens (SOC UI phase 1, docs proposal: ui-design.md in phase 8).
+ *
+ * Theme choice: <html data-theme="dark|light"> when the user picked one (useTheme), else the OS
+ * setting through prefers-color-scheme (decision D1). The dark set is written twice on purpose:
+ * once for the OS fallback, once for the explicit choice.
+ *
+ * Contrast (WCAG 2.x, checked by script for every text token on --bg, --surface, --raised):
+ * all text pairs reach AA 4.5:1 in both themes; --border-control reaches 3:1 for UI parts.
+ * --divider is decorative only. The legacy names (--border, --ok, ...) stay for existing rules.
+ */
+
+:root {
+  /* Light set */
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --raised: #eef1f5;
+  --divider: #d8dde4;
+  --border-control: #7c8796;
+  --text: #141a22;
+  --muted: #4f5a68;
+  --accent: #5b3fd1;
+  --accent-strong: #4a2fbf;
+  --accent-soft: rgb(91 63 209 / 10%);
+  --sev-high: #b3261e;
+  --sev-medium: #8a5300;
+  --sev-low: #1f5aa6;
+  --ok: #1b7340;
+  --warn: #8a5300;
+  --bad: #b3261e;
+  --idle: #5b6573;
+  --sim: #7a2a9e;
+  --shadow-panel: 0 1px 2px rgb(16 24 40 / 8%);
+  --shadow-pop: 0 8px 24px rgb(16 24 40 / 16%);
+  --border: var(--divider);
+
+  color-scheme: light;
+
+  /* Theme-independent */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --fs-xs: 0.75rem; /* 12px */
+  --fs-sm: 0.8125rem; /* 13px */
+  --fs-md: 0.875rem; /* 14px */
+  --fs-lg: 1rem; /* 16px */
+  --fs-xl: 1.25rem; /* 20px */
+  --fs-kpi: 1.75rem; /* 28px */
+  --fs-timer: 3.5rem; /* 56px */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-pill: 999px;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --z-sticky: 10;
+  --z-sidebar: 20;
+  --z-topbar: 30;
+  --z-drawer: 40;
+  --z-popover: 50;
+  --z-skip: 60;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1318;
+    --surface: #161b22;
+    --raised: #1e242d;
+    --divider: #2a313b;
+    --border-control: #6e7988;
+    --text: #e6eaf0;
+    --muted: #a3adbb;
+    --accent: #b19cff;
+    --accent-strong: #c9baff;
+    --accent-soft: rgb(177 156 255 / 14%);
+    --sev-high: #ff8a7a;
+    --sev-medium: #f2bb4b;
+    --sev-low: #8cc0f5;
+    --ok: #6fd39a;
+    --warn: #f2bb4b;
+    --bad: #ff8a7a;
+    --idle: #a3adbb;
+    --sim: #e0a6ff;
+    --shadow-panel: 0 1px 0 rgb(0 0 0 / 40%);
+    --shadow-pop: 0 8px 24px rgb(0 0 0 / 50%);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1318;
+  --surface: #161b22;
+  --raised: #1e242d;
+  --divider: #2a313b;
+  --border-control: #6e7988;
+  --text: #e6eaf0;
+  --muted: #a3adbb;
+  --accent: #b19cff;
+  --accent-strong: #c9baff;
+  --accent-soft: rgb(177 156 255 / 14%);
+  --sev-high: #ff8a7a;
+  --sev-medium: #f2bb4b;
+  --sev-low: #8cc0f5;
+  --ok: #6fd39a;
+  --warn: #f2bb4b;
+  --bad: #ff8a7a;
+  --idle: #a3adbb;
+  --sim: #e0a6ff;
+  --shadow-panel: 0 1px 0 rgb(0 0 0 / 40%);
+  --shadow-pop: 0 8px 24px rgb(0 0 0 / 50%);
+
+  color-scheme: dark;
+}

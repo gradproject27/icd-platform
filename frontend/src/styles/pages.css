@@ -1,0 +1,119 @@
+/* Page-specific rules. Every status is also stated in text, not only by colour. */
+
+/* Upload page (wireframes.md 4.2) */
+
+.upload-form select {
+  max-width: 28rem;
+}
+
+.upload-actions {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.upload-error {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.upload-progress p {
+  margin: var(--sp-4) 0 var(--sp-1);
+}
+
+.next-step p {
+  margin: var(--sp-2) 0;
+}
+
+/* Incident list (wireframes.md 4.3): IDs and times in monospace, no wrapping. */
+
+.incident-table td:nth-child(1),
+.incident-table td:nth-child(2),
+.incident-table td:nth-child(5) {
+  white-space: nowrap;
+}
+
+.incident-table td:nth-child(1),
+.incident-table td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+/* Pending decision (wireframes.md 4.6) */
+
+.isolation-line {
+  font-weight: 600;
+}
+
+.decision-action {
+  font-weight: 600;
+}
+
+.decision-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.decision-form fieldset {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+}
+
+.decision-form legend {
+  padding: 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.decision-form .scenario-list {
+  margin: var(--sp-1) 0 0 1.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.option {
+  display: block;
+  margin: 0.4rem 0;
+}
+
+.option input {
+  margin-right: var(--sp-2);
+}
+
+.option__reason {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.decision-form textarea {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.decision-refusal {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.confirm__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.confirm__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin-right: auto;
+}
+
+/* AI report */
+
+.report-section h3 {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-size: var(--fs-lg);
+}

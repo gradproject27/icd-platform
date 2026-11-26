@@ -1,0 +1,544 @@
+/* Shared building blocks used by several pages. Class names are kept from app.css (tests use some). */
+
+/* Page states */
+
+.page-state {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-control);
+  border-radius: var(--r-md);
+  color: var(--muted);
+  text-align: center;
+}
+
+.page-state--error {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.page-state p {
+  margin: 0 0 var(--sp-2);
+}
+
+.placeholder {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.note,
+.muted {
+  color: var(--muted);
+}
+
+.sub-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: var(--sp-4) 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.copyable {
+  user-select: all;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+/* Panels */
+
+.box,
+.processing {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.box--bad {
+  border: 1px solid var(--bad);
+  border-left-width: 4px;
+}
+
+.box--warn {
+  border: 1px solid var(--warn);
+  border-left-width: 4px;
+}
+
+.box p {
+  margin: var(--sp-1) 0;
+}
+
+.stub-banner {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-4);
+  border: 2px dashed var(--warn);
+  border-radius: var(--r-md);
+  color: var(--warn);
+  font-weight: 700;
+}
+
+/* Tables: compact, header on the raised surface, sticky while the page scrolls. */
+
+.table,
+.factor-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-sm);
+}
+
+.table {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+}
+
+.table th,
+.table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--divider);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.table thead th:first-child {
+  border-top-left-radius: var(--r-md);
+}
+
+.table thead th:last-child {
+  border-top-right-radius: var(--r-md);
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.table tbody tr:hover > * {
+  background: var(--accent-soft);
+}
+
+.factor-table {
+  margin: var(--sp-2) 0;
+}
+
+.factor-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: var(--sp-1);
+}
+
+.factor-table th,
+.factor-table td {
+  text-align: left;
+  padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
+  border-bottom: 1px solid var(--divider);
+  vertical-align: top;
+}
+
+.sort-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Fields and key-value lists */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-4) 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin: var(--sp-4) 0;
+}
+
+.ids,
+.counts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-4);
+  margin: var(--sp-3) 0;
+}
+
+.ids dt,
+.counts dt {
+  color: var(--muted);
+}
+
+.ids dd,
+.counts dd {
+  margin: 0;
+}
+
+.counts dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.counts__detail {
+  margin-left: var(--sp-3);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+/* Metric tiles (incident detail) */
+
+.metric-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.metric__label {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.metric__value {
+  font-size: var(--fs-kpi);
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric__note {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+/* Progress and steps */
+
+.progress {
+  height: 0.5rem;
+  max-width: 28rem;
+  background: var(--raised);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  background: var(--accent);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps__status {
+  font-style: italic;
+}
+
+.steps__item--done .steps__status {
+  color: var(--ok);
+}
+
+.steps__item--current {
+  font-weight: 600;
+}
+
+.steps__item--not-reached .steps__status {
+  color: var(--bad);
+}
+
+.steps__item--from-Week-3 {
+  color: var(--idle);
+}
+
+/* SIMULATED is text, so it survives screenshots, prints and screen readers. */
+
+.simulated-badge {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-weight: 700;
+  color: var(--sim);
+  white-space: nowrap;
+}
+
+/* Incident header (shared by detail, report, decision) */
+
+.incident-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-4) 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+}
+
+.incident-header dt {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.incident-header dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Response-window countdown (T1-11). The reminder is also stated in text, not only by style. */
+
+.countdown {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.countdown--reminder {
+  border: 2px solid var(--warn);
+}
+
+.countdown__time {
+  margin: var(--sp-1) 0;
+  font-size: var(--fs-timer);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown--reminder .countdown__time {
+  color: var(--warn);
+}
+
+.countdown__deadline {
+  margin: 0;
+  color: var(--muted);
+}
+
+.countdown__status p {
+  margin: var(--sp-2) 0 0;
+}
+
+.countdown__notice {
+  font-weight: 600;
+}
+
+/* Timeline of related events */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--divider);
+}
+
+.timeline__item {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0 var(--sp-3) var(--sp-3);
+  position: relative;
+}
+
+.timeline__item::before {
+  content: "";
+  position: absolute;
+  left: -0.4rem;
+  top: 0.85rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--idle);
+}
+
+.timeline__item--flagged::before {
+  background: var(--bad);
+  border-color: var(--bad);
+}
+
+.timeline__item--highlighted {
+  background: var(--accent-soft);
+}
+
+.timeline__body p {
+  margin: 0 0 var(--sp-1);
+}
+
+.event-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-5);
+  margin: var(--sp-1) 0;
+}
+
+.event-fields dt {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.event-fields dd {
+  margin: 0;
+}
+
+.original-record {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-sm);
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.key-facts__values {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.evidence {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 640px) {
+  .timeline__item {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+}
+
+/* Audit trail (S8-D11): details as key: value text, never raw JSON. */
+
+.audit-details {
+  margin: 0;
+}
+
+.audit-details div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.audit-details dt {
+  color: var(--muted);
+}
+
+.audit-details dt::after {
+  content: ":";
+}
+
+.audit-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Entity graph (S8-D14): solid = link key, dashed = only named. Roles are in the node text. */
+
+.graph {
+  overflow-x: auto;
+  margin: var(--sp-4) 0;
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.graph svg {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+
+.graph__edge {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.graph__edge--linked {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.graph__node rect {
+  fill: var(--raised);
+  stroke: var(--border-control);
+}
+
+.graph__node--flagged rect {
+  stroke: var(--bad);
+  stroke-width: 2;
+}
+
+.graph__node text {
+  fill: var(--text);
+  font-size: 13px;
+}

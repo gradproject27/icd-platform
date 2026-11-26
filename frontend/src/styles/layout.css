@@ -1,0 +1,183 @@
+/* App frame: header, main area, header widgets. The sidebar shell replaces this in phase 2. */
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-2) var(--sp-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--divider);
+  box-shadow: var(--shadow-panel);
+}
+
+.app-header__title {
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  letter-spacing: 0.04em;
+}
+
+.app-header__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  flex: 1;
+}
+
+.app-header__nav a {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-md);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.app-header__nav a:hover {
+  color: var(--text);
+  background: var(--raised);
+}
+
+.app-header__nav a.active {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent-soft);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.app-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--sp-5);
+}
+
+/* Health indicator: the text is the signal, the dot is extra. */
+
+.health {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.health__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--r-pill);
+  background: var(--idle);
+}
+
+.health--online .health__dot {
+  background: var(--ok);
+}
+
+.health--degraded .health__dot {
+  background: var(--warn);
+}
+
+.health--unavailable .health__dot {
+  background: var(--bad);
+}
+
+/* Theme toggle: the button text names the theme it switches to. */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+/* Notifications (S8-D8): the count is text; the panel and the toasts sit under the header. */
+
+.notifications {
+  position: relative;
+}
+
+.notifications__button {
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+}
+
+.notifications__panel {
+  position: absolute;
+  right: 0;
+  z-index: var(--z-popover);
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+}
+
+.notifications__list {
+  margin: 0 0 var(--sp-3);
+  padding-left: 1.25rem;
+}
+
+.notifications__list li {
+  margin-bottom: var(--sp-2);
+}
+
+.toasts {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.toast {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Login (standalone, no layout) */
+
+.login {
+  max-width: 22rem;
+  margin: 4rem auto;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.login__form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.login__form input {
+  background: var(--bg);
+}
