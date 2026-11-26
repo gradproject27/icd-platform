@@ -86,13 +86,25 @@ Safeguards, each covered by a test:
 
 ## 6. Calibration (AI1-OP-D4, AI1-OP-D5)
 
-**Labelled set.** `labelled_groups` builds groups from a labelled dataset file:
+**Which datasets (data plan rows 2, 3 and 5; RV1-D5, RV1-D10).** `p_llm` is stacked with the classifier's `p_clf`, so it is calibrated on the classifier's datasets: **NF-UNSW-NB15-v3** and **NF-CSE-CIC-IDS2018-v3**. `label-set` refuses everything else, with the reason:
+
+| Dataset | Why it is refused |
+|---|---|
+| Original UNSW-NB15 CSVs | Data plan row 5: CSV demo and ingestion test, not used for training; RV1-D10 keeps them for the demo, correlation evaluation and ground truth |
+| Precinct6 | Agreement check only, never an input (RV1-D5, CON-20) |
+| OTRF | Events are unlabelled; OTRF is the ATT&CK technique ground truth |
+
+`fixture` (C3's synthetic events) is accepted for dry runs and tests only.
+
+**Labelled set.** `labelled_groups` builds groups from one file, never from merged datasets:
 - flagged events grouped by (attack type, entity) are positives (truth 1);
 - unflagged events grouped by entity are negatives (truth 0);
 - runs are cut at gaps over 60 minutes, as in C2-D14;
 - unlabelled events are never used.
 
-`balanced_sample` picks the same groups every time (a hash order), half attack and half normal.
+**Split by file or day, never by random rows (RV1-D5).** `label-set` reads one whole file, or one time range of it with `--start` and `--end`. The split is written into every result row and into the report.
+
+**Natural attack ratio (RV1-D5).** `natural_sample` keeps the split's own share of attack groups. NF-UNSW-NB15-v3 is about 5.4% attack flows and NF-CSE-CIC-IDS2018-v3 about 12.9%. A 50/50 set would teach the calibrator a much higher base rate than real traffic has, and `p_llm` would come out too high. Within each class, groups are taken evenly spaced in time (deterministic, no hashing). Because attacks are rare, enough attack groups means asking about many groups: `label-set` warns below 30 attack groups.
 
 **Fit.**
 - Platt scaling is fitted by Newton's method on the log loss, with Platt's smoothed targets and step halving.
@@ -100,11 +112,12 @@ Safeguards, each covered by a test:
 - A calibrator records the method, prompt version and model it was fitted for. `estimate` refuses to apply it to any other setup.
 
 **Honest measures.**
-- `calibrate` reports Brier, log loss, ECE (10 bins), AUC and a reliability table, for the raw and the calibrated values.
-- The calibrated values are **out-of-fold** (5 folds): no group is scored by a fit that saw it.
+- `calibrate` takes the results of both datasets and fits **one** calibrator on them pooled.
+- It reports Brier, log loss, ECE (10 bins) and AUC, raw and calibrated, **per dataset, as a macro average and pooled** (RV1-D5), plus a reliability table.
+- The calibrated values are **out-of-fold** over 5 contiguous time blocks within each dataset: no group is scored by a fit that saw it, and the folds are time ranges, not shuffled rows.
 - The pass marks of §9A.2 (ECE ≤ 0.05, AUC ≥ 0.95) are for the stacked `C`, not for `p_llm` alone. The report shows them for reference only.
 
-**Which data.** The calibration split must be one that the classifier's training never sees (§9A.2 step 2). C2 owns the splits; the files and line ranges are to be agreed with C2 and C3 (open point 2).
+**Which split.** The calibration range must be one that the classifier's training never sees (§9A.2 step 2). C2 owns the splits; the files and day ranges are to be agreed with C2 and C3 (open point 2).
 
 **Stacking note for C3.** Platt scaling is a one-input logistic regression on `logit(p_raw)`. The stacker in step 4 is a logistic regression on `logit(p_clf)` and `logit(p_llm)`. Because `logit(p_llm) = a · logit(p_raw) + b`, if both are fitted on the same calibration split without regularisation, the stacker absorbs the Platt step: feeding it `p_raw` or `p_llm` gives the same final `C`. The calibrated `p_llm` still matters on its own, for display, for the evaluation above and for any fallback.
 
@@ -124,13 +137,17 @@ export ICD_OPINION_BACKEND=openai_http
 export ICD_LLM_ENDPOINT=http://127.0.0.1:8000/v1/chat/completions ICD_LLM_MODEL=qwen3.8-27b-awq-int4
 export ICD_LLM_SITE=hpc ICD_LLM_NO_THINKING=1   # ICD_LLM_API_KEY from the cluster, never committed
 
-# 1. Labelled set and the model's answers (the dataset file is never committed)
-python -m app.opinion.cli label-set unsw-nb15 ../data/UNSW-NB15_1.csv --out ../opinion-cal \
-    --groups 200 --max-events 200000 --cache-dir ../opinion-cache
+# 1. Labelled sets and the model's answers, one per NF-v3 file, on the agreed calibration range
+#    (the ranges below are placeholders; the dataset files are never committed)
+python -m app.opinion.cli label-set nf-unsw-nb15-v3 ../data/NF-UNSW-NB15-v3.csv \
+    --start <from> --end <to> --groups 600 --out ../opinion-cal/nf-unsw --cache-dir ../opinion-cache
+python -m app.opinion.cli label-set nf-cse-cic-ids2018-v3 ../data/NF-CSE-CIC-IDS2018-v3.csv \
+    --start <from> --end <to> --groups 300 --out ../opinion-cal/nf-cic --cache-dir ../opinion-cache
 
-# 2. Fit the calibrator; writes calibrator.json, calibration.md and calibration.json
-python -m app.opinion.cli calibrate ../opinion-cal/results.jsonl --out ../opinion-cal \
-    --version cal-unsw1-qwen27b-v1 --source "UNSW-NB15_1, first 200,000 events, 200 groups"
+# 2. One calibrator on both; writes calibrator.json, calibration.md and calibration.json
+python -m app.opinion.cli calibrate ../opinion-cal/nf-unsw/results.jsonl \
+    ../opinion-cal/nf-cic/results.jsonl --out ../opinion-cal \
+    --version cal-nf-v3-qwen27b-v1 --source "NF-v3 calibration ranges agreed with C2 and C3"
 
 # 3. Opinions for incidents, calibrated
 python -m app.opinion.cli incidents ../fixtures/correlation/events.json --out ../opinion-run \
@@ -143,10 +160,10 @@ Use `--method logprob` to try token probabilities. `results.jsonl` and `opinions
 
 | # | What | Who |
 |---|---|---|
-| 1 | First real run: 200 groups of UNSW-NB15_1 on the cluster's 27B model, both methods; record `calibration.md` under `docs/ai1-runs/` | AI1 |
-| 2 | Agree the calibration split (files and ranges never used to train the classifier) | C2, C3, AI1 |
+| 1 | First real run: both NF-v3 calibration ranges on the cluster's 27B model, both methods (about 900 groups: run off-peak, as the cluster guide asks); record `calibration.md` under `docs/ai1-runs/` | AI1 |
+| 2 | Agree the calibration split: NF-v3 files and day ranges never used to train the classifier | C2, C3, AI1 |
 | 3 | Check that the vLLM service returns `logprobs` (decides AI1-OP-D2) | AI1 |
 | 4 | Stacker, conformal flag, two-phase scoring, contracts 1.4 (`llm_pending`, `llm_unavailable`, `confidence_versions`) | C3 |
 | 5 | Job stage `llm_confidence` between the initial score and the AI report, and storage of `GroupOpinion` with the risk audit record | C1, C3 |
-| 6 | Cost: one request (5 samples, or 1 with logprob) per evidence group. Count the evidence groups of the 297 UNSW-NB15_1 incidents and measure the time per group on the cluster | AI1 |
+| 6 | Cost: one request (5 samples, or 1 with logprob) per evidence group. Measure the time per group on the cluster, then size the calibration runs (rare attacks make the sets large) and the per-incident cost in the platform | AI1 |
 | 7 | Whether extra flow features (packets, TTL, loss) help the view. Note: TTL values are a known dataset artefact in UNSW-NB15 and could act as a label shortcut, so they are left out of v1 | AI1, C2 |

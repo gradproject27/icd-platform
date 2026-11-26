@@ -9,7 +9,8 @@ refuses to apply it to anything else.
 
 Measures (design note 9A.2, pass marks proposed for step 7): Brier score, log loss, expected
 calibration error (10 equal-width bins), AUC (Mann-Whitney, ties count half) and a reliability
-table. `cross_validated` gives out-of-fold calibrated values, so the measures of the calibrated
+table, per dataset and as a macro average (RV1-D5). `cross_validated` gives out-of-fold
+calibrated values over contiguous time blocks (`time_blocks`), so the measures of the calibrated
 opinion are never computed on the groups it was fitted on.
 
 Pure Python: the backend has no numpy or scikit-learn, and two parameters do not need them.
@@ -193,21 +194,37 @@ def measures(p: Sequence[float], truth: Sequence[int]) -> dict[str, float | int 
     }
 
 
+def time_blocks(datasets: Sequence[str], starts: Sequence[str], folds: int = 5) -> list[int]:
+    """Fold of each group: contiguous time blocks within each dataset (RV1-D5: split by file,
+    day or scenario, never by random rows). `starts` are ISO times, which sort as text."""
+    if folds < 2:
+        raise ValueError("folds must be at least 2")
+    fold_of = [0] * len(datasets)
+    for dataset in set(datasets):
+        members = sorted((starts[i], i) for i in range(len(datasets)) if datasets[i] == dataset)
+        for rank, (_, i) in enumerate(members):
+            fold_of[i] = rank * folds // len(members)
+    return fold_of
+
+
 def cross_validated(
-    p_raw: Sequence[float], truth: Sequence[int], folds: int = 5, eps: float = EPS
+    p_raw: Sequence[float],
+    truth: Sequence[int],
+    folds: int = 5,
+    eps: float = EPS,
+    fold_of: Sequence[int] | None = None,
 ) -> list[float]:
     """Out-of-fold calibrated values: group i is calibrated by a fit that never saw it.
 
-    Folds are fixed (index modulo folds, within each class so every fold has both classes when
-    it can). A fold whose training part misses a class keeps p_raw for its groups.
+    `fold_of` gives each group's fold (use `time_blocks`); without it, folds are index blocks in
+    the given order. A fold whose training part misses a class keeps p_raw for its groups.
     """
     if folds < 2:
         raise ValueError("folds must be at least 2")
-    fold_of = [0] * len(p_raw)
-    counters = {0: 0, 1: 0}
-    for i, y in enumerate(truth):
-        fold_of[i] = counters[y] % folds
-        counters[y] += 1
+    if fold_of is None:
+        fold_of = [i * folds // max(len(p_raw), 1) for i in range(len(p_raw))]
+    if len(fold_of) != len(p_raw):
+        raise ValueError("one fold per group")
     out = list(p_raw)
     for k in range(folds):
         train = [i for i in range(len(p_raw)) if fold_of[i] != k]

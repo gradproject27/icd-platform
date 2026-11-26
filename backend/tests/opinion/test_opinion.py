@@ -23,8 +23,9 @@ from app.opinion.calibration import (
     fit_platt,
     logit,
     sigmoid,
+    time_blocks,
 )
-from app.opinion.cli import balanced_sample, main
+from app.opinion.cli import check_dataset, main, natural_sample
 from app.opinion.client import OpenAIOpinionClient, Sample, StubOpinionClient, yes_probability
 from app.opinion.estimate import (
     MemoryOpinionCache,
@@ -129,14 +130,42 @@ def test_labelled_groups_truth_and_gap():
     assert all("t-0006" not in {e.event_id for e in g.events} for g in groups)
 
 
-def test_balanced_sample_is_fixed_and_balanced():
-    groups = [OpinionGroup("DoS", f"10.0.0.{i}", (_event(i),), truth=1) for i in range(10)] + [
-        OpinionGroup("normal", f"10.0.1.{i}", (_event(100 + i, flagged=False),), truth=0)
-        for i in range(3)
+def _groups(attacks: int, normal: int) -> list[OpinionGroup]:
+    return [
+        OpinionGroup("DoS", f"10.0.0.{i}", (_event(i, minutes=i),), truth=1) for i in range(attacks)
+    ] + [
+        OpinionGroup("normal", f"10.0.1.{i}", (_event(500 + i, flagged=False, minutes=i),), truth=0)
+        for i in range(normal)
     ]
-    chosen = balanced_sample(groups, 8)
-    assert sum(g.truth for g in chosen) == 5 and len(chosen) == 8  # only 3 normal exist
-    assert chosen == balanced_sample(list(reversed(groups)), 8)
+
+
+def test_natural_sample_keeps_the_attack_ratio_and_is_fixed():
+    groups = _groups(10, 190)  # 5% attack, like NF-UNSW-NB15-v3
+    chosen = natural_sample(groups, 40)
+    assert len(chosen) == 40 and sum(g.truth for g in chosen) == 2  # 5% of 40
+    assert chosen == natural_sample(list(reversed(groups)), 40)
+    assert natural_sample(groups, 500) == sorted(groups, key=lambda g: g.events[0].timestamp)
+    assert sum(g.truth for g in natural_sample(_groups(1, 999), 20)) == 1  # class kept present
+
+
+@pytest.mark.parametrize(
+    ("dataset", "reason"),
+    [("unsw-nb15", "row 5"), ("precinct6", "agreement check"), ("otrf", "unlabelled")],
+)
+def test_datasets_outside_their_role_are_refused(dataset, reason, tmp_path, capsys):
+    assert main(["label-set", dataset, str(EVENTS_FILE), "--out", str(tmp_path)]) == 2
+    assert reason in capsys.readouterr().err
+    check_dataset("nf-unsw-nb15-v3")
+    check_dataset("nf-cse-cic-ids2018-v3")
+
+
+def test_time_range_split(tmp_path):
+    out = tmp_path / "range"
+    args = ["label-set", "fixture", str(EVENTS_FILE), "--out", str(out)]
+    assert main([*args, "--start", "2026-01-15T09:00", "--end", "2026-01-15T09:30"]) == 0
+    rows = [json.loads(line) for line in (out / "results.jsonl").read_text().splitlines()]
+    assert rows and all("2026-01-15T09:00" <= r["start"] < "2026-01-15T09:30" for r in rows)
+    assert all(r["dataset"] == "fixture" and "[2026-01-15T09:00" in r["split"] for r in rows)
 
 
 # --- view and prompt ------------------------------------------------------------------------
@@ -400,9 +429,15 @@ def test_measures():
 def test_cross_validated_never_sees_its_own_group():
     p = [0.1, 0.2, 0.3, 0.9, 0.8, 0.7, 0.4, 0.6, 0.5, 0.95]
     y = [0, 0, 0, 1, 1, 1, 0, 1, 0, 1]
-    out = cross_validated(p, y, folds=5)
+    out = cross_validated(p, y, folds=2)
     assert len(out) == len(p) and all(0 < v < 1 for v in out)
     assert out != p
+
+
+def test_time_blocks_are_contiguous_per_dataset():
+    datasets = ["a"] * 4 + ["b"] * 2
+    starts = ["2015-01-04", "2015-01-01", "2015-01-03", "2015-01-02", "2018-02-02", "2018-02-01"]
+    assert time_blocks(datasets, starts, folds=2) == [1, 0, 1, 0, 1, 0]
 
 
 # --- command line ---------------------------------------------------------------------------
@@ -437,7 +472,15 @@ def test_cli_incidents_label_set_and_calibrate(tmp_path):
     )
     calibrator = Calibrator.load(cal / "calibrator.json")
     assert calibrator.model_id == "stub-opinion" and calibrator.fitted_on == len(results)
-    assert "Calibrated (out-of-fold)" in (cal / "calibration.md").read_text()
+    report = json.loads((cal / "calibration.json").read_text())
+    assert set(report["per_dataset"]) == {"fixture"} and "macro" in report
+    assert report["fold_rule"] == "contiguous time blocks within each dataset"
+    text = (cal / "calibration.md").read_text()
+    assert "| fixture |" in text and "| macro average |" in text and "| pooled |" in text
+
+    old = tmp_path / "old.jsonl"
+    old.write_text(json.dumps({"truth": 1, "opinion": results[0]["opinion"]}) + "\n")
+    assert main(["calibrate", str(old), "--out", str(cal), "--version", "v", "--source", "s"]) == 1
 
     again = tmp_path / "again"
     assert (
