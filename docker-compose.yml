@@ -34,7 +34,9 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      # Through the shell: Podman splits an exec-form argument at its spaces, so the one-line
+      # Python check ran as `python -c import` there and the API never became healthy.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)\""]
       interval: 10s
       timeout: 5s
       retries: 5
