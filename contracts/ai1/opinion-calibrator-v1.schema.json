@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "a": {
+      "title": "A",
+      "type": "number"
+    },
+    "b": {
+      "title": "B",
+      "type": "number"
+    },
+    "eps": {
+      "default": 0.01,
+      "exclusiveMaximum": 0.5,
+      "exclusiveMinimum": 0,
+      "title": "Eps",
+      "type": "number"
+    },
+    "fitted_at": {
+      "format": "date-time",
+      "title": "Fitted At",
+      "type": "string"
+    },
+    "fitted_on": {
+      "description": "Groups used for the fit.",
+      "minimum": 2,
+      "title": "Fitted On",
+      "type": "integer"
+    },
+    "format": {
+      "const": "icd-opinion-calibrator-v1",
+      "default": "icd-opinion-calibrator-v1",
+      "title": "Format",
+      "type": "string"
+    },
+    "method": {
+      "enum": [
+        "samples",
+        "logprob"
+      ],
+      "title": "Method",
+      "type": "string"
+    },
+    "model_id": {
+      "minLength": 1,
+      "title": "Model Id",
+      "type": "string"
+    },
+    "positives": {
+      "minimum": 1,
+      "title": "Positives",
+      "type": "integer"
+    },
+    "prompt_version": {
+      "minLength": 1,
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "source": {
+      "description": "Which labelled set, for the record.",
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "version": {
+      "description": "Name written into each GroupOpinion.",
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "method",
+    "prompt_version",
+    "model_id",
+    "a",
+    "b",
+    "fitted_on",
+    "positives",
+    "source",
+    "fitted_at"
+  ],
+  "title": "Calibrator",
+  "type": "object"
+}
