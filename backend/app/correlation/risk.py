@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from fnmatch import fnmatchcase
 from pathlib import Path
+from typing import Literal
 
 from app.confidence.values import Confidence
 from app.contracts import (
@@ -53,6 +54,11 @@ class EventConfidences:
 
     values: Mapping[str, Confidence]
     version: str
+    phase: Literal["initial", "final"] = "initial"
+    versions: Mapping[str, str] = field(default_factory=dict)
+    # A flag every incident scored with these values carries: llm_pending before the HPC
+    # answer, llm_unavailable after it failed (design 9A.3).
+    incident_flag: str | None = None
 
 
 @dataclass(frozen=True)
@@ -294,6 +300,8 @@ def score_incident(
         if any(s.confidence_source == "dataset" for s in strengths):
             flags.append(RiskFlag.CONFIDENCE_FIXED)
         raised = {f for s in strengths for f in s.confidence_flags}
+        if confidences.incident_flag is not None:
+            raised.add(confidences.incident_flag)
         for flag in (RiskFlag.NEEDS_REVIEW, RiskFlag.LLM_PENDING, RiskFlag.LLM_UNAVAILABLE):
             if flag.value in raised:
                 flags.append(flag)
@@ -337,6 +345,8 @@ def score_incident(
         if confidences is None
         else f"{config.config_version}+{confidences.version}",
         computed_at=evaluated_at,
+        phase=None if confidences is None else confidences.phase,
+        confidence_versions={} if confidences is None else dict(confidences.versions),
         likelihood=likelihood,
         impact=impact,
         flags=flags,

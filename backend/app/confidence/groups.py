@@ -28,6 +28,7 @@ import argparse
 import hashlib
 import heapq
 import json
+import math
 import statistics
 import sys
 from collections import Counter
@@ -35,8 +36,6 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 from app.confidence import features as F
 from app.contracts import Event, LabelStatus
@@ -112,7 +111,7 @@ def _number(value: Any) -> float | None:
         number = float(value)
     except (TypeError, ValueError):
         return None
-    return number if np.isfinite(number) else None
+    return number if math.isfinite(number) else None
 
 
 def _median(values: list[float]) -> float | None:
@@ -293,6 +292,8 @@ def choose_groups(
 
     At most groups_per_class per attack class; benign groups up to the number of attack groups,
     each with a claim drawn from the attack classes. Sorted first, so the draw is stable."""
+    import numpy as np  # only for building calibration groups (not in the worker image)
+
     rng = np.random.default_rng([seed, code])
     by_class: dict[str, list[tuple]] = {}
     for key in sorted(counts):

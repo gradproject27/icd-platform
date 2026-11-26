@@ -39,7 +39,7 @@ class UploadRow(Base):
 class JobRow(Base):
     __tablename__ = "jobs"
     __table_args__ = (
-        CheckConstraint("kind IN ('ingest', 'analysis')", name="jobs_kind"),
+        CheckConstraint("kind IN ('ingest', 'analysis', 'confidence')", name="jobs_kind"),
         CheckConstraint("state IN ('queued', 'running', 'done', 'failed')", name="jobs_state"),
         Index("jobs_queue", "state", "created_at"),
     )

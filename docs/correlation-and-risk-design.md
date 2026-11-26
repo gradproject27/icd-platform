@@ -409,7 +409,7 @@ Steps 1 and 2 are built in `backend/app/confidence/` (step 4); features, split a
 | Failure | The LLM fails or is unavailable | Calibrated `p_clf` | The initial score stays the current score, with flag `llm_unavailable`. It is never shown or used as an LLM-informed final score. The step can be retried; a later success writes the final score |
 | Re-score | `risk.toml` or a model version changes | Stored `p_clf` and `p_llm`, re-computed only when their own version changed | A new record; earlier records stay |
 
-C5's freeze precondition (`is_high`) reads the current score; whether a phase 1 score may start a freeze is a C5 question to settle in step 6.
+C5's freeze precondition (`is_high`) reads the current score. Decided 26 Nov 2026 (user): a phase 1 (initial) High score may start a freeze; the incident keeps `llm_pending`, so the decision panel shows that the LLM opinion has not run, and a person still approves the freeze. Built in step 6b: table `risk_assessments` (migration 0008, append-only) and `RiskAssessment.phase` / `confidence_versions` (RV1-D17).
 
 **Audit.** Every scoring writes one record that is never changed: incident ID, phase, score, level, `L`, `I`, flags, `computed_at`, and every version behind it (`risk.toml`, classifier, calibrator, stacker, conformal threshold, LLM model and prompt). `Incident.risk` shows the newest record.
 

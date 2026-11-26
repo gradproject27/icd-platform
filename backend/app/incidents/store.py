@@ -17,8 +17,8 @@ from app.contracts import Event, Incident, LabelStatus
 from app.correlation.config import CorrelationConfig, load_config
 from app.correlation.engine import correlate
 from app.correlation.keys import key_values, key_values_of
-from app.correlation.risk import RiskConfig, score_incidents
-from app.incidents.models import IncidentEventRow, IncidentRow
+from app.correlation.risk import EventConfidences, RiskConfig, score_incidents
+from app.incidents.models import IncidentEventRow, IncidentRow, RiskAssessmentRow
 from app.jobs.errors import JobLost
 from app.jobs.queue import holds
 from app.models import EventRow
@@ -123,7 +123,42 @@ def store_incidents(
                 for link in incident.events
             ],
         )
+        _record_assessments(session, upload_id, incidents)
     return len(incidents)
+
+
+def _record_assessments(session: Session, upload_id: str, incidents: Sequence[Incident]) -> None:
+    """One append-only risk_assessments row per scored incident (design 9A.3).
+
+    A risk-v0 score (phase null) is recorded as phase initial: it is the score the incident was
+    stored with. recorded_at is the database clock, so it never depends on the caller."""
+    rows = [
+        {
+            "incident_id": incident.incident_id,
+            "upload_id": upload_id,
+            "phase": incident.risk.phase or "initial",
+            "score": incident.risk.score,
+            "level": incident.risk.level.value,
+            "config_version": incident.risk.config_version,
+            "computed_at": incident.risk.computed_at,
+            "data": incident.risk.model_dump(mode="json"),
+        }
+        for incident in incidents
+        if incident.risk is not None
+    ]
+    if rows:
+        session.execute(insert(RiskAssessmentRow), rows)
+
+
+def load_assessments(engine: Engine, incident_id: str) -> list[dict]:
+    """Every recorded score of one incident, oldest first (the audit of design 9A.3)."""
+    with Session(engine) as session:
+        rows = session.execute(
+            select(RiskAssessmentRow.phase, RiskAssessmentRow.recorded_at, RiskAssessmentRow.data)
+            .where(RiskAssessmentRow.incident_id == incident_id)
+            .order_by(RiskAssessmentRow.assessment_id)
+        ).all()
+    return [{"phase": p, "recorded_at": r, "risk": d} for p, r, d in rows]
 
 
 def load_incident(engine: Engine, incident_id: str) -> Incident | None:
@@ -198,6 +233,7 @@ def correlate_upload(
     config: CorrelationConfig | None = None,
     owner: tuple[str, str] | None = None,
     risk: RiskConfig | None = None,
+    confidences: EventConfidences | None = None,
 ) -> list[Incident]:
     """Run C3's correlation over the stored events of one upload, score every incident and
     store them (decision D1 of 16 Nov 2026: an incident is never stored without its score).
@@ -210,7 +246,15 @@ def correlate_upload(
         events, reference = _events_that_can_matter(session, upload_id, config)
     result = correlate(events, config, now, scope=upload_id)
     incidents = list(
-        score_incidents(result.incidents, events, now, risk, config, reference=reference)
+        score_incidents(
+            result.incidents,
+            events,
+            now,
+            risk,
+            config,
+            reference=reference,
+            confidences=confidences,
+        )  # fmt: skip
     )
     store_incidents(engine, upload_id, incidents, result.config_version, owner)
     return incidents
@@ -223,8 +267,10 @@ def rescore_upload(
     risk: RiskConfig | None = None,
     config: CorrelationConfig | None = None,
     owner: tuple[str, str] | None = None,
+    confidences: EventConfidences | None = None,
 ) -> list[Incident]:
-    """Score an upload's stored incidents again, for example after risk.toml changed.
+    """Score an upload's stored incidents again, for example after risk.toml changed, or with
+    the model's C (risk-v1 phase 2). Every new score is appended to risk_assessments.
 
     The grouping is not run again: the stored incidents keep their events and IDs, and only
     their risk changes.
@@ -240,7 +286,11 @@ def rescore_upload(
             return []
         events, reference = _events_that_can_matter(session, upload_id, config)
     incidents = [Incident.model_validate(data) for data, _ in rows]
-    scored = list(score_incidents(incidents, events, now, risk, config, reference=reference))
+    scored = list(
+        score_incidents(
+            incidents, events, now, risk, config, reference=reference, confidences=confidences
+        )
+    )
     # The grouping is unchanged, so each incident keeps the correlation version it was built with.
     by_version: dict[str, list[Incident]] = {}
     for incident, (_, version) in zip(scored, rows, strict=True):

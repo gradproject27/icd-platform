@@ -40,7 +40,7 @@ export type ErrorCode =
  * This interface was referenced by `Job`'s JSON-Schema
  * via the `definition` "JobKind".
  */
-export type JobKind = "ingest" | "analysis";
+export type JobKind = "ingest" | "analysis" | "confidence";
 /**
  * What a running job is doing now, for progress display. Set only while running.
  *

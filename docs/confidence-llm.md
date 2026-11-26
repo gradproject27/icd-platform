@@ -99,3 +99,18 @@ python -m app.confidence.stack_fit --out run-stack \
 ```
 
 It reads the CSVs again for the 47 features of each group's flows, gives each flow its calibrated `p_clf` and its group's `p_llm`, fits the stacker on one half of the calibration groups and the conformal threshold on the other, and reports on the test groups: AUC, Brier score, ECE, conformal coverage (target 95%) and the share of events that would get `needs_review`. Output `stacker.json` (plain JSON) and `stack_report.json` (counts and measures only).
+
+## 8. Step 6b: the confidence job on HPC
+
+User decision of 26 Nov 2026: the models run as an HPC batch job, not in the app's worker (decision RV1-D17). With `ICD_CONFIDENCE_BACKEND=hpc_batch`, an upload of a NetFlow v3 dataset goes:
+
+1. **Ingest job:** events stored, incidents correlated and scored as **phase 1** (`initial`): every flagged event keeps its dataset's fixed `C`, flags `confidence_fixed` and `llm_pending`. A confidence job is queued instead of the analysis jobs. An initial High score may already start a freeze, with `llm_pending` shown (user, 26 Nov 2026).
+2. **Confidence job** (`backend/app/jobs/confidence.py`): writes the input file (`app/confidence/handoff.py`: the 47 features of each flagged NetFlow v3 event and the masked description of each evidence group; no IP, port, time, host, user or label), copies it to the cluster and submits `tools/confidence/icd_confidence.sbatch` over the same SSH and Slurm handoff as the AI report (`ICD_HPC_*`), then reads the output.
+3. **Cluster** (`python -m app.confidence.batch_run`): `p_clf` from the step 4 model, `p_llm` from the step 5 prompt and Platt calibrator, `C` from the 6a stacker (with `needs_review`). A group whose LLM opinion fails gets `C` = `p_clf` with `llm_unavailable`. A failure of the whole run is written as an output with `error`.
+4. **Back in the worker:** the incidents are scored again as **phase 2** (`final`). If the cluster gives no answer, the job is tried again (`JOB_MAX_ATTEMPTS`); after the last attempt, the incidents are scored again with `llm_unavailable` and the initial score stays current, never shown as final. Either way the analysis jobs are queued next, so the AI report runs after phase 2.
+
+Every score is kept in `risk_assessments` (append-only), so both the initial and the final score stay on record with their versions.
+
+Setup once on the cluster: a checkout of the reviewed `main`, the step 4 venv, and the reviewed `model.joblib`, `llm_calibrator.json` and `stacker.json` in one folder (`MODELS` in the sbatch file). The calibrator is refused unless the LLM's model ID is the one it was fitted with. In `.env`: `ICD_CONFIDENCE_BACKEND=hpc_batch`, `ICD_CONFIDENCE_SBATCH_SCRIPT=<path on the cluster>` and the `ICD_HPC_*` connection.
+
+With the backend `off` (the default), and for every other dataset, nothing changes: the risk-v0 score, no confidence job.
