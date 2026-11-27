@@ -29,6 +29,9 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
   high: "High",
 };
 
+export const SEVERITY_UNAVAILABLE_LABEL = "Severity unavailable";
+export const SIMULATED_LABEL = "[SIMULATED]";
+
 export const ANALYSIS_STATUS_LABELS: Record<AnalysisStatus, string> = {
   not_started: "Not started",
   in_progress: "In progress",

@@ -5,10 +5,14 @@ import { listIncidents } from "../api/incidents";
 import type { IncidentSummary } from "../api/proposed";
 import { DECIDERS, ESCALATION_VIEWERS, rolesText } from "../auth/roles";
 import { useCurrentUser } from "../auth/useCurrentUser";
+import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { PageState } from "../components/PageState";
-import { formatListTime, riskText, STUB_BANNER } from "../incidents/format";
+import { RelativeAbsoluteTime } from "../components/RelativeAbsoluteTime";
+import { RiskChip, SeverityChip } from "../components/RiskChip";
+import { StatusChip } from "../components/StatusChip";
+import { STUB_BANNER } from "../incidents/format";
 import { reviewGroups, type ReviewGroup } from "../incidents/review";
-import { SCENARIO_LABELS } from "../labels";
+import { SCENARIO_LABELS, SIMULATED_LABEL } from "../labels";
 import { RecentDecisions } from "../incidents/ScenarioMeta";
 
 // Review queue (S8-D10; response-workflow-spec.md section 5 and T04, T12, T16). Incidents that
@@ -126,51 +130,59 @@ function QueueGroup({ group }: { group: ReviewGroup }) {
       {group.items.length === 0 ? (
         <p>None.</p>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Incident ID</th>
-              <th scope="col">First event</th>
-              <th scope="col">Type</th>
-              <th scope="col">Risk</th>
-              <th scope="col">Confidence</th>
-              <th scope="col">Recommended (advice)</th>
-              <th scope="col">Review</th>
-            </tr>
-          </thead>
-          <tbody>
-            {group.items.map((summary) => (
-              <QueueRow key={summary.incident.incident_id} summary={summary} />
-            ))}
-          </tbody>
-        </table>
+        <DataTable
+          caption={`${group.title} incidents`}
+          columns={[
+            {
+              key: "id",
+              header: "Incident ID",
+              renderCell: ({ incident }) => (
+                <Link className="mono" to={`/incidents/${encodeURIComponent(incident.incident_id)}`}>
+                  {incident.incident_id}
+                </Link>
+              ),
+            },
+            { key: "time", header: "First event", renderCell: ({ incident }) => <RelativeAbsoluteTime iso={incident.first_event_at} /> },
+            { key: "severity", header: "Severity", renderCell: ({ incident }) => <SeverityChip risk={incident.risk} /> },
+            { key: "type", header: "Type", renderCell: ({ incident }) => incident.incident_type ?? "Not classified" },
+            { key: "risk", header: "Risk", renderCell: ({ incident }) => <RiskChip risk={incident.risk} /> },
+            {
+              key: "state",
+              header: "State",
+              renderCell: ({ incident }) => <StatusChip status={incident.status ?? "new"} />,
+            },
+            { key: "confidence", header: "Confidence", renderCell: ({ incident }) => confidenceText(incident.confidence) },
+            {
+              key: "recommended",
+              header: "Recommended (advice)",
+              renderCell: ({ recommended_scenario_id: recommended }) => (
+                <span title={recommended ? SCENARIO_LABELS[recommended] : undefined}>
+                  {recommended ? <span className="mono">{recommended} (SIMULATED)</span> : "No matching scenario"}
+                </span>
+              ),
+            },
+            {
+              key: "review",
+              header: "Review",
+              renderCell: ({ incident }) => {
+                const simulatedId = `review-simulated-${encodeURIComponent(incident.incident_id)}`;
+                return (
+                  <Link
+                    className="mono"
+                    to={`/incidents/${encodeURIComponent(incident.incident_id)}/decision`}
+                    aria-label={`Review ${incident.incident_id}`}
+                    aria-describedby={simulatedId}
+                  >
+                    Review <span id={simulatedId} className="simulated-badge">{SIMULATED_LABEL}</span>
+                  </Link>
+                );
+              },
+            },
+          ] satisfies DataTableColumn<IncidentSummary>[]}
+          rows={group.items}
+          rowKey={({ incident }) => incident.incident_id}
+        />
       )}
     </section>
-  );
-}
-
-function QueueRow({ summary }: { summary: IncidentSummary }) {
-  const { incident, recommended_scenario_id: recommended } = summary;
-  const id = encodeURIComponent(incident.incident_id);
-  return (
-    <tr>
-      <td>
-        <Link to={`/incidents/${id}`}>{incident.incident_id}</Link>
-      </td>
-      <td>
-        <time dateTime={incident.first_event_at}>{formatListTime(incident.first_event_at)}</time>
-      </td>
-      <td>{incident.incident_type ?? "Not classified"}</td>
-      <td>{riskText(incident)}</td>
-      <td>{confidenceText(incident.confidence)}</td>
-      <td title={recommended ? SCENARIO_LABELS[recommended] : undefined}>
-        {recommended ? `${recommended} (SIMULATED)` : "No matching scenario"}
-      </td>
-      <td>
-        <Link to={`/incidents/${id}/decision`} aria-label={`Review ${incident.incident_id}`}>
-          Review
-        </Link>
-      </td>
-    </tr>
   );
 }

@@ -1,5 +1,5 @@
 import type { RiskLevel } from "../api/contracts";
-import { RISK_LEVEL_LABELS } from "../labels";
+import { RISK_LEVEL_LABELS, SEVERITY_UNAVAILABLE_LABEL } from "../labels";
 
 /** An incident's or an entity's risk as the API gives it; null or undefined when not scored. */
 type Risk = { level: RiskLevel; score: number } | null | undefined;
@@ -15,6 +15,17 @@ export function RiskChip({ risk }: { risk: Risk }) {
     <span className={`chip chip--risk chip--${level}`}>
       <RiskShape level={level} />
       {risk ? `${RISK_LEVEL_LABELS[risk.level]} ${risk.score}` : "Not scored"}
+    </span>
+  );
+}
+
+/** Severity uses the risk level exposed by the incident API; the score remains a separate value. */
+export function SeverityChip({ risk }: { risk: Risk }) {
+  const level = risk?.level ?? "none";
+  return (
+    <span className={`chip chip--${level}`}>
+      <RiskShape level={level} />
+      {risk ? RISK_LEVEL_LABELS[risk.level] : SEVERITY_UNAVAILABLE_LABEL}
     </span>
   );
 }

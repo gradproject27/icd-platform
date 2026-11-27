@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import type { IncidentStatus, RiskLevel } from "../api/contracts";
 import { ApiError } from "../api/errors";
 import { listIncidents } from "../api/incidents";
 import type { IncidentSummary } from "../api/proposed";
+import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { PageState } from "../components/PageState";
+import { RelativeAbsoluteTime } from "../components/RelativeAbsoluteTime";
+import { RiskChip, SeverityChip } from "../components/RiskChip";
+import { StatusChip } from "../components/StatusChip";
 import { formatLocalDateTime } from "../countdown/clock";
-import { entitiesText, formatListTime, riskText, STUB_BANNER } from "../incidents/format";
-import { ANALYSIS_STATUS_LABELS, INCIDENT_STATUS_LABELS, RISK_LEVEL_LABELS } from "../labels";
+import { entitiesText, STUB_BANNER } from "../incidents/format";
+import { ANALYSIS_STATUS_LABELS, INCIDENT_STATUS_LABELS, RISK_LEVEL_LABELS, SIMULATED_LABEL } from "../labels";
 
 // Incident list (wireframes.md 4.3). Sorting and filtering happen in the browser (decision D8);
 // the filters and the sort live in the URL query, so a refresh keeps them.
@@ -54,6 +58,7 @@ function compare(a: IncidentSummary, b: IncidentSummary, key: SortKey, dir: Sort
 }
 
 export function IncidentListPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [load, setLoad] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -182,70 +187,79 @@ export function IncidentListPage() {
               </button>
             </div>
           ) : (
-            <table className="table incident-table">
-              <thead>
-                <tr>
-                  <th scope="col">Incident ID</th>
-                  <th scope="col" aria-sort={ariaSort("time")}>
+            <DataTable
+              caption="Incidents"
+              className="incident-table"
+              columns={[
+                {
+                  key: "id",
+                  header: "Incident ID",
+                  renderCell: ({ incident }) => (
+                    <Link className="mono" to={`/incidents/${encodeURIComponent(incident.incident_id)}`}>
+                      {incident.incident_id}
+                    </Link>
+                  ),
+                },
+                {
+                  key: "time",
+                  header: (
                     <button type="button" className="sort-button" onClick={() => sortBy("time")}>
                       Time{sortMark("time")}
                     </button>
-                  </th>
-                  <th scope="col">Entities</th>
-                  <th scope="col">Type</th>
-                  <th scope="col" aria-sort={ariaSort("risk")}>
+                  ),
+                  ariaSort: ariaSort("time"),
+                  renderCell: ({ incident }) => (
+                    <RelativeAbsoluteTime
+                      iso={incident.first_event_at}
+                      absoluteTitle={`Last event: ${formatLocalDateTime(incident.last_event_at)}`}
+                    />
+                  ),
+                },
+                {
+                  key: "entities",
+                  header: "Entities",
+                  cellTitle: ({ entities }) => entitiesText(entities).title,
+                  renderCell: ({ entities }) => <span className="mono">{entitiesText(entities).text}</span>,
+                },
+                { key: "type", header: "Type", renderCell: ({ incident }) => incident.incident_type ?? "Not classified" },
+                {
+                  key: "risk",
+                  header: (
                     <button type="button" className="sort-button" onClick={() => sortBy("risk")}>
                       Risk{sortMark("risk")}
                     </button>
-                  </th>
-                  <th scope="col">State</th>
-                  <th scope="col">Analysis</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((summary) => (
-                  <IncidentRow key={summary.incident.incident_id} summary={summary} />
-                ))}
-              </tbody>
-            </table>
+                  ),
+                  ariaSort: ariaSort("risk"),
+                  renderCell: ({ incident }) => <RiskChip risk={incident.risk} />,
+                },
+                {
+                  key: "state",
+                  header: "State",
+                  renderCell: ({ incident }) => {
+                    const status = incident.status ?? "new";
+                    return (
+                      <>
+                        <StatusChip status={status} />
+                        {status === "awaiting_human_decision" && (
+                          <Link className="status-chip__action" to={`/incidents/${encodeURIComponent(incident.incident_id)}/decision`} aria-label={`Decide on ${incident.incident_id} ${SIMULATED_LABEL}`}>
+                            Decide {SIMULATED_LABEL}
+                          </Link>
+                        )}
+                      </>
+                    );
+                  },
+                },
+                { key: "analysis", header: "Analysis", renderCell: ({ incident }) => ANALYSIS_STATUS_LABELS[incident.analysis_status ?? "not_started"] },
+                { key: "severity", header: "Severity", renderCell: ({ incident }) => <SeverityChip risk={incident.risk} /> },
+              ] satisfies DataTableColumn<IncidentSummary>[]}
+              rows={rows}
+              rowKey={({ incident }) => incident.incident_id}
+              rowLabel={({ incident }) => incident.incident_id}
+              onRowActivate={({ incident }) => navigate(`/incidents/${encodeURIComponent(incident.incident_id)}`)}
+            />
           )}
         </>
       )}
     </section>
-  );
-}
-
-function IncidentRow({ summary }: { summary: IncidentSummary }) {
-  const { incident, entities } = summary;
-  const id = encodeURIComponent(incident.incident_id);
-  const status = incident.status ?? "new";
-  const shownEntities = entitiesText(entities);
-
-  return (
-    <tr>
-      <td>
-        <Link to={`/incidents/${id}`}>{incident.incident_id}</Link>
-      </td>
-      <td>
-        <time dateTime={incident.first_event_at} title={`Last event: ${formatLocalDateTime(incident.last_event_at)}`}>
-          {formatListTime(incident.first_event_at)}
-        </time>
-      </td>
-      <td title={shownEntities.title}>{shownEntities.text}</td>
-      <td>{incident.incident_type ?? "Not classified"}</td>
-      <td>{riskText(incident)}</td>
-      <td>
-        {INCIDENT_STATUS_LABELS[status]}
-        {status === "awaiting_human_decision" && (
-          <>
-            {" "}
-            <Link to={`/incidents/${id}/decision`} aria-label={`Decide on ${incident.incident_id}`}>
-              Decide
-            </Link>
-          </>
-        )}
-      </td>
-      <td>{ANALYSIS_STATUS_LABELS[incident.analysis_status ?? "not_started"]}</td>
-    </tr>
   );
 }

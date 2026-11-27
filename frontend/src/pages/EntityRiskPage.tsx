@@ -3,9 +3,10 @@ import { Link, useSearchParams } from "react-router";
 import { ApiError } from "../api/errors";
 import { getEntityRisk } from "../api/incidents";
 import type { EntityRiskList } from "../api/proposed";
+import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { PageState } from "../components/PageState";
+import { SeverityChip } from "../components/RiskChip";
 import { formatLocalDateTime } from "../countdown/clock";
-import { RISK_LEVEL_LABELS } from "../labels";
 
 // Entity risk (P3 of the competitor feature study): per source-side entity, a rank-weighted
 // roll-up of its incidents' risk scores and the ATT&CK tactics of its flagged events, as the
@@ -73,39 +74,39 @@ function EntityTable({ data }: { data: EntityRiskList }) {
         {data.score_threshold} or more, or {data.tactics_threshold} or more ATT&CK tactics. Configuration{" "}
         {data.config_version}, tactics {data.tactics_config_version}.
       </p>
-      <table className="factor-table">
-        <caption>Entities, highest score first</caption>
-        <thead>
-          <tr>
-            <th scope="col">Entity</th>
-            <th scope="col">Score</th>
-            <th scope="col">Level</th>
-            <th scope="col">Incidents (score)</th>
-            <th scope="col">ATT&CK tactics</th>
-            <th scope="col">Flags</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.items.map((item) => (
-            <tr key={item.entity}>
-              <th scope="row">{item.entity}</th>
-              <td>{item.score} / 100</td>
-              <td>{RISK_LEVEL_LABELS[item.level]}</td>
-              <td>
-                {item.incidents.map((incident, index) => (
-                  <span key={incident.incident_id}>
-                    {index > 0 && ", "}
-                    <Link to={`/incidents/${encodeURIComponent(incident.incident_id)}`}>{incident.incident_id}</Link> (
-                    {incident.score})
-                  </span>
-                ))}
-              </td>
-              <td>{item.tactics.length > 0 ? item.tactics.join(", ") : "-"}</td>
-              <td>{item.flags.length > 0 ? item.flags.map((flag) => FLAG_LABELS[flag] ?? flag).join("; ") : "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        caption="Entities, highest score first"
+        captionClassName="factor-table__caption"
+        className="factor-table"
+        columns={[
+          { key: "entity", header: "Entity", rowHeader: true, renderCell: (item) => <span className="mono">{item.entity}</span> },
+          { key: "level", header: "Level", renderCell: (item) => <SeverityChip risk={item} /> },
+          { key: "score", header: "Score", renderCell: (item) => <span className="num">{item.score} / 100</span> },
+          {
+            key: "incidents",
+            header: "Incidents (score)",
+            renderCell: (item) =>
+              item.incidents.length > 0
+                ? item.incidents.map((incident, index) => (
+                    <span key={incident.incident_id}>
+                      {index > 0 && ", "}
+                      <Link className="mono" to={`/incidents/${encodeURIComponent(incident.incident_id)}`}>
+                        {incident.incident_id}
+                      </Link>{" "}({incident.score})
+                    </span>
+                  ))
+                : "-",
+          },
+          { key: "tactics", header: "ATT&CK tactics", renderCell: (item) => (item.tactics.length > 0 ? item.tactics.join(", ") : "-") },
+          {
+            key: "flags",
+            header: "Flags",
+            renderCell: (item) => (item.flags.length > 0 ? item.flags.map((flag) => FLAG_LABELS[flag] ?? flag).join("; ") : "-"),
+          },
+        ] satisfies DataTableColumn<(typeof data.items)[number]>[]}
+        rows={data.items}
+        rowKey={(item) => item.entity}
+      />
     </>
   );
 }
